@@ -203,6 +203,11 @@ button,label.btn,input,select,textarea{font:inherit;color:inherit}
 .card .ocr{padding:2px 12px 0;font-size:12px;line-height:1.4;color:var(--muted);max-height:4.2em;overflow:hidden}
 .libsearch{display:flex;gap:8px;align-items:center}
 .libsearch input{flex:1}
+.plist li .del{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 45%,var(--line))}
+#dlYes.final{background:var(--danger);border-color:var(--danger);color:#fff}
+.plist li small.sy{flex-basis:100%;color:var(--muted);font-size:12px}
+.plist li small.sy.bad{color:var(--danger)}
+.btn.warn#syncBtn,#syncBtn.warn{border-color:var(--danger);color:var(--danger)}
 .plist li .files{flex-basis:100%;margin:2px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
 .plist li .files mark{background:color-mix(in srgb,#ffd84d 70%,transparent);color:inherit;border-radius:2px}
 .plist li .n mark{background:color-mix(in srgb,#ffd84d 70%,transparent);color:inherit;border-radius:2px}
@@ -501,12 +506,11 @@ details.drive ol b{color:var(--ink)}
     <div><b id="stLabel">Saved in this browser</b><small id="stHelp">Choose a folder on your PC to keep matters as real files.</small></div>
     <div class="row"><button class="btn primary" id="pickFolder">Choose folder on this PC</button><button class="btn" id="reconnect" hidden>Reconnect folder</button><button class="btn" id="useBrowser" hidden>Use browser storage</button></div>
   </div>
-  <details class="drive"><summary>Sync with Google Drive</summary>
+  <details class="drive"><summary>Sync with Google Drive and the iPad</summary>
     <ol>
-      <li>Install <b>Google Drive for desktop</b> and sign in. Your Drive appears as a drive on the PC (often <b>G:\My Drive</b>).</li>
-      <li>Create a folder there, for example <b>My Drive\Excerpt Desk</b>.</li>
-      <li>Press <b>Choose folder on this PC</b> above and select that folder.</li>
-      <li>Every matter, PDF, worksheet and export saved here then syncs to Drive by itself.</li>
+      <li>Keep matters <b>in this browser</b> (not in a PC folder) on every device. Matters in a PC folder do not sync; use <b>Move to synced storage</b> on each.</li>
+      <li>Open <b>Settings</b>, paste the sync address and key, and press <b>Sync now</b>. Do the same on the iPad.</li>
+      <li>From then on notes, highlights, drawings, sheets and PDFs sync by themselves. The <b>☁</b> button shows when it last synced.</li>
     </ol>
   </details>
   <div class="row"><h3 style="flex:1">Matters</h3><button class="btn primary" id="libNew">New matter</button></div>
@@ -545,6 +549,12 @@ details.drive ol b{color:var(--ink)}
   <div class="row end"><button class="btn primary" data-close>Done</button></div>
 </div></div>
 
+<div class="panel" id="delPanel" hidden><div class="pc" role="alertdialog" aria-labelledby="dlTitle" aria-describedby="dlText" style="width:min(540px,100%)">
+  <p id="dlStep" style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:600"></p>
+  <h2 id="dlTitle" style="color:var(--danger)"></h2>
+  <p id="dlText"></p>
+  <div class="row end"><button class="btn" id="dlNo">Cancel</button><button class="btn warn" id="dlYes"></button></div>
+</div></div>
 <div class="panel" id="clearPanel" hidden><div class="pc" role="alertdialog" aria-labelledby="ccTitle" aria-describedby="ccText" style="width:min(520px,100%)">
   <h2 id="ccTitle" style="color:var(--danger)">Clear the worksheet?</h2>
   <p id="ccText"></p>
@@ -577,6 +587,7 @@ const inPreview=(()=>{try{return window.self!==window.top}catch(e){return true}}
 if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 /* ================= settings ================= */
+const LOWMEM=navigator.maxTouchPoints>0; /* iPad / phone: tighter memory limits so Safari does not reload the page */
 let settings={fontSize:15,font:'serif',noteWidth:440,color:'yellow',startup:'blank',viewDir:'side',split:52,inkTool:'pen',inkPen:'black',inkHl:'yellow',inkSize:2,pencilOnly:null,tap:'hold'};
 try{Object.assign(settings,JSON.parse(localStorage.getItem('xdesk:settings')||'{}'))}catch(e){}
 let cur=settings.color in COLORS?settings.color:'yellow';
@@ -622,7 +633,9 @@ const BrowserStore={kind:'browser',
   async writeJson(p,o){await idb.set('kv','proj:'+p,JSON.stringify(o))},
   async files(p){const ks=await idb.keys('files');return ks.filter(k=>k.startsWith(p+'/')).map(k=>k.slice(p.length+1)).filter(n=>!n.includes('/')&&/\.pdf$/i.test(n))},
   async readFile(p,n){const v=await idb.get('files',p+'/'+n);if(!v)throw new Error('missing');return v instanceof Blob?await v.arrayBuffer():v},
-  async writeFile(p,n,data){await idb.set('files',p+'/'+n,toBuf(data))},
+  async writeFile(p,n,data){const b=toBuf(data);await idb.set('files',p+'/'+n,b);try{const m=(await idb.get('kv','fmeta:'+p))||{};m[n]={size:b.byteLength};await idb.set('kv','fmeta:'+p,m)}catch(e){}},
+  async delFile(p,n){await idb.del('files',p+'/'+n);try{const m=(await idb.get('kv','fmeta:'+p))||{};delete m[n];await idb.set('kv','fmeta:'+p,m)}catch(e){}},
+  async delMatter(p){for(const k of await idb.keys('files'))if(String(k).startsWith(p+'/'))await idb.del('files',k);for(const k of ['proj:','sync:st:','sync:base:','fmeta:'])await idb.del('kv',k+p)},
   async rename(o,n){const j=await this.readJson(o);j.name=n;await this.writeJson(n,j);const ks=(await idb.keys('files')).filter(k=>k.startsWith(o+'/'));
     for(const k of ks){const v=await idb.get('files',k);await idb.set('files',n+k.slice(o.length),v);await idb.del('files',k)}await idb.del('kv','proj:'+o)}
 };
@@ -638,6 +651,8 @@ const FolderStore={kind:'folder',
   async readFile(p,n){let d=await this.dir(p);const parts=n.split('/');for(const s of parts.slice(0,-1))d=await d.getDirectoryHandle(s);return await (await (await d.getFileHandle(parts[parts.length-1])).getFile()).arrayBuffer()},
   async writeFile(p,n,data){let d=await this.dir(p,true);const parts=n.split('/');for(const s of parts.slice(0,-1))d=await d.getDirectoryHandle(s,{create:true});
     const fh=await d.getFileHandle(parts[parts.length-1],{create:true});const w=await fh.createWritable();await w.write(data);await w.close()},
+  async delFile(p,n){const d=await this.dir(p);await d.removeEntry(n)},
+  async delMatter(p){await rootHandle.removeEntry(p,{recursive:true})},
   async copyDir(src,dst){for await(const [n,h] of src.entries()){if(h.kind==='file'){const f=await h.getFile();const fh=await dst.getFileHandle(n,{create:true});const w=await fh.createWritable();await w.write(f);await w.close()}else await this.copyDir(h,await dst.getDirectoryHandle(n,{create:true}))}},
   async rename(o,n){const src=await this.dir(o);const dst=await rootHandle.getDirectoryHandle(n,{create:true});await this.copyDir(src,dst);
     try{const j=await this.readJson(n);if(j){j.name=n;await this.writeJson(n,j)}}catch(e){}await rootHandle.removeEntry(o,{recursive:true})}
@@ -648,13 +663,14 @@ function MemoryStore(label){const json={},files={};return {kind:'memory',label,
   async files(p){return Object.keys(files).filter(k=>k.startsWith(p+'/')).map(k=>k.slice(p.length+1)).filter(n=>!n.includes('/'))},
   async readFile(p,n){const v=files[p+'/'+n];if(!v)throw new Error('missing');return v.slice().buffer},
   async writeFile(p,n,d){files[p+'/'+n]=new Uint8Array(toBuf(d)).slice()},
+  async delFile(p,n){delete files[p+'/'+n]},async delMatter(p){delete json[p]},
   async rename(){throw new Error('memory')}}}
 let libStore=BrowserStore;
 const fsSupported='showDirectoryPicker' in window;
 
 /* ================= project state ================= */
 let P=null, proj=null;
-const blank=name=>({format:FMT,name,docs:[],items:[],links:[],marks:[],ink:[],sheets:[{id:'s1',name:'Sheet 1'}],hiddenFiles:[]});
+const blank=name=>({format:FMT,name,docs:[],items:[],links:[],marks:[],ink:[],sheets:[{id:'s1',name:'Sheet 1'}],hiddenFiles:[],deletedFiles:[]});
 const byId=id=>P.items.find(i=>i.id===id);
 const docById=id=>P&&P.docs.find(d=>d.id===id);
 const stripName=s=>String(s||'').toLowerCase().replace(/\.pdf$/,'').replace(/\s*\(annotated\)$/,'').replace(/\s+/g,' ').trim();
@@ -676,7 +692,7 @@ function ensureSheets(){
 let saveT=null,saveState='';
 function setStatus(s){saveState=s;updateMeta()}
 function savedLabel(){return untitled()?'Not saved yet':scratch()?'Sample · not saved':proj.store.kind==='folder'?'Saved to folder':fsSupported?'Saved in this browser':'Saved on this device'}
-function touch(opt){if(!proj)return;mirrorUntitled();setStatus(scratch()?savedLabel():'Saving…');clearTimeout(saveT);saveT=setTimeout(saveNow,600);
+function touch(opt){if(!proj)return;editSeq++;mirrorUntitled();setStatus(scratch()?savedLabel():'Saving…');clearTimeout(saveT);saveT=setTimeout(saveNow,600);
   if(opt&&opt.hist===false){if(histT)commitHist(true);lastSnap=snap()}else{clearTimeout(histT);histT=setTimeout(()=>commitHist(true),450)}}
 
 /* undo / redo: snapshots of the worksheet after each change (typing is grouped by pauses) */
@@ -687,7 +703,7 @@ function updUndo(){$('#undoBtn').disabled=!undoStack.length;$('#redoBtn').disabl
 function resetHistory(){undoStack=[];redoStack=[];clearTimeout(histT);histT=null;lastSnap=P?snap():null;updUndo()}
 function commitHist(record){clearTimeout(histT);histT=null;if(!P)return;const s=snap();if(s===lastSnap)return;
   if(record&&lastSnap!==null){undoStack.push(lastSnap);let tot=0;for(const x of undoStack)tot+=x.length;
-    while(undoStack.length>1&&(undoStack.length>500||tot>40e6))tot-=undoStack.shift().length;redoStack=[]}lastSnap=s;updUndo()}
+    while(undoStack.length>1&&(undoStack.length>500||tot>(LOWMEM?8e6:40e6)))tot-=undoStack.shift().length;redoStack=[]}lastSnap=s;updUndo()}
 function applySnap(s){
   const o=JSON.parse(s);const before=new Set(P.docs.map(d=>d.file));
   P.docs=o.docs;P.items=o.items;P.links=o.links;P.marks=o.marks;P.ink=o.ink||[];P.sheets=o.sheets;ensureSheets();renderSheets();
@@ -704,7 +720,7 @@ function undoRedo(dir){
   to.push(snap());const s=from.pop();lastSnap=s;applySnap(s);updUndo();
 }
 $('#undoBtn').onclick=()=>undoRedo(-1);$('#redoBtn').onclick=()=>undoRedo(1);
-function serial(){return {format:FMT,name:P.name,updated:new Date().toISOString(),docs:P.docs,items:P.items,links:P.links,marks:P.marks,ink:P.ink||[],sheets:P.sheets,sheet:curSheet,hiddenFiles:P.hiddenFiles||[]}}
+function serial(){return {format:FMT,name:P.name,updated:new Date().toISOString(),docs:P.docs,items:P.items,links:P.links,marks:P.marks,ink:P.ink||[],sheets:P.sheets,sheet:curSheet,hiddenFiles:P.hiddenFiles||[],deletedFiles:P.deletedFiles||[]}}
 async function saveNow(){
   if(!proj)return false;clearTimeout(saveT);saveT=null;
   try{
@@ -723,7 +739,7 @@ async function saveNow(){
     await proj.store.writeJson(proj.name,serial());
     if(proj.store.kind==='folder'){try{proj.mtime=await FolderStore.mtime(proj.name)}catch(e){}}
     setStatus(savedLabel());
-    if(proj.store===BrowserStore&&syncOn())scheduleSync(6000);
+    if(proj.store===BrowserStore&&syncOn())requestSync(proj.name,1800);
     return true}
   catch(e){console.error(e);setStatus('Not saved');clearTimeout(saveT);saveT=setTimeout(saveNow,5000);toast(proj.store.kind==='folder'?'Could not save to the folder. Open Library and reconnect the folder.':'Could not save. Browser storage may be full or blocked.');return false}
 }
@@ -752,15 +768,23 @@ const rotSig=docId=>{const d=docById(docId);return d&&d.rot?JSON.stringify(d.rot
 
 /* ================= PDF data ================= */
 const RT={};
+const RTP={};
 async function ensureRT(doc){
-  if(RT[doc.id])return RT[doc.id];
+  if(RT[doc.id]){RT[doc.id].used=Date.now();return RT[doc.id]}
+  if(RTP[doc.id])return RTP[doc.id];
   if(!window.pdfjsLib)throw new Error('nolib');
-  const buf=await proj.store.readFile(proj.name,doc.file);const bytes=new Uint8Array(buf);
-  const pdf=await pdfjsLib.getDocument({data:bytes.slice()}).promise;
-  const rt={doc,bytes,pdf,pageData:[],tc:{}};
-  for(let i=1;i<=pdf.numPages;i++){const p=await pdf.getPage(i);rt.pageData.push({pdfPage:p,base:p.getViewport({scale:1})})}
-  RT[doc.id]=rt;return rt;
+  const job=(async()=>{
+    const buf=await proj.store.readFile(proj.name,doc.file);
+    const pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+    const rt={doc,pdf,pageData:[],tc:{},used:Date.now()};
+    for(let i=1;i<=pdf.numPages;i++){const p=await pdf.getPage(i);rt.pageData.push({pdfPage:p,base:p.getViewport({scale:1})})}
+    RT[doc.id]=rt;trimRT();return rt})();
+  RTP[doc.id]=job;try{return await job}finally{delete RTP[doc.id]}
 }
+/* keep only a few PDFs open in memory; others are reopened when you go back to them */
+let rtHold=0;
+function trimRT(){if(rtHold)return;const keep=new Set(views.map(v=>v.doc));const max=LOWMEM?3:6;const ids=Object.keys(RT).filter(id=>!keep.has(id)).sort((a,b)=>RT[a].used-RT[b].used);
+  while(Object.keys(RT).length>max&&ids.length)dropRT(ids.shift())}
 function dropRT(id){const rt=RT[id];if(rt){try{rt.pdf.destroy()}catch(e){}delete RT[id]}views.forEach(v=>{const c=v.cache[id];if(c)c.pages.forEach(unrenderPage);delete v.cache[id]})}
 
 /* ================= views (1 to 3) ================= */
@@ -809,9 +833,9 @@ function makePage(n,docId,pd){const el=document.createElement('div');el.classNam
 function layoutStamp(v){return fitW(v)+'|'+v.zoom+'|'+rotSig(v.doc)}
 function observeView(v){
   if(v.io)v.io.disconnect();if(v.io2)v.io2.disconnect();
-  v.io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){const pg=v.pages[+en.target.dataset.page-1];if(pg&&pg.el===en.target)renderPage(pg)}}),{root:v.scroller,rootMargin:'900px 0px'});
+  v.io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){const pg=v.pages[+en.target.dataset.page-1];if(pg&&pg.el===en.target)renderPage(pg)}}),{root:v.scroller,rootMargin:LOWMEM?'500px 0px':'900px 0px'});
   /* pages far away are released, so long PDFs do not use up the iPad's memory */
-  v.io2=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting){const pg=v.pages[+en.target.dataset.page-1];if(pg&&pg.el===en.target)unrenderPage(pg)}}),{root:v.scroller,rootMargin:'3000px 0px'});
+  v.io2=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting){const pg=v.pages[+en.target.dataset.page-1];if(pg&&pg.el===en.target)unrenderPage(pg)}}),{root:v.scroller,rootMargin:LOWMEM?'1400px 0px':'3000px 0px'});
   v.pages.forEach(pg=>{v.io.observe(pg.el);v.io2.observe(pg.el)});
 }
 function unrenderPage(pg){if(!pg.rendered)return;pg.tok++;pg.rendered=false;pg.content.querySelectorAll('canvas').forEach(c=>{c.width=0;c.height=0});pg.content.innerHTML=''}
@@ -827,7 +851,7 @@ async function renderPage(pg){
   if(pg.rendered||!pg.scale)return;pg.rendered=true;const tok=pg.tok;
   const vp=pg.pdfPage.getViewport({scale:pg.scale,rotation:(pg.pdfPage.rotate+pg.rot)%360});
   /* keep each page picture within what the iPad allows (about 16 million pixels), or it would come out blank */
-  const dpr=Math.max(.5,Math.min(window.devicePixelRatio||1,2,Math.sqrt(12e6/Math.max(1,vp.width*vp.height))));
+  const dpr=Math.max(.5,Math.min(window.devicePixelRatio||1,2,Math.sqrt((LOWMEM?4e6:12e6)/Math.max(1,vp.width*vp.height))));
   const canvas=document.createElement('canvas');canvas.width=Math.floor(vp.width*dpr);canvas.height=Math.floor(vp.height*dpr);
   canvas.style.width=Math.round(vp.width)+'px';canvas.style.height=Math.round(vp.height)+'px';
   const tl=document.createElement('div');tl.className='textLayer';tl.style.setProperty('--scale-factor',vp.scale);
@@ -851,7 +875,7 @@ async function viewShow(v,docId,o={}){
   if(v.doc&&v.cache[v.doc]){v.cache[v.doc].scroll=v.scroller.scrollTop;if(v.doc!==docId)v.cache[v.doc].pages.forEach(unrenderPage)}
   const my=++v.tok;v.doc=docId;if(v===V())active=docId;renderTabs();
   let rt;
-  try{if(!RT[docId])viewMsg(v,'Opening <b>'+esc(doc.title)+'</b>…');rt=await ensureRT(doc)}
+  try{if(!RT[docId]&&!RTP[docId])viewMsg(v,'Opening <b>'+esc(doc.title)+'</b>…');rt=await ensureRT(doc)}
   catch(e){if(my!==v.tok)return;viewMsg(v,e&&e.message==='nolib'?'The PDF reader did not load. Check the internet connection and reload.':'<b>'+esc(doc.file)+'</b> could not be opened. If it was moved or renamed, add it again with <b>+ Add PDF</b>.');return}
   if(my!==v.tok)return;
   let c=v.cache[docId];if(!c)c=v.cache[docId]={pages:rt.pageData.map((pd,i)=>makePage(i+1,docId,pd)),scroll:0,stamp:''};
@@ -921,13 +945,14 @@ function renderTabs(){
   const box=$('#dtabs');box.innerHTML='';if(!P)return;const shown=new Set(views.map(v=>v.doc));
   P.docs.forEach(d=>{
     const b=document.createElement('div');b.className='dtab'+(views.length>1&&shown.has(d.id)&&d.id!==active?' inview':'');b.setAttribute('role','tab');b.tabIndex=0;b.dataset.id=d.id;b.setAttribute('aria-selected',d.id===active);b.title=d.file+'  (double-click to rename)';
-    b.innerHTML='<span class="t"></span><span class="x" role="button" aria-label="Remove from this matter">×</span>';b.querySelector('.t').textContent=d.title;box.append(b);
+    b.innerHTML='<span class="t"></span><span class="x" role="button" aria-label="Close or delete this PDF" title="Close or delete this PDF">×</span>';b.querySelector('.t').textContent=d.title;box.append(b);
   });
   if(!P.docs.length){const s=document.createElement('span');s.style.color='var(--muted)';s.style.fontSize='12px';s.textContent='No PDFs yet';box.append(s)}
 }
 $('#dtabs').addEventListener('click',e=>{
   const tab=e.target.closest('.dtab');if(!tab||e.target.tagName==='INPUT')return;const id=tab.dataset.id;const x=e.target.closest('.x');
-  if(x){if(!x.classList.contains('arm')){x.classList.add('arm');x.textContent='Remove?';setTimeout(()=>{if(x.isConnected){x.classList.remove('arm');x.textContent='×'}},3000);return}removeDoc(id);return}
+  if(x){const d=docById(id);popMenu(x,[{label:'Close this PDF',hint:'Takes it off this matter\'s tabs. The file is kept (Undo brings it back).',run:()=>removeDoc(id)},
+    {label:'Delete this PDF…',hint:'Deletes the file itself. You will be asked twice.',run:()=>deletePdf(id)}]);return}
   if(id!==V().doc)viewShow(V(),id);
 });
 $('#dtabs').addEventListener('keydown',e=>{const tab=e.target.closest('.dtab');if(tab&&(e.key==='Enter'||e.key===' ')&&e.target===tab){e.preventDefault();viewShow(V(),tab.dataset.id)}});
@@ -937,9 +962,9 @@ $('#dtabs').addEventListener('dblclick',e=>{
   let done=false;const fin=ok=>{if(done)return;done=true;if(ok&&inp.value.trim()){d.title=inp.value.trim().slice(0,100);touch();views.forEach(setHead)}renderTabs()};
   inp.addEventListener('keydown',ev=>{if(ev.key==='Enter')fin(true);if(ev.key==='Escape')fin(false)});inp.addEventListener('blur',()=>fin(true));
 });
-function removeDoc(id){
+function removeDoc(id,deleting){
   const d=docById(id);if(!d)return;
-  P.docs=P.docs.filter(x=>x!==d);(P.hiddenFiles=P.hiddenFiles||[]).push(d.file);
+  P.docs=P.docs.filter(x=>x!==d);if(!deleting)(P.hiddenFiles=P.hiddenFiles||[]).push(d.file);
   P.items=P.items.filter(i=>!(i.type==='excerpt'&&i.anchor&&i.anchor.doc===id));
   P.items.forEach(i=>{if(i.anchor&&i.anchor.doc===id)delete i.anchor});
   P.marks=P.marks.filter(m=>m.anchor.doc!==id);P.ink=(P.ink||[]).filter(k=>k.doc!==id);
@@ -948,7 +973,7 @@ function removeDoc(id){
   dropRT(id);touch();renderItems();
   views.forEach(v=>{if(v.doc===id){v.doc=null;if(P.docs[0])viewShow(v,P.docs[0].id,{record:false});else emptyDocMsg(v)}});
   active=V().doc;renderTabs();updateNav();
-  toast('Removed '+d.title+' from this matter. The file itself is untouched.');
+  if(!deleting)toast('Removed '+d.title+' from this matter. The file itself is kept; add it again any time.');
 }
 function emptyDocMsg(v){viewMsg(v||V(),'<b>Add the PDFs for this matter.</b><br>Use <b>+ Add PDF</b> above, or drop files here. You can add several: plaint, written statement, orders, judgments.')}
 function recentNames(){try{return JSON.parse(localStorage.getItem('xdesk:recent')||'[]')}catch(e){return []}}
@@ -1103,7 +1128,7 @@ async function makeCrop(pageEl,dr){
   const sx=dr[0]*cv.width,sy=dr[1]*cv.height,sw=dr[2]*cv.width,sh=dr[3]*cv.height,k=Math.min(1,1000/sw);
   const out=document.createElement('canvas');out.width=Math.max(1,Math.round(sw*k));out.height=Math.max(1,Math.round(sh*k));
   const o=out.getContext('2d');o.fillStyle='#fff';o.fillRect(0,0,out.width,out.height);o.drawImage(cv,sx,sy,sw,sh,0,0,out.width,out.height);
-  const img=out.toDataURL('image/jpeg',.86);
+  const img=out.toDataURL('image/jpeg',.86);cv.width=cv.height=0;out.width=out.height=0;
   const tc=await textOf(rt,n),vb=pd.base,words=[];
   tc.items.forEach(it=>{if(!it.str||!it.str.trim())return;const tx=pdfjsLib.Util.transform(vb.transform,it.transform);const fh=Math.hypot(tx[2],tx[3]);
     const cx=(tx[4]+it.width/2)/vb.width,cy=(tx[5]-fh*.35)/vb.height;if(cx>=rect[0]&&cx<=rect[0]+rect[2]&&cy>=rect[1]&&cy<=rect[1]+rect[3])words.push(it.str)});
@@ -1552,7 +1577,7 @@ inkbar.addEventListener('pointerdown',e=>{if(e.target.tagName!=='INPUT'&&e.targe
 function setDraw(on){
   if(drawMode===on)return;drawMode=on;app.classList.toggle('drawing',on);$('#drawBtn').setAttribute('aria-pressed',on);inkbar.hidden=!on;
   if(on){setPen(false);endModes();clearSel();hideBars();hlMenu.hidden=true;if(document.activeElement&&document.activeElement.isContentEditable)document.activeElement.blur();
-    toast(touchDevice&&settings.pencilOnly?'Draw with Apple Pencil on the PDF or the worksheet. Your finger still scrolls. Tap Done to finish.':'Draw on the PDF or the worksheet. Tap Done (or press Esc) to finish.')}
+    toast(touchDevice&&settings.pencilOnly?'Draw with your pen (Apple Pencil or tablet stylus) on the PDF or the worksheet. Your finger still scrolls. If your pen does not draw, untick Pencil only. Tap Done to finish.':'Draw on the PDF or the worksheet. Tap Done (or press Esc) to finish.')}
   else if(stroke){stroke.tmp&&stroke.tmp.remove();stroke=null}
   inkSync();
 }
@@ -1617,8 +1642,10 @@ function finishStroke(e,cancel){
 window.addEventListener('pointerup',e=>finishStroke(e,false));
 window.addEventListener('pointercancel',e=>finishStroke(e,true));
 /* stop Apple Pencil from scrolling or selecting while drawing (a finger still scrolls) */
+/* Android (Lenovo, Samsung) styluses are recognised from the pointer type, Apple Pencil from the touch type */
+let lastPtrType='';document.addEventListener('pointerdown',e=>{lastPtrType=e.pointerType},true);
 document.addEventListener('touchstart',e=>{if(!drawMode)return;const t=e.touches[e.touches.length-1];
-  if(t&&t.touchType==='stylus'&&inkTarget(e))e.preventDefault()},{passive:false});
+  if(t&&(t.touchType==='stylus'||lastPtrType==='pen')&&inkTarget(e))e.preventDefault()},{passive:false});
 document.addEventListener('touchmove',e=>{if(stroke)e.preventDefault()},{passive:false});
 inkSync();
 
@@ -1652,7 +1679,7 @@ async function addPdfs(files){
     if(ws&&ws.case){try{const r=await importCaseFile(bytes,ws,f.name);cases++;loaded+=r.items;if(r.docs.length)last=r.docs[0]}catch(e){console.error(e);toast('Could not open the case file '+f.name)}continue}
     const name=uniqueFile(f.name,taken);
     try{await proj.store.writeFile(proj.name,name,bytes)}catch(e){console.error(e);toast('Could not save '+f.name+' into the matter. Reconnect the folder in Library.');continue}
-    taken.push(name);P.hiddenFiles=(P.hiddenFiles||[]).filter(h=>h!==name);
+    taken.push(name);P.hiddenFiles=(P.hiddenFiles||[]).filter(h=>h!==name);P.deletedFiles=(P.deletedFiles||[]).filter(h=>h!==name);
     const doc={id:uid(),file:name,title:name.replace(/\.pdf$/i,'').replace(/\s*\(annotated\)$/i,'')};P.docs.push(doc);rebindAnchors(doc);last=doc;
     if(ws)loaded+=importEmbeddedSingle(ws,doc);
   }
@@ -1673,7 +1700,7 @@ async function appendToActive(files){
   const doc=docById(active);if(!doc)return;if(!window.PDFLib){toast('The PDF writer did not load. Check the connection and reload.');return}
   const pdfs=files.filter(isPdf);if(!pdfs.length){toast('Only PDF files can be added.');return}
   try{
-    const rt=await ensureRT(doc);const {PDFDocument}=PDFLib;const out=await PDFDocument.load(rt.bytes,{ignoreEncryption:true});const before=out.getPageCount();
+    const rt=await ensureRT(doc);const {PDFDocument}=PDFLib;const out=await PDFDocument.load(new Uint8Array(await proj.store.readFile(proj.name,doc.file)),{ignoreEncryption:true});const before=out.getPageCount();
     for(const f of pdfs){const src=await PDFDocument.load(new Uint8Array(await f.arrayBuffer()),{ignoreEncryption:true});const cp=await out.copyPages(src,src.getPageIndices());cp.forEach(p=>{stripX(out,p);out.addPage(p)})}
     const bytes=await out.save();await proj.store.writeFile(proj.name,doc.file,bytes);
     dropRT(doc.id);for(const v of views)if(v.doc===doc.id){const c=v.cur;v.doc=null;await viewShow(v,doc.id,{page:c,record:false})}touch();
@@ -1686,13 +1713,14 @@ function normAnchor(a){
   if(!a)return null;const o={doc:a.doc!=null?a.doc:a.file,page:Math.max(1,parseInt(a.page,10)||1),color:COLORS[a.color]?a.color:'yellow'};
   if(a.quote)o.quote=String(a.quote).replace(/\s+/g,' ').trim();
   if(Array.isArray(a.rects)&&a.rects.length)o.rects=a.rects;
+  if(a.area)o.area=true;
   if(typeof a.x==='number'&&typeof a.y==='number'){o.x=Math.max(0,Math.min(1,a.x));o.y=Math.max(0,Math.min(1,a.y))}
   if(!o.quote&&!o.rects&&o.x==null){o.x=.05;o.y=.06}
   return o;
 }
 function normItem(raw){
   const type=raw.type==='excerpt'?'excerpt':'text';const it={id:String(raw.id||uid()),type};
-  if(type==='excerpt'){it.comment=String(raw.comment||'');it.anchor=normAnchor(raw.anchor||{doc:raw.doc,page:raw.page,quote:raw.quote||raw.text,color:raw.color,rects:raw.rects})}
+  if(type==='excerpt'){it.comment=String(raw.comment||'');if(typeof raw.img==='string'&&/^data:image\//.test(raw.img)){it.img=raw.img;it.iw=+raw.iw||0;it.ih=+raw.ih||0}it.anchor=normAnchor(raw.anchor||{doc:raw.doc,page:raw.page,quote:raw.quote||raw.text,color:raw.color,rects:raw.rects})}
   else{it.text=String(raw.text||'');it.size=Math.max(10,Math.min(40,parseInt(raw.size,10)||settings.fontSize));if(raw.anchor)it.anchor=normAnchor(raw.anchor)}
   if(typeof raw.x==='number'&&typeof raw.y==='number'){it.x=raw.x;it.y=raw.y}
   if(raw.sheet!=null)it.sheet=String(raw.sheet);
@@ -1748,7 +1776,7 @@ function autoLayout(list,baseY){
 }
 function loadProjectJson(json,name){
   P=blank(name);curSheet='s1';
-  if(json){P.hiddenFiles=Array.isArray(json.hiddenFiles)?json.hiddenFiles:[];importInto(json,true);
+  if(json){P.hiddenFiles=Array.isArray(json.hiddenFiles)?json.hiddenFiles:[];P.deletedFiles=Array.isArray(json.deletedFiles)?json.deletedFiles.map(String):[];importInto(json,true);
     allAnchors().forEach(({a})=>{if(a.missing&&!a.rects)delete a.missing})}
 }
 
@@ -1759,7 +1787,7 @@ async function openProject(store,name){
   try{json=await store.readJson(name)}catch(e){toast('The worksheet file in "'+name+'" is not valid JSON. It was left untouched; fix or replace it.');json=null}
   loadProjectJson(json,name);
   let files=[];try{files=await store.files(name)}catch(e){}
-  const hidden=new Set(P.hiddenFiles||[]);
+  const hidden=new Set([...(P.hiddenFiles||[]),...(P.deletedFiles||[])]);
   let foundNew=false;
   files.filter(f=>!/\(annotated\)\.pdf$/i.test(f)&&!hidden.has(f)&&!P.docs.some(d=>d.file===f)).forEach(f=>{const d={id:uid(),file:f,title:f.replace(/\.pdf$/i,'')};P.docs.push(d);rebindAnchors(d);foundNew=true});
   proj={store,name,mtime:0,blocked:false};
@@ -1775,6 +1803,7 @@ async function openProject(store,name){
   updateNav();
   if((foundNew||!json)&&store.kind!=='memory')touch({hist:false});
   resetHistory();
+  if(store===BrowserStore&&typeof syncOn==='function'&&syncOn())requestSync(name,400);
 }
 async function openUntitled(recover){const s=MemoryStore('untitled');await s.create('Untitled');const got=recover?await recoverUntitled(s):false;
   if(!recover)await forgetUntitled();await openProject(s,'Untitled');
@@ -1912,7 +1941,7 @@ async function buildCompiled(docIds,withNotes){
   const {PDFDocument,degrees}=PDFLib;const out=await PDFDocument.create();const sections=[],pageMap={};let skipped=[];
   for(const id of docIds){
     const doc=docById(id);let rt;try{rt=await ensureRT(doc)}catch(e){skipped.push(doc.title);continue}
-    const src=await PDFDocument.load(rt.bytes,{ignoreEncryption:true});const cp=await out.copyPages(src,src.getPageIndices());const start=out.getPageCount()+1;
+    const src=await PDFDocument.load(new Uint8Array(await proj.store.readFile(proj.name,doc.file)),{ignoreEncryption:true});const cp=await out.copyPages(src,src.getPageIndices());const start=out.getPageCount()+1;
     cp.forEach((p,i)=>{stripX(out,p);const r=getRot(id,i+1);if(r)p.setRotation(degrees((p.getRotation().angle+r)%360));out.addPage(p)});
     pageMap[id]=cp;sections.push({id,title:doc.title,file:doc.file,start,count:cp.length});
   }
@@ -1939,7 +1968,7 @@ async function importCaseFile(bytes,ws,fileName){
   for(const s of secs){
     const idx=[];for(let i=(s.start|0)-1;i<(s.start|0)-1+(s.count|0)&&i<total;i++)if(i>=0)idx.push(i);if(!idx.length)continue;
     const nd=await PDFDocument.create();const cp=await nd.copyPages(src,idx);cp.forEach(p=>{stripX(nd,p);nd.addPage(p)});
-    const name=uniqueFile(s.file||s.title||'Document',taken);taken.push(name);await proj.store.writeFile(proj.name,name,await nd.save());
+    const name=uniqueFile(s.file||s.title||'Document',taken);taken.push(name);P.deletedFiles=(P.deletedFiles||[]).filter(h=>h!==name);await proj.store.writeFile(proj.name,name,await nd.save());
     const doc={id:uid(),file:name,title:s.title||name.replace(/\.pdf$/i,'')};P.docs.push(doc);made.push({src:s,doc});
   }
   const sub=Object.assign({},ws,{docs:made.map(({src,doc})=>({id:String(src.id),file:doc.file,title:doc.title}))});delete sub.case;
@@ -1966,7 +1995,7 @@ $('#xGo').onclick=async()=>{
   const k=xKind(),s=xScope();const btn=$('#xGo');
   if(k!=='backup'&&!window.PDFLib){toast('The PDF writer did not load. Check the connection and reload.');return}
   if((k==='pdf'||k==='both')&&!P.docs.length){toast('This matter has no PDFs yet.');return}
-  btn.disabled=true;btn.textContent='Exporting…';await saveNow();
+  btn.disabled=true;btn.textContent='Exporting…';await saveNow();rtHold++;
   try{
     const nm=safeName($('#xName').value||xDefault());let msg='';
     if(k==='backup'){msg=await deliver('Backups',nm+'.xdesk.json',JSON.stringify(serial(),null,1),'application/json')}
@@ -1979,7 +2008,7 @@ $('#xGo').onclick=async()=>{
       msg=proj.store.kind==='folder'?'Saved '+c+' annotated PDFs in '+P.name+' \u203a Exports':inPreview?'Exporting files works in the downloaded Excerpt Desk file, not in this preview.':'Downloaded '+c+' annotated PDFs'}
     $('#exportPanel').hidden=true;toast(msg);
   }catch(e){console.error(e);toast(e&&e.message==='nodocs'?'None of the PDFs could be opened.':'Export failed. '+(e&&/encrypt/i.test(e.message)?'A PDF is protected.':'Try again, or export one PDF at a time.'))}
-  finally{btn.disabled=false;btn.textContent='Export'}
+  finally{rtHold--;trimRT();btn.disabled=false;btn.textContent='Export'}
 };
 let restoreData=null;
 $('#restoreIn').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
@@ -2072,12 +2101,14 @@ async function refreshLibrary(){
   const list=$('#projList');list.innerHTML='';let names=[];
   try{names=await libStore.list();$('#reconnect').hidden=true}
   catch(e){if(folder){$('#reconnect').hidden=false;$('#stHelp').textContent='Permission to the folder is needed again. Press Reconnect folder.'}}
-  libNames=names;libFiles={};renderLibList();
+  libNames=names;libFiles={};libSync={};
+  if(!folder&&syncOn()){for(const n of names)libSync[n]=await getSt(n)}
+  renderLibList();
   const my=++libTok;
   for(const n of names){try{libFiles[n]=await libStore.files(n)}catch(e){libFiles[n]=[]}if(my!==libTok)return}
   if($('#libQ').value.trim())renderLibList();
 }
-let libNames=[],libFiles={},libTok=0;
+let libNames=[],libFiles={},libTok=0,libSync={};
 const markHit=(s,q)=>{const i=s.toLowerCase().indexOf(q);return i<0?esc(s):esc(s.slice(0,i))+'<mark>'+esc(s.slice(i,i+q.length))+'</mark>'+esc(s.slice(i+q.length))};
 function renderLibList(){
   const list=$('#projList');list.innerHTML='';const q=$('#libQ').value.trim().toLowerCase();
@@ -2085,14 +2116,28 @@ function renderLibList(){
     const fileHits=q?files.filter(f=>f.toLowerCase().includes(q)):[];const nameHit=!q||n.toLowerCase().includes(q);return {n,fileHits,show:nameHit||fileHits.length}}).filter(r=>r.show);
   if(!rows.length){const li=document.createElement('li');li.className='empty';li.textContent=q?'No matter or PDF file name contains "'+q+'".':'No matters yet. Press New matter.';list.append(li);return}
   rows.forEach(({n,fileHits})=>{const li=document.createElement('li');if(proj&&proj.store===libStore&&proj.name===n)li.className='cur';
-    li.innerHTML='<span class="n"></span><button class="btn" data-a="ren">Rename</button><button class="btn primary" data-a="open">Open</button>';li.querySelector('.n').innerHTML=q?markHit(n,q):esc(n);
+    const folderM=libStore===FolderStore,sy=libSync[n];
+    li.innerHTML='<span class="n"></span>'+(folderM&&syncOn()?'<button class="btn" data-a="tosync" title="Copy this matter into this browser\'s storage, which syncs with Google Drive and the iPad">Move to synced storage</button>':'')+'<button class="btn" data-a="ren">Rename</button><button class="btn del" data-a="del" title="Delete this matter (asks twice)">Delete</button><button class="btn primary" data-a="open">Open</button>';li.querySelector('.n').innerHTML=q?markHit(n,q):esc(n);
+    if(!folderM&&syncOn()){const sm=document.createElement('small');sm.className='sy';sm.textContent=!sy||(!sy.ok&&!sy.err)?'☁ not synced yet':sy.err?'☁ ⚠ not synced: '+sy.err:'☁ synced '+new Date(sy.ok).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});if(sy&&sy.err)sm.classList.add('bad');li.append(sm)}
+    const ts=li.querySelector('[data-a=tosync]');if(ts)ts.onclick=()=>moveToSynced(n,ts);
     if(fileHits.length){const ul=document.createElement('ul');ul.className='files';fileHits.slice(0,6).forEach(f=>{const l=document.createElement('li');l.innerHTML='PDF: '+markHit(f,q);ul.append(l)});li.append(ul)}
     li.querySelector('[data-a=open]').onclick=async()=>{$('#libPanel').hidden=true;await openProject(libStore,n);
       if(fileHits.length){const d=P.docs.find(x=>x.file===fileHits[0]);if(d&&V().doc!==d.id)viewShow(V(),d.id)}};
-    li.querySelector('[data-a=ren]').onclick=()=>startRename(li,n);list.append(li)});
+    li.querySelector('[data-a=ren]').onclick=()=>startRename(li,n);li.querySelector('[data-a=del]').onclick=()=>deleteMatter(libStore,n);list.append(li)});
 }
 $('#libQ').addEventListener('input',renderLibList);
 $('#libQ').addEventListener('keydown',e=>{if(e.key==='Enter'){const b=$('#projList [data-a=open]');if(b)b.click()}});
+async function moveToSynced(n,btn){
+  btn.disabled=true;btn.textContent='Copying…';
+  try{let name=n;const have=await BrowserStore.list();if(have.includes(name))name=n+' (from PC)';let k=2;while(have.includes(name))name=n+' (from PC '+(k++)+')';
+    const j=await FolderStore.readJson(n)||blankJson(name);await BrowserStore.create(name);
+    for(const f of await FolderStore.files(n)){const b=await FolderStore.readFile(n,f);await BrowserStore.writeFile(name,f,b)}
+    j.name=name;await BrowserStore.writeJson(name,j);
+    libStore=BrowserStore;try{localStorage.setItem('xdesk:mode','browser')}catch(e){}
+    $('#libPanel').hidden=true;await openProject(BrowserStore,name);requestSync(name,300);
+    toast('"'+name+'" is now in synced storage and is being sent to Google Drive. The PC folder copy is untouched.');}
+  catch(e){console.error(e);toast('Could not copy that matter. Reconnect the folder and try again.');btn.disabled=false;btn.textContent='Move to synced storage'}
+}
 function startRename(li,old){
   li.innerHTML='';const inp=document.createElement('input');inp.type='text';inp.value=old;inp.maxLength=100;inp.setAttribute('aria-label','New name for '+old);
   const ok=document.createElement('button');ok.className='btn primary';ok.textContent='Rename';const no=document.createElement('button');no.className='btn';no.textContent='Cancel';
@@ -2204,6 +2249,63 @@ async function openSample(){
   await openProject(s,'Sample matter');
 }
 
+/* ================= deleting PDFs and matters: always asked twice ================= */
+let dlResolve=null;
+function askDelete(o){
+  return new Promise(res=>{
+    const step=n=>{$('#dlStep').textContent=n===1?'Delete · step 1 of 2':'Delete · step 2 of 2 · final';$('#dlStep').style.color=n===1?'var(--muted)':'var(--danger)';
+      $('#dlTitle').textContent=n===1?o.title:'Are you sure? This cannot be undone.';$('#dlText').innerHTML=n===1?o.text:o.final;
+      $('#dlNo').textContent=n===1?'Cancel':'No, keep it';$('#dlYes').textContent=n===1?'Yes, delete…':'Delete permanently';$('#dlYes').classList.toggle('final',n===2);
+      $('#dlYes').onclick=()=>{if(n===1){step(2);setTimeout(()=>$('#dlNo').focus(),30)}else{finish(true)}}};
+    const finish=v=>{dlResolve=null;$('#delPanel').hidden=true;res(v);if(!v)toast('Nothing was deleted.')};
+    dlResolve=finish;$('#dlNo').onclick=()=>finish(false);step(1);openPanel('delPanel');setTimeout(()=>$('#dlNo').focus(),30);
+  });
+}
+/* closing the dialog any other way (Esc, tapping outside) counts as "No" */
+new MutationObserver(()=>{if($('#delPanel').hidden&&dlResolve)dlResolve(false)}).observe($('#delPanel'),{attributes:true,attributeFilter:['hidden']});
+async function pendingDel(){try{return (await idb.get('kv','sync:pendingDel'))||{matters:[],files:[]}}catch(e){return {matters:[],files:[]}}}
+async function addPendingDel(kind,v){const p=await pendingDel();p[kind].push(v);try{await idb.set('kv','sync:pendingDel',p)}catch(e){}}
+
+async function deletePdf(id){
+  const d=docById(id);if(!d)return;
+  const ex=P.items.filter(i=>i.type==='excerpt'&&i.anchor&&i.anchor.doc===id).length,ln=P.items.filter(i=>i.type==='text'&&i.anchor&&i.anchor.doc===id).length;
+  const hl=P.marks.filter(m=>m.anchor.doc===id).length,dr=(P.ink||[]).filter(k=>k.doc===id).length;
+  const what=[ex?ex+' excerpt'+(ex===1?'':'s')+' or crop'+(ex===1?'':'s'):'',hl?hl+' highlight'+(hl===1?'':'s'):'',dr?dr+' pen stroke'+(dr===1?'':'s'):''].filter(Boolean);
+  const synced=proj.store===BrowserStore&&syncOn();
+  const ok=await askDelete({title:'Delete "'+d.title+'"?',
+    text:'This deletes the PDF <b>'+esc(d.file)+'</b> from <b>'+esc(P.name)+'</b>'+(synced?' on this device, in Google Drive and on your other device':proj.store.kind==='folder'?' and from its folder on this PC':'')+'.'+
+      (what.length?' Its '+esc(what.join(', '))+' will be removed too.':'')+(ln?' '+ln+' note'+(ln===1?'':'s')+' linked to it will stay, without the link.':''),
+    final:'<b>'+esc(d.file)+'</b> will be deleted permanently'+(synced?'. Google Drive keeps it in its Bin for 30 days.':'.')+(synced||proj.store.kind==='folder'?' A copy of the worksheet as it is now is kept in Backups.':'')});
+  if(!ok)return;
+  try{
+    const copy=JSON.stringify(serial(),null,1),nm='Before deleting '+safeName(d.title)+' '+stamp()+'.xdesk.json';
+    if(proj.store.kind==='folder'){try{await FolderStore.writeFile(proj.name,'Backups/'+nm,copy)}catch(e){}}
+    else if(synced&&navigator.onLine){try{await driveCall({op:'write',matter:proj.name,sub:'Backups',name:nm,text:copy},1)}catch(e){}}
+    removeDoc(id,true);(P.deletedFiles=P.deletedFiles||[]).push(d.file);P.hiddenFiles=(P.hiddenFiles||[]).filter(f=>f!==d.file);
+    try{await proj.store.delFile(proj.name,d.file)}catch(e){console.warn(e)}
+    if(synced)await addPendingDel('files',[proj.name,d.file]);
+    await saveNow();resetHistory();if(synced)requestSync(proj.name,500);
+    toast('"'+d.title+'" deleted.');
+  }catch(e){console.error(e);toast('Could not delete that PDF. Try again.')}
+}
+async function deleteMatter(store,name){
+  let info='';try{const j=await store.readJson(name);const f=await store.files(name);info=f.length+' PDF'+(f.length===1?'':'s')+', '+((j&&j.items)||[]).length+' notes and excerpts'+((j&&j.sheets&&j.sheets.length>1)?' on '+j.sheets.length+' sheets':'')}catch(e){}
+  const synced=store===BrowserStore&&syncOn();
+  const ok=await askDelete({title:'Delete the matter "'+name+'"?',
+    text:'This deletes the whole matter <b>'+esc(name)+'</b>'+(info?' ('+esc(info)+')':'')+(synced?' from this device, from Google Drive and from your other device':store===FolderStore?', including its folder on this PC':'')+'.',
+    final:'Everything in <b>'+esc(name)+'</b> will be deleted permanently: its PDFs, worksheet, sheets and notes.'+(synced?' Google Drive keeps the folder in its Bin for 30 days.':'')});
+  if(!ok){openPanel('libPanel');refreshLibrary();return}
+  try{
+    const wasOpen=proj&&proj.store===store&&proj.name===name;
+    await store.delMatter(name);
+    try{localStorage.setItem('xdesk:recent',JSON.stringify(recentNames().filter(r=>!(r.name===name&&r.kind===store.kind))))}catch(e){}
+    if(synced){await addPendingDel('matters',name);requestSync(null,300)}
+    if(wasOpen){saveT=null;clearTimeout(saveT);await openUntitled(true)}
+    toast('Matter "'+name+'" deleted.');
+  }catch(e){console.error(e);toast('Could not delete that matter. '+(store===FolderStore?'Close any files open from its folder and try again.':'Try again.'))}
+  openPanel('libPanel');refreshLibrary();
+}
+
 /* ================= Clear (scrap) the worksheet ================= */
 $('#clearBtn').onclick=e=>{
   if(!P)return;const n=P.items.filter(onSheet).length+(P.ink||[]).filter(k=>k.doc==null&&onSheet(k)).length,m=P.marks.length+(P.ink||[]).filter(k=>k.doc!=null).length;
@@ -2237,68 +2339,206 @@ async function scrapWorksheet(all){
 }
 
 /* ================= Google Drive sync (device storage <-> Drive folder, through the Apps Script web app) ================= */
-let syncCfg=null,syncing=false,syncAgain=false,lastSync=0,syncTimer=null;
+let syncCfg=null,syncing=false,syncAgain=false,lastSync=0,syncTimer=null,srvV=0,syncMsg='',lastFull=0,syncErrs={};
 try{lastSync=+localStorage.getItem('xdesk:lastSync')||0}catch(e){}
 const syncOn=()=>!!(syncCfg&&syncCfg.url&&syncCfg.key);
 async function loadSyncCfg(){try{syncCfg=(await idb.get('kv','sync:cfg'))||null}catch(e){syncCfg=null}updSyncBtn()}
-async function saveSyncCfg(){try{await idb.set('kv','sync:cfg',syncCfg)}catch(e){}updSyncBtn()}
+async function saveSyncCfg(){try{await idb.set('kv','sync:cfg',syncCfg)}catch(e){}srvV=0;updSyncBtn()}
 const hhmm=t=>new Date(t).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-function updSyncBtn(msg){const b=$('#syncBtn');b.hidden=!syncOn();if(b.hidden)return;
-  b.textContent=syncing?'☁ Syncing…':(msg||('☁ '+(lastSync?'Synced '+hhmm(lastSync):'Sync')));
-  b.title=lastSync?'Last synced with Google Drive at '+new Date(lastSync).toLocaleString('en-IN')+'. Click to sync now.':'Sync with Google Drive now';
-  const i=$('#sInfo');if(i)i.textContent=lastSync?'Last synced '+new Date(lastSync).toLocaleString('en-IN'):''}
-function b64FromBuf(buf){const u=new Uint8Array(buf);let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
+function updSyncBtn(msg){const b=$('#syncBtn');b.hidden=!syncOn();if(b.hidden)return;if(msg!=null)syncMsg=msg;
+  const bad=Object.keys(syncErrs).length;
+  b.textContent=syncing&&syncMsg?syncMsg:syncing?'☁ Syncing…':bad?'☁ ⚠ '+bad+' not synced':('☁ '+(lastSync?'Synced '+hhmm(lastSync):'Sync'));
+  b.classList.toggle('warn',!syncing&&!!bad);
+  b.title=(bad?'Not synced: '+Object.entries(syncErrs).map(([n,e])=>n+' ('+e+')').join('; ')+'\n':'')+(lastSync?'Last synced with Google Drive at '+new Date(lastSync).toLocaleString('en-IN')+'. Click to sync now.':'Sync with Google Drive now');
+  const i=$('#sInfo');if(i)i.textContent=lastSync?'Last synced '+new Date(lastSync).toLocaleString('en-IN')+(srvV?' · Google script version '+srvV:''):''}
+function b64FromBuf(buf){const u=buf instanceof Uint8Array?buf:new Uint8Array(buf);let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
 function bufFromB64(b){const s=atob(b);const u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
-async function driveCall(body){
-  const r=await fetch(syncCfg.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({key:syncCfg.key},body)),redirect:'follow'});
-  if(!r.ok)throw new Error('Google answered '+r.status);const j=await r.json();if(j.error)throw new Error(j.error==='key'?'the sync key does not match':j.error);return j;
+async function driveCall(body,tries){
+  tries=tries||3;let last;
+  for(let k=0;k<tries;k++){
+    try{const ac=window.AbortController?new AbortController():null;const tm=ac?setTimeout(()=>ac.abort(),120000):0;
+      let r;try{r=await fetch(syncCfg.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({key:syncCfg.key},body)),redirect:'follow',signal:ac?ac.signal:undefined})}finally{clearTimeout(tm)}
+      if(!r.ok)throw new Error('Google answered '+r.status);const j=await r.json();
+      if(j.error){const e=new Error(j.error==='key'?'the sync key does not match':j.error);e.final=true;throw e}return j}
+    catch(e){last=e;if(e.final)throw e;await new Promise(res=>setTimeout(res,1200*(k+1)))}
+  }
+  throw new Error(last&&last.name==='AbortError'?'Google took too long to answer':'no connection to Google ('+(last&&last.message||'network')+')');
 }
 async function getSt(n){try{return (await idb.get('kv','sync:st:'+n))||{}}catch(e){return {}}}
 async function setSt(n,s){try{await idb.set('kv','sync:st:'+n,s)}catch(e){}}
+async function getBase(n){try{return (await idb.get('kv','sync:base:'+n))||null}catch(e){return null}}
+async function setBase(n,s){try{await idb.set('kv','sync:base:'+n,s)}catch(e){}}
 const isOpenLocal=n=>proj&&proj.store===BrowserStore&&proj.name===n;
-async function pullPdfs(name,R){const have=new Set((await BrowserStore.files(name)).map(x=>x.toLowerCase()));let n=0;
-  for(const f of (R&&R.files)||[]){if(have.has(f.name.toLowerCase()))continue;updSyncBtn('☁ Getting '+f.name.slice(0,24)+'…');const d=await driveCall({op:'readFile',id:f.id});await BrowserStore.writeFile(name,f.name,bufFromB64(d.b64));n++}return n}
-async function pushPdfs(name,R){const remote=new Set(((R&&R.files)||[]).map(f=>f.name.toLowerCase()));let n=0;
-  for(const f of await BrowserStore.files(name)){if(remote.has(f.toLowerCase()))continue;updSyncBtn('☁ Sending '+f.slice(0,24)+'…');const b=await BrowserStore.readFile(name,f);await driveCall({op:'write',matter:name,name:f,b64:b64FromBuf(b),mime:'application/pdf'});n++}return n}
-async function pullWs(name,R){const t=await driveCall({op:'readText',id:R.ws.id});const j=JSON.parse(t.text);await BrowserStore.writeJson(name,j);return j}
-async function pushWs(name,j){const r=await driveCall({op:'write',matter:name,name:WS,text:JSON.stringify(j,null,1)});return r.modified}
-function scheduleSync(ms){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncAll(false),ms)}
-async function syncAll(manual){
+const CH=2621440; /* 2.5 MB pieces */
+
+/* ---- three-way merge: keeps changes made on both devices, item by item ---- */
+const WSKEYS=['docs','items','links','marks','ink','sheets'];
+/* compare content, not the order fields happen to be written in */
+function canon(x){if(Array.isArray(x))return '['+x.map(canon).join(',')+']';if(x&&typeof x==='object')return '{'+Object.keys(x).filter(k=>x[k]!==undefined&&k!=='missing').sort().map(k=>JSON.stringify(k)+':'+canon(x[k])).join(',')+'}';return JSON.stringify(x)}
+function stableWs(j){if(!j)return '';const o={};WSKEYS.forEach(k=>o[k]=(Array.isArray(j[k])?[...j[k]]:[]).sort((a,b)=>String(a&&a.id)<String(b&&b.id)?-1:1));if(Array.isArray(j.sheets))o.sheetOrder=j.sheets.map(x=>x&&x.id);o.hiddenFiles=Array.isArray(j.hiddenFiles)?[...j.hiddenFiles].sort():[];o.deletedFiles=Array.isArray(j.deletedFiles)?[...j.deletedFiles].sort():[];return canon(o)}
+function mergeList(B,L,R,preferR){
+  const key=x=>String(x&&x.id),S=canon;
+  const bm=new Map((B||[]).map(x=>[key(x),S(x)])),lm=new Map((L||[]).map(x=>[key(x),x])),rm=new Map((R||[]).map(x=>[key(x),x]));
+  const order=[...((preferR?R:L)||[]),...((preferR?L:R)||[])].map(key);const seen=new Set(),out=[];
+  for(const id of order){if(seen.has(id))continue;seen.add(id);const l=lm.get(id),r=rm.get(id),b=bm.get(id);let v=null;
+    if(l&&r){const ls=S(l),rs=S(r);v=ls===rs?l:ls===b?r:rs===b?l:(preferR?r:l)}
+    else if(l)v=(b!=null&&S(l)===b)?null:l;   /* removed on the other device, unchanged here: remove */
+    else if(r)v=(b!=null&&S(r)===b)?null:r;
+    if(v)out.push(v)}
+  return out;
+}
+function mergeSet(B,L,R){const b=new Set(B||[]),l=new Set(L||[]),r=new Set(R||[]),out=new Set();[...l,...r].forEach(x=>{const a=l.has(x),c=r.has(x);if((a&&c)||(a&&!b.has(x))||(c&&!b.has(x)))out.add(x)});return [...out]}
+function merge3(B,L,R){
+  B=B||{};const preferR=(Date.parse(R.updated)||0)>(Date.parse(L.updated)||0);
+  const M=Object.assign({},preferR?R:L);WSKEYS.forEach(k=>M[k]=mergeList(B[k],L[k],R[k],preferR));M.hiddenFiles=mergeSet(B.hiddenFiles,L.hiddenFiles,R.hiddenFiles);M.deletedFiles=mergeSet(B.deletedFiles,L.deletedFiles,R.deletedFiles);
+  {const dl=new Set(M.deletedFiles);const gone=new Set(M.docs.filter(d=>dl.has(d.file)).map(d=>d.id));if(gone.size){M.docs=M.docs.filter(d=>!gone.has(d.id));M.items=M.items.filter(i=>!(i.type==='excerpt'&&i.anchor&&gone.has(i.anchor.doc)));M.items.forEach(i=>{if(i.anchor&&gone.has(i.anchor.doc))delete i.anchor});M.marks=M.marks.filter(m=>!(m.anchor&&gone.has(m.anchor.doc)));M.ink=M.ink.filter(k=>!gone.has(k.doc))}}
+  /* the same PDF added on both devices: keep one, point everything at it */
+  const byFile={},remap={};M.docs=M.docs.filter(d=>{const f=String(d.file||'').toLowerCase();if(byFile[f]){remap[d.id]=byFile[f];return false}byFile[f]=d.id;return true});
+  if(Object.keys(remap).length){const fx=a=>{if(a&&remap[a.doc])a.doc=remap[a.doc]};M.items.forEach(i=>fx(i.anchor));M.marks.forEach(m=>fx(m.anchor));M.ink.forEach(k=>{if(remap[k.doc])k.doc=remap[k.doc]})}
+  const ids=new Set(M.items.map(i=>i.id));M.links=M.links.filter(l=>ids.has(l.a)&&ids.has(l.b));
+  if(!M.sheets.length)M.sheets=(L.sheets&&L.sheets.length?L.sheets:R.sheets)||[];
+  M.sheet=L.sheet;return M;
+}
+
+/* ---- PDFs: sizes of the files on this device ---- */
+async function localFiles(name){
+  let meta={};try{meta=(await idb.get('kv','fmeta:'+name))||{}}catch(e){}let changed=false;const out=[];
+  for(const f of await BrowserStore.files(name)){let m=meta[f];if(!m){try{const b=await BrowserStore.readFile(name,f);m=meta[f]={size:b.byteLength};changed=true}catch(e){continue}}out.push({name:f,size:m.size})}
+  if(changed)try{await idb.set('kv','fmeta:'+name,meta)}catch(e){}return out;
+}
+async function pullFile(name,rf){
+  let data;
+  if(srvV>=2){data=new Uint8Array(rf.size);for(let off=0;off<rf.size;off+=CH){updSyncBtn('☁ Getting '+rf.name.slice(0,20)+'… '+Math.round(off/rf.size*100)+'%');
+      const d=await driveCall({op:'readChunk',id:rf.id,start:off,len:Math.min(CH,rf.size-off)});const u=bufFromB64(d.b64);data.set(u.subarray(0,Math.min(u.length,rf.size-off)),off)}}
+  else{if(rf.size>8e6)throw new Error(rf.name+' is large; update the Google script to version 2');updSyncBtn('☁ Getting '+rf.name.slice(0,24)+'…');data=bufFromB64((await driveCall({op:'readFile',id:rf.id})).b64)}
+  await BrowserStore.writeFile(name,rf.name,data);
+}
+async function pushFile(name,f){
+  const buf=await BrowserStore.readFile(name,f),size=buf.byteLength;
+  if(srvV>=2){let r=null;const s=await driveCall({op:'upStart',matter:name,name:f,size,mime:'application/pdf'});
+    for(let off=0;off<size;off+=CH){updSyncBtn('☁ Sending '+f.slice(0,20)+'… '+Math.round(off/size*100)+'%');
+      r=await driveCall({op:'upChunk',matter:name,name:f,session:s.session,start:off,total:size,b64:b64FromBuf(new Uint8Array(buf,off,Math.min(CH,size-off)))},2)}
+    return r}
+  if(size>8e6)throw new Error(f+' is large; update the Google script to version 2');
+  updSyncBtn('☁ Sending '+f.slice(0,24)+'…');return await driveCall({op:'write',matter:name,name:f,b64:b64FromBuf(buf),mime:'application/pdf'});
+}
+async function syncFiles(name,R,st,M){
+  const del=new Set(((M&&M.deletedFiles)||[]).map(f=>String(f).toLowerCase()));
+  let loc=await localFiles(name),rem=(R&&R.files)||[];st.files=st.files||{};
+  /* PDFs deleted on either device: remove them here and in Drive, never fetch them again */
+  for(const l of loc.filter(x=>del.has(x.name.toLowerCase()))){try{await BrowserStore.delFile(name,l.name)}catch(e){}if(isOpenLocal(name)){const d=P.docs.find(x=>x.file===l.name);if(d)dropRT(d.id)}delete st.files[l.name.toLowerCase()]}
+  for(const rf of rem.filter(x=>del.has(x.name.toLowerCase()))){if(srvV>=2){try{const r=await driveCall({op:'trash',matter:name,name:rf.name});if(r.mark)st.mark=r.mark}catch(e){console.warn(e)}}}
+  loc=loc.filter(x=>!del.has(x.name.toLowerCase()));rem=rem.filter(x=>!del.has(x.name.toLowerCase()));
+  const L={},RM={};loc.forEach(x=>L[x.name.toLowerCase()]=x);rem.forEach(x=>RM[x.name.toLowerCase()]=x);
+  let got=[],sent=0;
+  for(const rf of rem){const k=rf.name.toLowerCase(),s=st.files[k],l=L[k];
+    const need=!l||(s&&rf.modified!==s.rmod&&l.size===s.lsize);
+    if(need){await pullFile(name,rf);st.files[k]={lsize:rf.size,rmod:rf.modified};await setSt(name,st);got.push(rf.name)}
+    else if(!s&&l&&l.size===rf.size)st.files[k]={lsize:l.size,rmod:rf.modified}}
+  for(const l of loc){const k=l.name.toLowerCase(),s=st.files[k],rf=RM[k];
+    const need=!rf||(s&&l.size!==s.lsize&&(!rf||rf.modified===s.rmod))||(!s&&rf&&l.size!==rf.size);
+    if(need){const r=await pushFile(name,l.name);st.files[k]={lsize:l.size,rmod:r&&r.modified};if(r&&r.mark)st.mark=r.mark;await setSt(name,st);sent++}}
+  return {got,sent};
+}
+
+/* ---- one matter ---- */
+let editSeq=0;
+function busyHere(){const ae=document.activeElement;return !!((ae&&ae.isContentEditable)||stroke||drag||linking||pen||crop||hold||(ae&&ae.tagName==='INPUT'&&ae.closest&&ae.closest('.stab')))}
+function applyRemote(M){
+  const cs=curSheet,sc=[deskPane.scrollLeft,deskPane.scrollTop];
+  loadProjectJson(M,proj.name);if(P.sheets.some(s=>s.id===cs))curSheet=cs;ensureSheets();
+  views.forEach(v=>{if(v.doc&&!docById(v.doc)){v.doc=null;v.pages=[]}});
+  views.forEach(v=>{if(!v.doc){if(P.docs[0])viewShow(v,P.docs[0].id,{record:false});else emptyDocMsg(v)}else relayoutIfNeeded(v)});
+  active=V()?V().doc:null;renderTabs();renderItems();drawMarks();updateNav();deskPane.scrollTo(sc[0],sc[1]);
+  lastSnap=snap();setStatus(savedLabel());
+}
+async function syncMatter(name,R,quiet,goneRemote){
+  const st=await getSt(name),baseS=await getBase(name),base=baseS?JSON.parse(baseS):null,open=isOpenLocal(name);
+  if(!R&&goneRemote&&base){
+    /* deleted on the other device. If nothing changed here since the last sync, delete it here too; otherwise keep your newer work and send it back */
+    let L=null;try{L=open?serial():await BrowserStore.readJson(name)}catch(e){}
+    if(!L||stableWs(L)===stableWs(base)){await BrowserStore.delMatter(name);if(open){saveT=null;await openUntitled(true)}toast('"'+name+'" was deleted on your other device, so it was deleted here too.');return {pulled:true}}
+  }
+  if(open&&saveT)await saveNow(true);
+  const seq=editSeq;let L=null;try{L=open?serial():await BrowserStore.readJson(name)}catch(e){}
+  const rws=R&&R.ws;let J=null;
+  if(rws&&(!base||rws.modified!==st.wsModified)){const t=await driveCall({op:'readText',id:rws.id});J=JSON.parse(t.text)}
+  let M=null,res={pulled:false,pushed:false};
+  if(L&&J)M=merge3(base,L,J);else if(J)M=J;else if(L)M=L;
+  if(M){
+    const Ms=stableWs(M),remoteS=J?stableWs(J):(rws&&base?stableWs(base):null),needLocal=!L||stableWs(L)!==Ms;
+    if(needLocal&&open&&busyHere()){requestSync(name,2500);return res}
+    let wsMod=rws?rws.modified:0,mark=R?R.mark:st.mark;
+    if(remoteS!==Ms){M.updated=new Date().toISOString();M.name=name;
+      const w=await driveCall({op:'write',matter:name,name:WS,text:JSON.stringify(M),ifMark:srvV>=2?((R&&R.mark)||''):undefined});
+      if(w.conflict){requestSync(name,300);return res}wsMod=w.modified;mark=w.mark||mark;res.pushed=true}
+    if(needLocal){
+      if(open&&(editSeq!==seq||busyHere())){requestSync(name,1500);return res} /* you typed meanwhile: merge again in a moment */
+      await BrowserStore.writeJson(name,M);if(open){applyRemote(M);res.applied=true}res.pulled=true}
+    await setBase(name,JSON.stringify(M));st.wsModified=wsMod;st.mark=mark;await setSt(name,st);
+  }
+  const f=await syncFiles(name,R,st,M||L);
+  if(f.got.length){res.pulled=true;if(isOpenLocal(name)){
+    if(!(P.docs||[]).length||f.got.some(g=>!P.docs.some(d=>d.file===g))){const j=await BrowserStore.readJson(name);if(j){const add=f.got.filter(g=>!(j.docs||[]).some(d=>d.file===g)&&!(j.hiddenFiles||[]).includes(g));
+      if(add.length&&!busyHere()){add.forEach(g=>P.docs.push({id:uid(),file:g,title:g.replace(/\.pdf$/i,'')}));touch({hist:false});renderTabs()}}}
+    f.got.forEach(g=>{const d=P.docs.find(x=>x.file===g);if(d){dropRT(d.id);views.forEach(v=>{if(v.doc===d.id||!v.doc){v.doc=null;viewShow(v,d.id,{record:false})}})}})}}
+  if(f.sent)res.pushed=true;
+  st.ok=Date.now();delete st.err;await setSt(name,st);delete syncErrs[name];
+  return res;
+}
+
+/* ---- scheduling: your changes go up about 2 seconds after you stop; the other device checks every 10 seconds ---- */
+const pendingNames=new Set();let pendingFull=false;
+function requestSync(name,ms){if(!syncOn())return;if(name)pendingNames.add(name);else pendingFull=true;clearTimeout(syncTimer);syncTimer=setTimeout(()=>runSync(false),ms||0)}
+function scheduleSync(ms){requestSync(null,ms)}
+async function detectServer(){if(srvV)return srvV;try{const r=await driveCall({op:'ping'});srvV=r.v||1}catch(e){if(/key/.test(e.message))throw e;throw e}return srvV}
+async function runSync(manual){
   if(!syncOn())return;if(syncing){syncAgain=true;return}
   if(!navigator.onLine){updSyncBtn('☁ Offline');if(manual)toast('No internet connection. Your work is safe on this device and will sync when you are back online.');return}
-  syncing=true;updSyncBtn();let reopen=false,errs=0,pulled=0,pushed=0;const conflicts=[];
+  if(proj&&proj.store===BrowserStore&&isOpenLocal(proj.name)&&busyHere()&&!manual&&!pendingFull){syncTimer=setTimeout(()=>runSync(false),2500);return}
+  syncing=true;updSyncBtn('');let pulled=0,pushed=0,errs=0,full=manual||pendingFull||srvV<2;
   try{
-    if(proj&&proj.store===BrowserStore&&saveT){clearTimeout(saveT);saveT=null;await proj.store.writeJson(proj.name,serial());setStatus(savedLabel())}
-    const rem=(await driveCall({op:'list'})).matters||[];const RM={};rem.forEach(m=>RM[m.name]=m);
-    const locals=await BrowserStore.list();const names=new Set([...locals,...rem.map(m=>m.name)]);
-    for(const name of names){try{
-      const st=await getSt(name),R=RM[name],L=locals.includes(name)?await BrowserStore.readJson(name):null,lu=L?(L.updated||''):null;
-      if(R&&R.ws&&!L){const j=await pullWs(name,R);await pullPdfs(name,R);await setSt(name,{wsModified:R.ws.modified,localUpdated:j.updated||''});pulled++;continue}
-      if(L&&(!R||!R.ws)){await pushPdfs(name,R);const m=await pushWs(name,L);await setSt(name,{wsModified:m,localUpdated:lu});pushed++;continue}
-      if(!L||!R)continue;
-      const rChanged=R.ws.modified!==st.wsModified,lChanged=lu!==st.localUpdated;
-      if(rChanged&&lChanged){
-        /* changed on both devices since the last sync: the newer one wins, the other is kept in the matter's Backups folder */
-        if(R.ws.modified>(Date.parse(lu)||0)){await driveCall({op:'write',matter:name,sub:'Backups',name:'iPad copy '+stamp()+'.xdesk.json',text:JSON.stringify(L,null,1)});
-          const j=await pullWs(name,R);await pullPdfs(name,R);await setSt(name,{wsModified:R.ws.modified,localUpdated:j.updated||''});if(isOpenLocal(name))reopen=true;pulled++}
-        else{const t=await driveCall({op:'readText',id:R.ws.id});await driveCall({op:'write',matter:name,sub:'Backups',name:'Laptop copy '+stamp()+'.xdesk.json',text:t.text});
-          await pushPdfs(name,R);const m=await pushWs(name,L);await setSt(name,{wsModified:m,localUpdated:lu});pushed++}
-        conflicts.push(name);
-      }else if(rChanged){const j=await pullWs(name,R);await pullPdfs(name,R);await setSt(name,{wsModified:R.ws.modified,localUpdated:j.updated||''});if(isOpenLocal(name))reopen=true;pulled++}
-      else if(lChanged){await pushPdfs(name,R);const m=await pushWs(name,L);await setSt(name,{wsModified:m,localUpdated:lu});pushed++}
-      else{const a=await pullPdfs(name,R),b=await pushPdfs(name,R);if(a&&isOpenLocal(name))reopen=true;if(a)pulled++;if(b)pushed++}
-    }catch(e){console.warn('sync',name,e);errs++}}
+    await detectServer();full=full||srvV<2;
+    const pd=await pendingDel();
+    if(srvV>=2&&(pd.matters.length||pd.files.length)){
+      for(const m of [...pd.matters]){try{await driveCall({op:'trashMatter',matter:m});pd.matters=pd.matters.filter(x=>x!==m)}catch(e){console.warn(e)}}
+      for(const f of [...pd.files]){try{await driveCall({op:'trash',matter:f[0],name:f[1]});pd.files=pd.files.filter(x=>x!==f)}catch(e){console.warn(e)}}
+      try{await idb.set('kv','sync:pendingDel',pd)}catch(e){}}
+    else if(pd.matters.length&&manual)toast('To delete matters from Google Drive too, update the Google script to version 2.');
+    let todo,goneRemote=new Set();
+    if(full){pendingFull=false;pendingNames.clear();const lr=await driveCall({op:'list'});goneRemote=new Set(lr.deleted||[]);const rem=lr.matters||[];const RM={};rem.forEach(m=>RM[m.name]=m);
+      const locals=await BrowserStore.list();todo=[...new Set([...(proj&&proj.store===BrowserStore?[proj.name]:[]),...locals,...rem.map(m=>m.name)])].map(n=>[n,RM[n]]);lastFull=Date.now()}
+    else{const names=[...pendingNames];pendingNames.clear();todo=[];for(const n of names){const lr=await driveCall({op:'list',matter:n});(lr.deleted||[]).forEach(x=>goneRemote.add(x));const r=lr.matters||[];todo.push([n,r[0]||null])}}
+    for(const [name,R] of todo){
+      if(pd.matters.includes(name))continue;
+      if(!R&&!(await BrowserStore.list()).includes(name))continue;
+      try{const r=await syncMatter(name,R,false,goneRemote.has(name));if(r.pulled)pulled++;if(r.pushed)pushed++;if(r.applied)toast('Updated from your other device')}
+      catch(e){console.warn('sync',name,e);errs++;syncErrs[name]=e.message||'error';const st=await getSt(name);st.err=e.message;await setSt(name,st)}}
     lastSync=Date.now();try{localStorage.setItem('xdesk:lastSync',lastSync)}catch(e){}
-    if(reopen){const n=views.length;await openProject(BrowserStore,proj.name);if(n>1)await setViews(n);toast('Updated from Google Drive')}
-    if(conflicts.length)toast('"'+conflicts.join('", "')+'" was edited on both devices. The newer version is kept; the other is saved in that matter\'s Backups folder.');
-    else if(errs)toast(errs+' matter'+(errs===1?'':'s')+' could not sync. Press ☁ to try again.');
-    else if(manual)toast('Synced with Google Drive'+(pulled||pushed?' ('+(pulled?pulled+' received':'')+(pulled&&pushed?', ':'')+(pushed?pushed+' sent':'')+')':': everything was up to date'));
+    if(errs&&(manual||full))toast(errs+' matter'+(errs===1?'':'s')+' could not sync fully: '+Object.entries(syncErrs).map(([n,e])=>'"'+n+'" ('+e+')').join('; ')+'. Your work is safe on this device; it will try again.');
+    else if(manual)toast('Synced with Google Drive'+(pulled||pushed?' ('+(pulled?pulled+' received':'')+(pulled&&pushed?', ':'')+(pushed?pushed+' sent':'')+')':': everything is up to date'));
+    if(manual&&srvV<2)toast('Tip: update the Google script to version 2 for faster sync and large PDFs (see the setup guide).');
     if($('#libPanel')&&!$('#libPanel').hidden)refreshLibrary();
-    if(untitled()&&P&&!P.docs.length)showWelcome();
-  }catch(e){console.warn(e);updSyncBtn('☁ Not synced');if(manual)toast('Could not sync: '+e.message+'.');syncing=false;return}
-  finally{if(syncing){syncing=false;updSyncBtn()}if(syncAgain){syncAgain=false;scheduleSync(1500)}}
+    if(untitled()&&P&&!P.docs.length&&!P.items.length)showWelcome();
+  }catch(e){console.warn(e);updSyncBtn('☁ Not synced');if(manual)toast('Could not sync: '+e.message+'.');syncing=false;syncMsg='';if(!/key/.test(e.message))requestSync(null,30000);return}
+  finally{if(syncing){syncing=false;syncMsg='';updSyncBtn()}if(syncAgain||pendingNames.size||pendingFull){syncAgain=false;clearTimeout(syncTimer);syncTimer=setTimeout(()=>runSync(false),800)}}
 }
+async function syncAll(manual){if(manual)pendingFull=true;return runSync(manual)}
+/* quick check: has the other device changed anything? */
+let pollBusy=false;
+async function pollChanges(){
+  if(!syncOn()||syncing||pollBusy||!navigator.onLine||document.visibilityState!=='visible')return;
+  if(Date.now()-lastFull>300000){requestSync(null,0);return}
+  if(srvV<2){if(Date.now()-lastSync>60000)requestSync(null,0);return}
+  pollBusy=true;try{const s=await driveCall({op:'state'},1);const marks=s.marks||{};const changed=[];
+    for(const [n,m] of Object.entries(marks)){const st=await getSt(n);if(st.mark!==m)changed.push(n)}
+    for(const n of (s.deleted||[])){if((await BrowserStore.list()).includes(n))changed.push(n)}
+    changed.forEach(n=>pendingNames.add(n));if(changed.length)requestSync(changed[0],0)}
+  catch(e){}finally{pollBusy=false}
+}
+setInterval(pollChanges,10000);
 $('#syncBtn').onclick=()=>syncAll(true);
+
 $('#sUrl').addEventListener('change',e=>{syncCfg=Object.assign({},syncCfg,{url:e.target.value.trim()});saveSyncCfg()});
 $('#sKey').addEventListener('change',e=>{syncCfg=Object.assign({},syncCfg,{key:e.target.value.trim()});saveSyncCfg()});
 $('#sTest').onclick=async()=>{syncCfg=Object.assign({},syncCfg,{url:$('#sUrl').value.trim(),key:$('#sKey').value.trim()});await saveSyncCfg();
@@ -2307,10 +2547,9 @@ $('#sTest').onclick=async()=>{syncCfg=Object.assign({},syncCfg,{url:$('#sUrl').v
 $('#sSync').onclick=async()=>{syncCfg=Object.assign({},syncCfg,{url:$('#sUrl').value.trim(),key:$('#sKey').value.trim()});await saveSyncCfg();
   if(!syncOn()){toast('Paste both the sync address and the key first.');return}$('#setPanel').hidden=true;syncAll(true)};
 window.addEventListener('online',()=>scheduleSync(1500));
-setInterval(()=>{if(syncOn()&&document.visibilityState==='visible')syncAll(false)},180000);
 document.addEventListener('visibilitychange',async()=>{
   if(document.visibilityState!=='visible')return;
-  if(syncOn())scheduleSync(800);
+  if(syncOn())setTimeout(pollChanges,600);
   /* laptop: if the open matter's worksheet was changed by the other device and nothing is waiting to be saved here, reload it */
   if(proj&&proj.store.kind==='folder'&&!saveT&&!proj.blocked){try{const m=await FolderStore.mtime(proj.name);if(proj.mtime&&m>proj.mtime+1500){const n=views.length;await openProject(FolderStore,proj.name);if(n>1)await setViews(n);toast('Updated with changes from your other device')}}catch(e){}}
 });
