@@ -205,6 +205,15 @@ button,label.btn,input,select,textarea{font:inherit;color:inherit}
 .libsearch input{flex:1}
 .plist li .del{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 45%,var(--line))}
 #dlYes.final{background:var(--danger);border-color:var(--danger);color:#fff}
+.olist{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.olist li{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;border-top:1px solid var(--line);background:var(--surface)}
+.olist li:first-child{border-top:0}
+.olist li .on{color:var(--muted);font-variant-numeric:tabular-nums;min-width:1.6em}
+.olist li .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.olist li .pg{color:var(--muted);font-size:12px;white-space:nowrap}
+.olist li .btn.sq{width:36px;height:34px;font-size:16px}
+.olist li input{width:18px;height:18px}
+#cmbName{flex:none;height:36px}
 .plist li small.sy{flex-basis:100%;color:var(--muted);font-size:12px}
 .plist li small.sy.bad{color:var(--danger)}
 .btn.warn#syncBtn,#syncBtn.warn{border-color:var(--danger);color:var(--danger)}
@@ -488,6 +497,7 @@ details.drive ol b{color:var(--ink)}
     <label class="xopt"><input type="radio" name="xk" value="both"><div><b>PDF and notes together (case file)</b><span>Notes of argument at the front, each page reference a clickable link; then all PDFs with highlights, comments and bookmarks. Opens again in Excerpt Desk as a ready matter.</span></div></label>
     <label class="xopt"><input type="radio" name="xk" value="backup"><div><b>Backup of notes</b><span>Notes, highlights and links only, as a small .xdesk.json file. Restore it any time below.</span></div></label>
   </div>
+  <div id="xOrder" hidden><h3 style="margin-bottom:6px">Order of the PDFs</h3><ol class="olist" id="xOrderList"></ol></div>
   <div class="row"><input type="text" id="xName" aria-label="File name" maxlength="140"><span style="color:var(--muted)" id="xExt">.pdf</span></div>
   <p id="xWhere"></p>
   <div class="row end"><button class="btn" data-close>Close</button><button class="btn primary" id="xGo">Export</button></div>
@@ -497,6 +507,15 @@ details.drive ol b{color:var(--ink)}
     <label class="btn" for="restoreIn">Restore from backup…</label><input class="sr" type="file" id="restoreIn" accept=".json,application/json">
     <button class="btn warn" id="restoreGo" hidden>Replace this worksheet with the backup</button>
   </div>
+</div></div>
+
+<div class="panel" id="combinePanel" hidden><div class="pc" role="dialog" aria-labelledby="cmbTitle" style="width:min(600px,100%)">
+  <h2 id="cmbTitle">Combine PDFs into one</h2>
+  <p>Tick the PDFs to combine and set their order with <b>↑</b> and <b>↓</b>. Your notes, highlights, crops and drawings move to the right pages of the combined PDF, and each part gets a bookmark.</p>
+  <ol class="olist" id="cmbList"></ol>
+  <div class="field"><label for="cmbName">Name of the combined PDF</label><input type="text" id="cmbName" maxlength="100"></div>
+  <label class="chk"><input type="checkbox" id="cmbDel"> Delete the separate PDFs afterwards (you will be asked twice). If not ticked, they are only closed and kept.</label>
+  <div class="row end"><button class="btn" data-close>Cancel</button><button class="btn primary" id="cmbGo">Combine</button></div>
 </div></div>
 
 <!-- Library -->
@@ -541,6 +560,9 @@ details.drive ol b{color:var(--ink)}
   <div class="field"><label for="sFont">Note typeface</label><select id="sFont"><option value="serif">Serif (reading)</option><option value="sans">Sans (plain)</option></select></div>
   <div class="field"><label for="sWidth">Longest line of a note before it wraps</label><div class="row"><input type="number" id="sWidth" min="200" max="900" step="20" style="width:90px"><span style="color:var(--muted)">px</span></div></div>
   <div class="field"><label for="sColor">Default highlight colour</label><select id="sColor"></select></div>
+  <h3>Problem report</h3>
+  <p id="prInfo">If the app misbehaves or reloads by itself, press <b>Copy problem report</b> and paste it to Claude. It lists recent actions and device details, not the contents of your matters.</p>
+  <div class="row"><button class="btn" id="prCopy">Copy problem report</button><button class="btn" id="prClear">Clear the record</button></div>
   <h3>Google Drive sync</h3>
   <p>For the iPad, or any device that keeps matters on the device itself: matters are stored here and synced with the <b>Excerpt Desk</b> folder in your Google Drive, the same folder your laptop uses. Paste the two values from your Apps Script setup.</p>
   <div class="field"><label for="sUrl">Sync address (Apps Script web app URL)</label><input type="url" id="sUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
@@ -564,7 +586,7 @@ details.drive ol b{color:var(--ink)}
 </div></div>
 
 <div class="panel" id="copyPanel" hidden><div class="pc">
-  <h2>Your notes</h2>
+  <h2 id="copyTitle">Your notes</h2>
   <p>This window did not allow automatic copying. The text below is selected: press Ctrl+C (or right-click and Copy).</p>
   <textarea id="copyText" readonly style="min-height:50vh"></textarea>
   <div class="row end"><button class="btn" data-close>Close</button></div>
@@ -783,7 +805,7 @@ async function ensureRT(doc){
 }
 /* keep only a few PDFs open in memory; others are reopened when you go back to them */
 let rtHold=0;
-function trimRT(){if(rtHold)return;const keep=new Set(views.map(v=>v.doc));const max=LOWMEM?3:6;const ids=Object.keys(RT).filter(id=>!keep.has(id)).sort((a,b)=>RT[a].used-RT[b].used);
+function trimRT(){if(rtHold)return;const keep=new Set(views.map(v=>v.doc));const max=LOWMEM?2:6;const ids=Object.keys(RT).filter(id=>!keep.has(id)).sort((a,b)=>RT[a].used-RT[b].used);
   while(Object.keys(RT).length>max&&ids.length)dropRT(ids.shift())}
 function dropRT(id){const rt=RT[id];if(rt){try{rt.pdf.destroy()}catch(e){}delete RT[id]}views.forEach(v=>{const c=v.cache[id];if(c)c.pages.forEach(unrenderPage);delete v.cache[id]})}
 
@@ -806,7 +828,7 @@ function updateViewBtns(){
   const d=$('#dirBtn');d.hidden=views.length<2;d.textContent=settings.viewDir==='stack'?'⇅':'⇆';d.title=settings.viewDir==='stack'?'Stacked: switch to side by side':'Side by side: switch to stacked';
 }
 async function setViews(n){
-  n=Math.max(1,Math.min(3,n));
+  n=Math.max(1,Math.min(3,n));if(typeof crumb==='function')crumb('views: '+n);
   while(views.length>n){const v=views.pop();if(v.io)v.io.disconnect();if(v.io2)v.io2.disconnect();v.pages.forEach(unrenderPage);v.el.remove()}
   const adding=[];
   while(views.length<n){const v=makeView();views.push(v);docArea.append(v.el);adding.push(v)}
@@ -833,12 +855,21 @@ function makePage(n,docId,pd){const el=document.createElement('div');el.classNam
 function layoutStamp(v){return fitW(v)+'|'+v.zoom+'|'+rotSig(v.doc)}
 function observeView(v){
   if(v.io)v.io.disconnect();if(v.io2)v.io2.disconnect();
-  v.io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){const pg=v.pages[+en.target.dataset.page-1];if(pg&&pg.el===en.target)renderPage(pg)}}),{root:v.scroller,rootMargin:LOWMEM?'500px 0px':'900px 0px'});
+  v.io=new IntersectionObserver(es=>es.forEach(en=>{const pg=v.pages[+en.target.dataset.page-1];if(!pg||pg.el!==en.target)return;pg.want=en.isIntersecting;if(pg.want)queueRender(pg)}),{root:v.scroller,rootMargin:LOWMEM?'250px 0px':'900px 0px'});
   /* pages far away are released, so long PDFs do not use up the iPad's memory */
-  v.io2=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting){const pg=v.pages[+en.target.dataset.page-1];if(pg&&pg.el===en.target)unrenderPage(pg)}}),{root:v.scroller,rootMargin:LOWMEM?'1400px 0px':'3000px 0px'});
+  v.io2=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting){const pg=v.pages[+en.target.dataset.page-1];if(pg&&pg.el===en.target)unrenderPage(pg)}}),{root:v.scroller,rootMargin:LOWMEM?'700px 0px':'3000px 0px'});
   v.pages.forEach(pg=>{v.io.observe(pg.el);v.io2.observe(pg.el)});
 }
-function unrenderPage(pg){if(!pg.rendered)return;pg.tok++;pg.rendered=false;pg.content.querySelectorAll('canvas').forEach(c=>{c.width=0;c.height=0});pg.content.innerHTML=''}
+function unrenderPage(pg){if(!pg.rendered)return;pg.tok++;pg.rendered=false;pg.want=false;pg.content.querySelectorAll('canvas').forEach(c=>{c.width=0;c.height=0});pg.content.innerHTML='';
+  /* also let the PDF reader drop what it decoded for this page (scanned pages hold big pictures) */
+  try{if(pg.pdfPage&&pg.pdfPage.cleanup)pg.pdfPage.cleanup()}catch(e){}}
+/* draw pages one at a time on the iPad (three at a time on the laptop), skipping pages you have already scrolled past */
+const rq=[];let rqBusy=0;
+function queueRender(pg){if(pg.rendered||rq.includes(pg))return;rq.push(pg);pumpRender()}
+async function pumpRender(){
+  while(rq.length&&rqBusy<(LOWMEM?1:3)){const pg=rq.shift();if(!pg.want||pg.rendered||!pg.el.isConnected)continue;rqBusy++;
+    renderPage(pg).catch(()=>{}).finally(()=>{rqBusy--;pumpRender()})}
+}
 function layoutView(v){
   if(!v.doc||!v.pages.length)return;const fit=fitW(v);
   v.pages.forEach(pg=>{pg.rot=getRot(v.doc,pg.n);pg.disp=pg.pdfPage.getViewport({scale:1,rotation:(pg.pdfPage.rotate+pg.rot)%360});
@@ -851,7 +882,7 @@ async function renderPage(pg){
   if(pg.rendered||!pg.scale)return;pg.rendered=true;const tok=pg.tok;
   const vp=pg.pdfPage.getViewport({scale:pg.scale,rotation:(pg.pdfPage.rotate+pg.rot)%360});
   /* keep each page picture within what the iPad allows (about 16 million pixels), or it would come out blank */
-  const dpr=Math.max(.5,Math.min(window.devicePixelRatio||1,2,Math.sqrt((LOWMEM?4e6:12e6)/Math.max(1,vp.width*vp.height))));
+  const dpr=Math.max(.5,Math.min(window.devicePixelRatio||1,2,Math.sqrt((LOWMEM?3e6:12e6)/Math.max(1,vp.width*vp.height))));
   const canvas=document.createElement('canvas');canvas.width=Math.floor(vp.width*dpr);canvas.height=Math.floor(vp.height*dpr);
   canvas.style.width=Math.round(vp.width)+'px';canvas.style.height=Math.round(vp.height)+'px';
   const tl=document.createElement('div');tl.className='textLayer';tl.style.setProperty('--scale-factor',vp.scale);
@@ -882,13 +913,13 @@ async function viewShow(v,docId,o={}){
   v.pages=c.pages;v.pagesEl.replaceChildren(...v.pages.map(p=>p.el));
   if(c.stamp!==layoutStamp(v))layoutView(v);else{observeView(v);drawMarksView(v)}
   if(o.page)goPageView(v,o.page,{record:false});else{v.scroller.scrollTop=c.scroll||0;updateCur(v)}
-  setHead(v);if(v===V())updateNav();
+  setHead(v);if(v===V())updateNav();crumb('showing a PDF · '+v.pages.length+' pages · view '+(views.indexOf(v)+1)+' of '+views.length);noteResume();
   await resolveAnchors(rt);
 }
 function updateCur(v){
   if(!v.pages.length)return;const top=v.scroller.scrollTop+Math.min(120,v.scroller.clientHeight*.3);let n=1;
   for(const pg of v.pages){if(pg.el.offsetTop<=top)n=pg.n;else break}
-  v.cur=n;setHead(v);if(v===V())updateNav();
+  if(v.cur!==n){v.cur=n;noteResume();if(n%10===0)crumb('reading page '+n)}setHead(v);if(v===V())updateNav();
 }
 function updateNav(){
   const v=V();if(!v)return;const n=v.pages.length;
@@ -1119,7 +1150,7 @@ window.addEventListener('pointerup',async()=>{
   endCrop();
   try{await makeCrop(c.pageEl,dr)}catch(err){console.error(err);toast('Could not copy that area. Try again.')}
 });
-async function makeCrop(pageEl,dr){
+async function makeCrop(pageEl,dr){crumb('crop');
   const doc=pageEl.dataset.doc,n=+pageEl.dataset.page,rot=getRot(doc,n),rect=rotRect(inv(rot),dr);
   const rt=RT[doc];const pd=rt.pageData[n-1];const rotation=(pd.pdfPage.rotate+rot)%360;
   const vp1=pd.pdfPage.getViewport({scale:1,rotation});const vp=pd.pdfPage.getViewport({scale:Math.min(2.6,1500/vp1.width),rotation});
@@ -1311,7 +1342,7 @@ function switchSheet(id){
   if(!P||id===curSheet||!P.sheets.some(x=>x.id===id))return;
   const ae=document.activeElement;if(ae&&ae.isContentEditable)ae.blur();
   sheetScroll[curSheet]=[deskPane.scrollLeft,deskPane.scrollTop];curSheet=id;hideBars();if(pendingAnchor)endModes();
-  renderItems();renderSheets();rememberOpen();const sc=sheetScroll[id]||[0,0];deskPane.scrollTo(sc[0],sc[1]);
+  renderItems();renderSheets();rememberOpen();noteResume();const sc=sheetScroll[id]||[0,0];deskPane.scrollTo(sc[0],sc[1]);
   clearTimeout(saveT);if(!scratch())saveT=setTimeout(saveNow,1500);
 }
 function addSheet(){
@@ -1373,11 +1404,50 @@ desk.addEventListener('dblclick',e=>{if(e.target!==desk||!P||drawMode||suppressC
 function tapHint(mouse){clearTimeout(tapHintT);tapHintT=setTimeout(()=>{if(Date.now()-tapHintAt<25000)return;tapHintAt=Date.now();
   toast(mouse?'Double-click on the worksheet to type there.':'Press and hold on the worksheet to type there. A quick tap is ignored.')},380)}
 
+/* ================= problem recorder: a short diary of recent actions, kept on this device only ================= */
+const APPV='2026-10-18';
+let crumbs=[];try{crumbs=JSON.parse(localStorage.getItem('xdesk:log')||'[]')}catch(e){crumbs=[]}
+function crumb(m){try{crumbs.push([Date.now(),String(m).slice(0,160)]);if(crumbs.length>90)crumbs=crumbs.slice(-90);localStorage.setItem('xdesk:log',JSON.stringify(crumbs))}catch(e){}}
+const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
+/* was the last session cut off by the iPad (reload) rather than closed by you? */
+const prevAlive=+ls('xdesk:alive')||0,prevClean=ls('xdesk:clean');
+const unexpectedReload=prevClean==='0'&&Date.now()-prevAlive<120000;
+if(unexpectedReload){crumb('UNEXPECTED RELOAD (the device closed the page)');ls('xdesk:reloads',String((+ls('xdesk:reloads')||0)+1))}
+crumb('app started · '+(LOWMEM?'touch device':'laptop')+' · '+innerWidth+'×'+innerHeight);
+ls('xdesk:clean','0');ls('xdesk:alive',String(Date.now()));
+setInterval(()=>{if(document.visibilityState==='visible')ls('xdesk:alive',String(Date.now()))},4000);
+/* remember exactly where you are, so a reload brings you back to it */
+let resumeT=null;
+function noteResume(){clearTimeout(resumeT);resumeT=setTimeout(()=>{if(!proj||proj.store.kind==='memory')return;const v=V();
+  ls('xdesk:resume',JSON.stringify({kind:proj.store.kind,name:proj.name,doc:v&&v.doc,page:v&&v.cur,sheet:curSheet,ts:Date.now()}))},800)}
+/* when the app goes into the background, free the pictures of pages you are not looking at, so iPadOS is less likely to close it */
+function freeForBackground(){let n=0;views.forEach(v=>v.pages.forEach(pg=>{if(pg.rendered&&Math.abs(pg.n-v.cur)>1){unrenderPage(pg);n++}}));if(n)crumb('background: freed '+n+' page pictures')}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){ls('xdesk:clean','1');if(LOWMEM)freeForBackground()}
+  else{ls('xdesk:clean','0');ls('xdesk:alive',String(Date.now()));if(LOWMEM)views.forEach(v=>{if(v.pages.length)observeView(v)})}});
+window.addEventListener('pagehide',()=>ls('xdesk:clean','1'));
+async function problemReport(){
+  const L=[];const d=new Date();
+  L.push('Excerpt Desk problem report · app '+APPV+' · '+d.toLocaleString('en-IN'));
+  L.push('Device: '+navigator.userAgent);
+  L.push('Screen: '+innerWidth+'×'+innerHeight+' @'+(devicePixelRatio||1)+'x · touch '+(navigator.maxTouchPoints||0)+(navigator.deviceMemory?' · memory '+navigator.deviceMemory+' GB':''));
+  try{const e=await navigator.storage.estimate();L.push('Storage used: '+Math.round(e.usage/1048576)+' MB of '+Math.round(e.quota/1048576)+' MB')}catch(e){}
+  L.push('Unexpected reloads recorded: '+(+ls('xdesk:reloads')||0));
+  if(P&&proj){L.push('Open matter: '+(proj.store.kind)+' · '+P.docs.length+' PDFs · '+P.items.length+' items · '+(P.ink||[]).length+' strokes · '+P.sheets.length+' sheets · '+views.length+' view(s) · zoom '+views.map(v=>Math.round(v.zoom*100)+'%').join('/'));
+    let meta={};try{if(proj.store===BrowserStore)meta=(await idb.get('kv','fmeta:'+proj.name))||{}}catch(e){}
+    P.docs.forEach((x,i)=>{const rt=RT[x.id];L.push('  PDF '+(i+1)+': '+(meta[x.file]?Math.round(meta[x.file].size/1024)+' KB':'size ?')+(rt?' · '+rt.pageData.length+' pages':''))})}
+  L.push('Pages drawn now: '+views.reduce((a,v)=>a+v.pages.filter(p=>p.rendered).length,0)+' · PDFs open in memory: '+Object.keys(RT).length+' · undo steps: '+undoStack.length);
+  L.push('Sync: '+(syncOn()?'on, script v'+(srvV||'?')+', last '+(lastSync?new Date(lastSync).toLocaleTimeString('en-IN'):'never'):'off')+(Object.keys(syncErrs).length?' · problems: '+Object.entries(syncErrs).map(([n,e])=>e).join('; '):''));
+  L.push('--- recent actions (oldest first) ---');
+  crumbs.slice(-70).forEach(([t,m])=>L.push(new Date(t).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+'  '+m));
+  return L.join('\n');
+}
+
 /* ================= stability ================= */
 let errCount=0,errAt=0;
 function onAppError(err){
   try{console.error(err)}catch(_){}
-  const msg=String(err&&(err.message||err.reason)||err||'');if(/ResizeObserver loop|Script error\.?$|AbortError|cancelled|RenderingCancelled/i.test(msg))return;
+  const msg=String(err&&(err.message||err.reason)||err||'');crumb('error: '+msg.slice(0,120));if(/ResizeObserver loop|Script error\.?$|AbortError|cancelled|RenderingCancelled/i.test(msg))return;
   errCount++;
   try{endModes();cancelHold();if(stroke&&stroke.tmp)stroke.tmp.remove();stroke=null;pen=null;drawPen();crop=null;document.querySelectorAll('.crop-box').forEach(b=>b.remove())}catch(_){}
   try{if(proj&&saveT)saveNow()}catch(_){}
@@ -1576,6 +1646,7 @@ $('#inkDone').onclick=()=>setDraw(false);
 inkbar.addEventListener('pointerdown',e=>{if(e.target.tagName!=='INPUT'&&e.target.tagName!=='LABEL')e.preventDefault()});
 function setDraw(on){
   if(drawMode===on)return;drawMode=on;app.classList.toggle('drawing',on);$('#drawBtn').setAttribute('aria-pressed',on);inkbar.hidden=!on;
+  crumb('draw '+(on?'on':'off'));
   if(on){setPen(false);endModes();clearSel();hideBars();hlMenu.hidden=true;if(document.activeElement&&document.activeElement.isContentEditable)document.activeElement.blur();
     toast(touchDevice&&settings.pencilOnly?'Draw with your pen (Apple Pencil or tablet stylus) on the PDF or the worksheet. Your finger still scrolls. If your pen does not draw, untick Pencil only. Tap Done to finish.':'Draw on the PDF or the worksheet. Tap Done (or press Esc) to finish.')}
   else if(stroke){stroke.tmp&&stroke.tmp.remove();stroke=null}
@@ -1652,7 +1723,8 @@ inkSync();
 /* ================= adding PDFs ================= */
 $('#addBtn').onclick=e=>popMenu(e.currentTarget,[
   {label:'Add as new PDF',hint:'Each file gets its own tab in this matter',run:()=>$('#pdfIn').click()},
-  {label:'Add pages to this PDF',hint:'Appends the files to the end of the open PDF, same file name',run:()=>{if(!active){toast('Open a PDF first, or use Add as new PDF.');return}$('#appendIn').click()}}]);
+  {label:'Add pages to this PDF',hint:'Appends the files to the end of the open PDF, same file name',run:()=>{if(!active){toast('Open a PDF first, or use Add as new PDF.');return}$('#appendIn').click()}},
+  {label:'Combine PDFs into one…',hint:'Merge this matter\'s PDFs into a single PDF, in the order you choose',run:()=>openCombine()}]);
 $('#pdfIn').addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)addPdfs(fs)});
 $('#appendIn').addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)appendToActive(fs)});
 const docWrap=document.querySelector('.docwrap');
@@ -1790,7 +1862,7 @@ async function openProject(store,name){
   const hidden=new Set([...(P.hiddenFiles||[]),...(P.deletedFiles||[])]);
   let foundNew=false;
   files.filter(f=>!/\(annotated\)\.pdf$/i.test(f)&&!hidden.has(f)&&!P.docs.some(d=>d.file===f)).forEach(f=>{const d={id:uid(),file:f,title:f.replace(/\.pdf$/i,'')};P.docs.push(d);rebindAnchors(d);foundNew=true});
-  proj={store,name,mtime:0,blocked:false};
+  proj={store,name,mtime:0,blocked:false};crumb('opened matter ('+store.kind+') · '+P.docs.length+' PDFs · '+P.items.length+' items');
   if(store.kind==='folder'){try{proj.mtime=await FolderStore.mtime(name)}catch(e){}}
   if(store.kind!=='memory'){try{localStorage.setItem('xdesk:last',JSON.stringify({kind:store.kind,name}))}catch(e){}noteRecent(name,store.kind)}
   setStatus(savedLabel());deskPane.scrollTo(0,0);
@@ -1976,6 +2048,75 @@ async function importCaseFile(bytes,ws,fileName){
   return {docs:made.map(m=>m.doc),items:rep.items};
 }
 
+/* ================= order list (↑ ↓) used by Combine and Export ================= */
+function orderList(ol,rows,opt){
+  ol.innerHTML='';
+  rows.forEach((r,i)=>{const li=document.createElement('li');
+    li.innerHTML=(opt.check?'<input type="checkbox" aria-label="Include">':'')+'<span class="on">'+(i+1)+'.</span><span class="t"></span><span class="pg"></span><button class="btn sq up" aria-label="Move up" title="Move up">↑</button><button class="btn sq dn" aria-label="Move down" title="Move down">↓</button>';
+    li.querySelector('.t').textContent=r.title;li.querySelector('.pg').textContent=r.pages?r.pages+' p.':'';
+    const cb=li.querySelector('input');if(cb){cb.checked=r.on!==false;cb.onchange=()=>{r.on=cb.checked;opt.change&&opt.change()}}
+    const up=li.querySelector('.up'),dn=li.querySelector('.dn');up.disabled=i===0;dn.disabled=i===rows.length-1;
+    up.onclick=()=>{rows.splice(i-1,0,rows.splice(i,1)[0]);orderList(ol,rows,opt);opt.change&&opt.change();ol.children[i-1].querySelector('.up').focus()};
+    dn.onclick=()=>{rows.splice(i+1,0,rows.splice(i,1)[0]);orderList(ol,rows,opt);opt.change&&opt.change();ol.children[i+1].querySelector('.dn').focus()};
+    ol.append(li)});
+}
+async function pageCount(d){try{if(RT[d.id])return RT[d.id].pageData.length}catch(e){}return 0}
+
+/* ---- Export: the order of PDFs in a combined PDF or case file follows the tab order, set here ---- */
+function xOrderRefresh(){
+  const k=xKind(),s=xScope(),show=P&&P.docs.length>1&&(k==='both'||(k==='pdf'&&s==='all'));$('#xOrder').hidden=!show;if(!show)return;
+  const rows=P.docs.map(d=>({id:d.id,title:d.title}));
+  orderList($('#xOrderList'),rows,{change:()=>{const by={};P.docs.forEach(d=>by[d.id]=d);P.docs=rows.map(r=>by[r.id]);renderTabs();touch()}});
+}
+
+/* ---- Combine several PDFs of this matter into one PDF ---- */
+let cmbRows=[];
+async function openCombine(){
+  if(!P||P.docs.length<2){toast('Add at least two PDFs to this matter first.');return}
+  cmbRows=P.docs.map(d=>({id:d.id,title:d.title,on:true}));
+  $('#cmbName').value=P.name;$('#cmbDel').checked=false;
+  const draw=()=>orderList($('#cmbList'),cmbRows,{check:true,change:upd});
+  const upd=()=>{const n=cmbRows.filter(r=>r.on).length;$('#cmbGo').disabled=n<2;$('#cmbGo').textContent=n<2?'Choose at least two':'Combine '+n+' PDFs'};
+  draw();upd();openPanel('combinePanel');
+}
+$('#cmbGo').onclick=async()=>{
+  const sel=cmbRows.filter(r=>r.on).map(r=>docById(r.id)).filter(Boolean);if(sel.length<2)return;
+  const name=safeName($('#cmbName').value.trim()||P.name).replace(/\.pdf$/i,'');const delAfter=$('#cmbDel').checked;
+  if(!window.PDFLib){toast('The PDF writer did not load. Check the connection and reload.');return}
+  if(delAfter){const ok=await askDelete({title:'Delete the '+sel.length+' separate PDFs after combining?',
+      text:'After the combined PDF <b>'+esc(name)+'.pdf</b> is made, the separate files ('+sel.map(d=>esc(d.title)).join(', ')+') will be deleted. Your notes, highlights and drawings move to the combined PDF.',
+      final:'The '+sel.length+' separate PDFs will be deleted permanently once the combined PDF is saved.'});
+    if(!ok){openPanel('combinePanel');return}}
+  const btn=$('#cmbGo');btn.disabled=true;btn.textContent='Combining…';$('#combinePanel').hidden=false;openPanel('combinePanel');crumb('combine '+sel.length+' PDFs');
+  try{
+    const {PDFDocument}=PDFLib;const out=await PDFDocument.create();const offs={},firsts=[];let off=0;
+    for(const d of sel){btn.textContent='Combining '+d.title.slice(0,24)+'…';
+      const src=await PDFDocument.load(new Uint8Array(await proj.store.readFile(proj.name,d.file)),{ignoreEncryption:true});
+      const cp=await out.copyPages(src,src.getPageIndices());cp.forEach(p=>{stripX(out,p);out.addPage(p)});
+      offs[d.id]=off;firsts.push({title:d.title,ref:cp[0].ref,y:null});off+=cp.length}
+    addOutline(out,firsts);out.setTitle(name);out.setCreator('Excerpt Desk');
+    const bytes=await out.save();const file=uniqueFile(name,await takenNames());
+    await proj.store.writeFile(proj.name,file,bytes);
+    /* move every note, excerpt, highlight and drawing to the right page of the combined PDF */
+    const nd={id:uid(),file,title:file.replace(/\.pdf$/i,'')},ids=new Set(sel.map(d=>d.id));
+    const rot={};sel.forEach(d=>{if(d.rot)Object.entries(d.rot).forEach(([k,v])=>{rot[+k+offs[d.id]]=v})});if(Object.keys(rot).length)nd.rot=rot;
+    const mv=a=>{if(a&&ids.has(a.doc)){a.page=(+a.page||1)+offs[a.doc];a.doc=nd.id}};
+    P.items.forEach(i=>mv(i.anchor));P.marks.forEach(m=>mv(m.anchor));(P.ink||[]).forEach(k=>{if(ids.has(k.doc)){k.page+=offs[k.doc];k.doc=nd.id}});
+    const at=P.docs.indexOf(sel[0]);P.docs=P.docs.filter(d=>!ids.has(d.id));P.docs.splice(Math.max(0,Math.min(at,P.docs.length)),0,nd);
+    P.deletedFiles=(P.deletedFiles||[]).filter(f=>f!==file);
+    if(delAfter){for(const d of sel){try{await proj.store.delFile(proj.name,d.file)}catch(e){}(P.deletedFiles=P.deletedFiles||[]).push(d.file);if(proj.store===BrowserStore&&syncOn())await addPendingDel('files',[proj.name,d.file])}}
+    else sel.forEach(d=>{(P.hiddenFiles=P.hiddenFiles||[]).push(d.file)});
+    sel.forEach(d=>dropRT(d.id));views.forEach(v=>{v.back=[];v.fwd=[];if(!v.doc||ids.has(v.doc)){v.doc=null;v.pages=[]}});
+    await saveNow();if(delAfter)resetHistory();
+    $('#combinePanel').hidden=true;
+    for(const v of views){if(!v.doc)await viewShow(v,nd.id,{record:false})}
+    active=V().doc;renderTabs();renderItems();drawMarks();updateNav();
+    if(proj.store===BrowserStore&&syncOn())requestSync(proj.name,500);
+    toast('Combined '+sel.length+' PDFs into "'+nd.title+'" ('+off+' pages). Each part has a bookmark.'+(delAfter?'':' The separate PDFs are closed, not deleted.'));
+  }catch(e){console.error(e);toast('Could not combine: '+(e&&/encrypt/i.test(e.message)?'one PDF is password-protected.':'please try again.'))}
+  finally{btn.disabled=false;btn.textContent='Combine'}
+};
+
 /* ================= Export ================= */
 function downloadBlob(data,name,mime){const url=URL.createObjectURL(new Blob([data],{type:mime}));const l=document.createElement('a');l.href=url;l.download=name;document.body.append(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),5000)}
 async function deliver(sub,name,data,mime){
@@ -1988,14 +2129,14 @@ function xDefault(){const k=xKind(),s=xScope(),d=docById(active);
   if(k==='pdf')return s==='this'?(d?d.title:P.name)+' (annotated)':s==='all'?P.name+' - Combined':'(each PDF keeps its own name)';
   if(k==='notes')return P.name+' - Notes of argument';if(k==='both')return P.name+' - Case file';return P.name+' backup '+stamp()}
 function xRefresh(){const k=xKind(),s=xScope();const each=k==='pdf'&&s==='each';$('#xName').value=xDefault();$('#xName').disabled=each;$('#xExt').textContent=k==='backup'?'.xdesk.json':'.pdf';
-  $('#xWhere').innerHTML=proj&&proj.store.kind==='folder'?'Saved in the <b>'+esc(P.name)+'</b> folder, inside <b>'+(k==='backup'?'Backups':'Exports')+'</b>.':'Saved to your Downloads folder.'}
+  xOrderRefresh();$('#xWhere').innerHTML=proj&&proj.store.kind==='folder'?'Saved in the <b>'+esc(P.name)+'</b> folder, inside <b>'+(k==='backup'?'Backups':'Exports')+'</b>.':'Saved to your Downloads folder.'}
 $('#exportBtn').onclick=()=>{if(!P)return;document.querySelector('input[name=xs][value=this]').disabled=!active;if(!active&&xScope()==='this')document.querySelector('input[name=xs][value=all]').checked=true;$('#restoreGo').hidden=true;restoreData=null;openPanel('exportPanel');xRefresh()};
 document.querySelectorAll('input[name=xk],input[name=xs]').forEach(r=>r.addEventListener('change',xRefresh));
 $('#xGo').onclick=async()=>{
   const k=xKind(),s=xScope();const btn=$('#xGo');
   if(k!=='backup'&&!window.PDFLib){toast('The PDF writer did not load. Check the connection and reload.');return}
   if((k==='pdf'||k==='both')&&!P.docs.length){toast('This matter has no PDFs yet.');return}
-  btn.disabled=true;btn.textContent='Exporting…';await saveNow();rtHold++;
+  btn.disabled=true;btn.textContent='Exporting…';await saveNow();rtHold++;crumb('export started: '+k);
   try{
     const nm=safeName($('#xName').value||xDefault());let msg='';
     if(k==='backup'){msg=await deliver('Backups',nm+'.xdesk.json',JSON.stringify(serial(),null,1),'application/json')}
@@ -2027,7 +2168,7 @@ async function copyText(t){
     const ok=document.execCommand('copy');ta.remove();return ok}catch(e){return false}
 }
 $('#copyBtn').onclick=async()=>{
-  if(!P)return;const order=readingOrder().filter(it=>it.type==='excerpt'||(it.text||'').trim());if(!order.length){toast('The worksheet is empty.');return}
+  if(!P)return;$('#copyTitle').textContent='Your notes';const order=readingOrder().filter(it=>it.type==='excerpt'||(it.text||'').trim());if(!order.length){toast('The worksheet is empty.');return}
   const where=a=>{if(!a)return'';const d=a.doc&&docById(a.doc);return ' ['+(d?d.title:(a.file||'?'))+', p. '+a.page+']'};
   let t=P.name+'\nNotes of argument\n\n',k=0;
   order.forEach(it=>{if(isHeading(it)){t+='\n'+it.text.trim().toUpperCase()+'\n';return}k++;
@@ -2162,11 +2303,14 @@ $('#openSample').onclick=async()=>{$('#libPanel').hidden=true;await openSample()
 /* Settings */
 $('#setBtn').onclick=()=>{
   $('#sUrl').value=(syncCfg&&syncCfg.url)||'';$('#sKey').value=(syncCfg&&syncCfg.key)||'';updSyncBtn();
-  $('#sStart').value=settings.startup;$('#sTap').value=settings.tap==='tap'?'tap':'hold';$('#sSize').value=settings.fontSize;$('#sFont').value=settings.font;$('#sWidth').value=settings.noteWidth;
+  updPrInfo();$('#sStart').value=settings.startup;$('#sTap').value=settings.tap==='tap'?'tap':'hold';$('#sSize').value=settings.fontSize;$('#sFont').value=settings.font;$('#sWidth').value=settings.noteWidth;
   const sc=$('#sColor');sc.innerHTML='';Object.keys(COLORS).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=CNAMES[k];sc.append(o)});sc.value=settings.color;
   openPanel('setPanel');
 };
 $('#sStart').addEventListener('change',e=>{settings.startup=e.target.value;applySettings()});
+$('#prCopy').onclick=async()=>{const t=await problemReport();if(await copyText(t))toast('Problem report copied. Paste it in your chat with Claude.');else{$('#copyTitle').textContent='Problem report';$('#copyText').value=t;openPanel('copyPanel');setTimeout(()=>$('#copyText').select(),50)}};
+$('#prClear').onclick=()=>{crumbs=[];ls('xdesk:log','[]');ls('xdesk:reloads','0');updPrInfo();toast('Record cleared')};
+function updPrInfo(){const n=+ls('xdesk:reloads')||0;$('#prInfo').innerHTML=(n?'<b>The app was closed unexpectedly '+n+' time'+(n===1?'':'s')+' on this device.</b> ':'')+'If the app misbehaves or reloads by itself, press <b>Copy problem report</b> and paste it to Claude. It lists recent actions and device details, not the contents of your matters.'}
 $('#sTap').addEventListener('change',e=>{settings.tap=e.target.value;applySettings()});
 $('#sSize').addEventListener('change',e=>{settings.fontSize=Math.max(10,Math.min(36,parseInt(e.target.value,10)||15));e.target.value=settings.fontSize;applySettings()});
 $('#sFont').addEventListener('change',e=>{settings.font=e.target.value;applySettings();drawLinks()});
@@ -2407,6 +2551,7 @@ async function localFiles(name){
   if(changed)try{await idb.set('kv','fmeta:'+name,meta)}catch(e){}return out;
 }
 async function pullFile(name,rf){
+  crumb('receiving a PDF · '+Math.round(rf.size/1024)+' KB');
   let data;
   if(srvV>=2){data=new Uint8Array(rf.size);for(let off=0;off<rf.size;off+=CH){updSyncBtn('☁ Getting '+rf.name.slice(0,20)+'… '+Math.round(off/rf.size*100)+'%');
       const d=await driveCall({op:'readChunk',id:rf.id,start:off,len:Math.min(CH,rf.size-off)});const u=bufFromB64(d.b64);data.set(u.subarray(0,Math.min(u.length,rf.size-off)),off)}}
@@ -2414,7 +2559,7 @@ async function pullFile(name,rf){
   await BrowserStore.writeFile(name,rf.name,data);
 }
 async function pushFile(name,f){
-  const buf=await BrowserStore.readFile(name,f),size=buf.byteLength;
+  const buf=await BrowserStore.readFile(name,f),size=buf.byteLength;crumb('sending a PDF · '+Math.round(size/1024)+' KB');
   if(srvV>=2){let r=null;const s=await driveCall({op:'upStart',matter:name,name:f,size,mime:'application/pdf'});
     for(let off=0;off<size;off+=CH){updSyncBtn('☁ Sending '+f.slice(0,20)+'… '+Math.round(off/size*100)+'%');
       r=await driveCall({op:'upChunk',matter:name,name:f,session:s.session,start:off,total:size,b64:b64FromBuf(new Uint8Array(buf,off,Math.min(CH,size-off)))},2)}
@@ -2496,7 +2641,7 @@ async function runSync(manual){
   if(!syncOn())return;if(syncing){syncAgain=true;return}
   if(!navigator.onLine){updSyncBtn('☁ Offline');if(manual)toast('No internet connection. Your work is safe on this device and will sync when you are back online.');return}
   if(proj&&proj.store===BrowserStore&&isOpenLocal(proj.name)&&busyHere()&&!manual&&!pendingFull){syncTimer=setTimeout(()=>runSync(false),2500);return}
-  syncing=true;updSyncBtn('');let pulled=0,pushed=0,errs=0,full=manual||pendingFull||srvV<2;
+  syncing=true;updSyncBtn('');crumb('sync');let pulled=0,pushed=0,errs=0,full=manual||pendingFull||srvV<2;
   try{
     await detectServer();full=full||srvV<2;
     const pd=await pendingDel();
@@ -2513,7 +2658,7 @@ async function runSync(manual){
       if(pd.matters.includes(name))continue;
       if(!R&&!(await BrowserStore.list()).includes(name))continue;
       try{const r=await syncMatter(name,R,false,goneRemote.has(name));if(r.pulled)pulled++;if(r.pushed)pushed++;if(r.applied)toast('Updated from your other device')}
-      catch(e){console.warn('sync',name,e);errs++;syncErrs[name]=e.message||'error';const st=await getSt(name);st.err=e.message;await setSt(name,st)}}
+      catch(e){console.warn('sync',name,e);crumb('sync problem: '+(e.message||e));errs++;syncErrs[name]=e.message||'error';const st=await getSt(name);st.err=e.message;await setSt(name,st)}}
     lastSync=Date.now();try{localStorage.setItem('xdesk:lastSync',lastSync)}catch(e){}
     if(errs&&(manual||full))toast(errs+' matter'+(errs===1?'':'s')+' could not sync fully: '+Object.entries(syncErrs).map(([n,e])=>'"'+n+'" ('+e+')').join('; ')+'. Your work is safe on this device; it will try again.');
     else if(manual)toast('Synced with Google Drive'+(pulled||pushed?' ('+(pulled?pulled+' received':'')+(pulled&&pushed?', ':'')+(pushed?pushed+' sent':'')+')':': everything is up to date'));
@@ -2591,6 +2736,12 @@ window.addEventListener('beforeunload',e=>{
   if(syncOn())setTimeout(()=>syncAll(false),1500);
   await setViews(1);
   let again=null;try{again=JSON.parse(sessionStorage.getItem('xdesk:open')||'null')}catch(e){}
+  let res=null;try{res=JSON.parse(ls('xdesk:resume')||'null')}catch(e){}
+  if(unexpectedReload&&res&&Date.now()-res.ts<45*60000&&res.kind==='browser'){
+    try{if((await BrowserStore.list()).includes(res.name)){await openProject(BrowserStore,res.name);
+      if(res.sheet&&P.sheets.some(x=>x.id===res.sheet))switchSheet(res.sheet);
+      if(res.doc&&docById(res.doc))await viewShow(V(),res.doc,{page:res.page||1,record:false});else if(res.page)goPageView(V(),res.page,{record:false});
+      toast('The iPad closed the app to free memory. You are back where you were; nothing was lost.');return}}catch(e){console.warn(e)}}
   if(again&&again.kind==='browser'){try{if((await BrowserStore.list()).includes(again.name)){await openProject(BrowserStore,again.name);if(again.sheet&&P.sheets.some(x=>x.id===again.sheet))switchSheet(again.sheet);return}}catch(e){console.warn(e)}}
   if(again&&again.kind==='folder'&&rootHandle){try{if((await rootHandle.queryPermission({mode:'readwrite'}))==='granted'){await openProject(FolderStore,again.name);return}}catch(e){}}
   if(settings.startup==='last'&&last){
