@@ -2752,6 +2752,53 @@ window.addEventListener('beforeunload',e=>{
   }
   await openUntitled(true);
 })();
+
+/* ================= hand-over from Charpe Suite (Oct 2026) =================
+   Charpe Suite (same web address, sanketcharpe.github.io) places order PDFs in a
+   small inbox and opens Excerpt Desk with ?inbox=<id>. Choose the matter they
+   belong to — or make a new one — and they are added there. */
+(function(){
+  const id=new URLSearchParams(location.search).get('inbox');if(!id)return;
+  const openInbox=()=>new Promise((res,rej)=>{const r=indexedDB.open('charpe-xdesk-inbox',1);r.onupgradeneeded=()=>r.result.createObjectStore('items',{keyPath:'id'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+  const getItem=async()=>{const d=await openInbox();return new Promise((res,rej)=>{const t=d.transaction('items','readonly');const q=t.objectStore('items').get(id);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})};
+  const delItem=async()=>{try{const d=await openInbox();d.transaction('items','readwrite').objectStore('items').delete(id)}catch(e){}};
+  const words=s=>String(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>2&&!['the','and','others','vs','versus','state','union','india','through'].includes(w));
+  async function run(){
+    if(!proj){setTimeout(run,400);return}
+    let item;try{item=await getItem()}catch(e){toast('Could not read the PDFs sent from Charpe Suite.');return}
+    if(!item){toast('Those PDFs were already added.');history.replaceState(null,'',location.pathname);return}
+    let names=[];try{names=await libStore.list()}catch(e){}
+    const cnKey=String(item.cn||'').toLowerCase().replace(/[^a-z0-9]/g,''),pw=words(item.title);
+    const score=n=>{const l=n.toLowerCase();let s=0;if(cnKey&&l.replace(/[^a-z0-9]/g,'').includes(cnKey))s+=10;pw.forEach(w=>{if(l.includes(w))s++});return s};
+    const ranked=names.map(n=>({n,s:score(n)})).sort((a,b)=>b.s-a.s||a.n.localeCompare(b.n));
+    const box=document.createElement('div');
+    box.style.cssText='position:fixed;inset:0;background:rgba(10,18,32,.5);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;font:14px/1.45 system-ui,Segoe UI,Arial,sans-serif';
+    const fl=item.files.map(f=>'<li>'+esc(f.name)+'</li>').join('');
+    box.innerHTML='<div style="background:#fff;color:#1a2233;border-radius:12px;max-width:560px;width:100%;box-shadow:0 14px 40px rgba(0,0,0,.3)">'+
+      '<div style="padding:14px 18px;border-bottom:1px solid #e3e6ea"><b style="font-size:16px">From Charpe Suite</b><div style="font-size:12.5px;color:#5b6474;margin-top:2px">'+esc(item.title)+(item.cn?' · '+esc(item.cn):'')+(item.court?' · '+esc(item.court):'')+'</div></div>'+
+      '<div style="padding:12px 18px"><div style="font-size:12.5px;margin-bottom:8px">'+item.files.length+' PDF'+(item.files.length===1?'':'s')+':<ul style="margin:4px 0 0 18px;padding:0">'+fl+'</ul></div>'+
+      '<label style="display:block;font-size:11px;font-weight:700;color:#5b6474;text-transform:uppercase;letter-spacing:.4px;margin:10px 0 4px">Add them to which matter? Search by case number or party name</label>'+
+      '<input id="xinQ" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #c9ced6;border-radius:6px;font:inherit" placeholder="Type to search your matters">'+
+      '<div id="xinL" style="max-height:260px;overflow:auto;margin-top:8px;border:1px solid #eef0f2;border-radius:6px"></div>'+
+      '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="xinNew" style="font-weight:700">+ New matter: '+esc(((item.cn?item.cn+' ':'')+item.title).slice(0,70))+'</button><button class="btn" id="xinNo">Cancel</button></div></div></div>';
+    document.body.append(box);
+    const L=box.querySelector('#xinL'),Q=box.querySelector('#xinQ');
+    const paint=()=>{const q=Q.value.trim().toLowerCase();const rows=ranked.filter(r=>!q||r.n.toLowerCase().includes(q));
+      L.innerHTML=rows.length?rows.slice(0,80).map(r=>'<div style="display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid #f1f2f4"><span style="flex:1">'+esc(r.n)+(r.s>=10?' <b style="color:#127a4b;font-size:11px">same case number</b>':'')+'</span><button class="btn" data-n="'+esc(r.n)+'">Add here</button></div>').join(''):'<div style="padding:12px;color:#5b6474;font-size:13px">No matter matches. Use “New matter”.</div>';
+      L.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>finish(b.dataset.n))};
+    Q.oninput=paint;paint();Q.focus();
+    const files=()=>item.files.map(f=>new File([f.blob],f.name,{type:'application/pdf'}));
+    async function finish(name){
+      if(!confirm('Add '+item.files.length+' PDF'+(item.files.length===1?'':'s')+' to “'+name+'”?'))return;
+      box.remove();await openProject(libStore,name);await addPdfs(files());await delItem();
+      history.replaceState(null,'',location.pathname);toast('Added '+item.files.length+' PDF'+(item.files.length===1?'':'s')+' from Charpe Suite to '+name);
+    }
+    box.querySelector('#xinNew').onclick=async()=>{const nm=prompt('Name of the new matter',((item.cn?item.cn+' ':'')+item.title).slice(0,90));if(!nm)return;
+      box.remove();await newMatter(nm,files(),false);await delItem();history.replaceState(null,'',location.pathname)};
+    box.querySelector('#xinNo').onclick=()=>{box.remove();history.replaceState(null,'',location.pathname);toast('Nothing added. The PDFs stay waiting until you send them again.')};
+  }
+  setTimeout(run,600);
+})();
 })();
 </script>
 </body>
