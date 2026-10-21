@@ -2757,16 +2757,35 @@ window.addEventListener('beforeunload',e=>{
    Charpe Suite (same web address, sanketcharpe.github.io) places order PDFs in a
    small inbox and opens Excerpt Desk with ?inbox=<id>. Choose the matter they
    belong to — or make a new one — and they are added there. */
+/* Since Oct 2026 Charpe Suite leaves them with Charpe Helper on this PC (127.0.0.1:8770) instead,
+   so THIS Excerpt Desk window — whatever Chrome profile or browser it runs in — picks them up
+   and offers its own list of matters. Checked on opening, on focus and every few seconds. */
 (function(){
-  const id=new URLSearchParams(location.search).get('inbox');if(!id)return;
+  const urlId=new URLSearchParams(location.search).get('inbox');
   const openInbox=()=>new Promise((res,rej)=>{const r=indexedDB.open('charpe-xdesk-inbox',1);r.onupgradeneeded=()=>r.result.createObjectStore('items',{keyPath:'id'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
-  const getItem=async()=>{const d=await openInbox();return new Promise((res,rej)=>{const t=d.transaction('items','readonly');const q=t.objectStore('items').get(id);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})};
-  const delItem=async()=>{try{const d=await openInbox();d.transaction('items','readwrite').objectStore('items').delete(id)}catch(e){}};
+  const idbSrc=id=>({url:true,
+    get:async()=>{const d=await openInbox();return new Promise((res,rej)=>{const t=d.transaction('items','readonly');const q=t.objectStore('items').get(id);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})},
+    del:async()=>{try{const d=await openInbox();d.transaction('items','readwrite').objectStore('items').delete(id)}catch(e){}},skip:()=>{}});
+  const HELPER='http://127.0.0.1:8770/';
+  const hpost=b=>fetch(HELPER,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(b)}).then(r=>r.json());
+  const b64blob=b=>{const bin=atob(b||'');const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new Blob([u],{type:'application/pdf'})};
+  const helperSrc=id=>({url:false,
+    get:async()=>{const r=await hpost({action:'xget',id});if(!r||!r.item)return null;r.item.files=(r.item.files||[]).map(f=>({name:f.name,slot:f.slot||'',blob:b64blob(f.b64)}));return r.item},
+    del:async()=>{try{await hpost({action:'xdel',id})}catch(e){}},skip:()=>skipped.add(id)});
+  const skipped=new Set();let busy=false,nextTry=0;
+  async function poll(){
+    if(busy||!proj||document.hidden||Date.now()<nextTry)return;
+    let j;try{j=await hpost({action:'xlist'})}catch(e){nextTry=Date.now()+60000;return}
+    const it=((j&&j.items)||[]).find(x=>x.id&&!skipped.has(x.id));if(!it||busy)return;
+    busy=true;run(helperSrc(it.id));
+  }
+  const done=()=>{busy=false;setTimeout(poll,800)};
   const words=s=>String(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>2&&!['the','and','others','vs','versus','state','union','india','through'].includes(w));
-  async function run(){
-    if(!proj){setTimeout(run,400);return}
-    let item;try{item=await getItem()}catch(e){toast('Could not read the PDFs sent from Charpe Suite.');return}
-    if(!item){toast('Those PDFs were already added.');history.replaceState(null,'',location.pathname);return}
+  async function run(src){
+    if(!proj){setTimeout(()=>run(src),400);return}
+    const delItem=src.del,clearUrl=()=>{if(src.url)history.replaceState(null,'',location.pathname)};
+    let item;try{item=await src.get()}catch(e){toast('Could not read the PDFs sent from Charpe Suite.');done();return}
+    if(!item){if(src.url)toast('Those PDFs were already added.');clearUrl();done();return}
     let names=[],needPerm=false;
     const loadNames=async()=>{needPerm=false;names=[];
       if(libStore===FolderStore&&rootHandle){let st='prompt';try{st=await rootHandle.queryPermission({mode:'readwrite'})}catch(e){}if(st!=='granted'){needPerm=true;return}}
@@ -2791,8 +2810,11 @@ window.addEventListener('beforeunload',e=>{
     const paint=()=>{const q=Q.value.trim().toLowerCase();const rows=ranked.filter(r=>!q||r.n.toLowerCase().includes(q));
       if(needPerm){L.innerHTML='<div style="padding:12px;font-size:13px">Your matters are in the folder <b>'+esc(rootHandle?rootHandle.name:'')+'</b> on this PC. Allow Excerpt Desk to open it again to see them.<br><button class="btn" id="xinPerm" style="margin-top:8px;font-weight:700">Open my matters folder</button></div>';
         L.querySelector('#xinPerm').onclick=async()=>{try{await rootHandle.requestPermission({mode:'readwrite'})}catch(e){}await loadNames();rank();paint()};return}
-      L.innerHTML=rows.length?rows.slice(0,80).map(r=>'<div style="display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid #f1f2f4"><span style="flex:1">'+esc(r.n)+(r.s>=10?' <b style="color:#127a4b;font-size:11px">same case number</b>':'')+'</span><button class="btn" data-n="'+esc(r.n)+'">Add here</button></div>').join(''):'<div style="padding:12px;color:#5b6474;font-size:13px">No matter matches. Use “New matter”.</div>';
-      L.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>finish(b.dataset.n))};
+      L.innerHTML=rows.length?rows.slice(0,80).map(r=>'<div style="display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid #f1f2f4"><span style="flex:1">'+esc(r.n)+(r.s>=10?' <b style="color:#127a4b;font-size:11px">same case number</b>':'')+'</span><button class="btn" data-n="'+esc(r.n)+'">Add here</button></div>').join(''):(names.length?'<div style="padding:12px;color:#5b6474;font-size:13px">No matter matches. Use “New matter”.</div>':'<div style="padding:12px;color:#5b6474;font-size:13px">No matters are open in this Excerpt Desk yet. If they are kept in a folder on this PC, <a href="#" id="xinPick">choose that folder</a> once; otherwise use “New matter”.</div>');
+      L.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>finish(b.dataset.n));
+      const pk=L.querySelector('#xinPick');if(pk)pk.onclick=async e=>{e.preventDefault();
+        try{const h=await window.showDirectoryPicker({id:'excerpt-desk',mode:'readwrite'});rootHandle=h;libStore=FolderStore;try{await idb.set('kv','root',h)}catch(x){}try{localStorage.setItem('xdesk:mode','folder')}catch(x){}}catch(x){return}
+        await loadNames();rank();paint()}};
     Q.oninput=paint;paint();Q.focus();
     const files=()=>item.files.map(f=>new File([f.blob],f.name,{type:'application/pdf'}));
     /* consolidated PDFs (slot set) overwrite the same-named file in the matter, keeping the tab and its notes;
@@ -2820,13 +2842,14 @@ window.addEventListener('beforeunload',e=>{
       const n=item.files.length,hasSlot=item.files.some(f=>f.slot);
       if(!confirm((hasSlot?'Put the PDFs into “'+name+'”? A consolidated PDF already there is replaced by this latest one.':'Add '+n+' PDF'+(n===1?'':'s')+' to “'+name+'”?')))return;
       box.remove();await openProject(libStore,name);const r=await place();await delItem();
-      history.replaceState(null,'',location.pathname);doneMsg(r,name);
+      clearUrl();doneMsg(r,name);done();
     }
     box.querySelector('#xinNew').onclick=async()=>{const nm=prompt('Name of the new matter',((item.cn?item.cn+' ':'')+item.title).slice(0,90));if(!nm)return;
-      box.remove();await newMatter(nm,[],false);if(!proj||untitled()){toast('The matter could not be created.');return}const r=await place();await delItem();history.replaceState(null,'',location.pathname);doneMsg(r,proj.name)};
-    box.querySelector('#xinNo').onclick=()=>{box.remove();history.replaceState(null,'',location.pathname);toast('Nothing added. The PDFs stay waiting until you send them again.')};
+      box.remove();await newMatter(nm,[],false);if(!proj||untitled()){toast('The matter could not be created.');done();return}const r=await place();await delItem();clearUrl();doneMsg(r,proj.name);done()};
+    box.querySelector('#xinNo').onclick=()=>{box.remove();clearUrl();src.skip();toast('Nothing added. The PDFs stay waiting; they are offered again when Excerpt Desk is next opened.');done()};
   }
-  setTimeout(run,600);
+  if(urlId){busy=true;setTimeout(()=>run(idbSrc(urlId)),600)}
+  setTimeout(poll,1500);setInterval(poll,5000);window.addEventListener('focus',()=>{nextTry=0;poll()});
 })();
 })();
 </script>
