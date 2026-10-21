@@ -2767,16 +2767,21 @@ window.addEventListener('beforeunload',e=>{
     if(!proj){setTimeout(run,400);return}
     let item;try{item=await getItem()}catch(e){toast('Could not read the PDFs sent from Charpe Suite.');return}
     if(!item){toast('Those PDFs were already added.');history.replaceState(null,'',location.pathname);return}
-    let names=[];try{names=await libStore.list()}catch(e){}
+    let names=[],needPerm=false;
+    const loadNames=async()=>{needPerm=false;names=[];
+      if(libStore===FolderStore&&rootHandle){let st='prompt';try{st=await rootHandle.queryPermission({mode:'readwrite'})}catch(e){}if(st!=='granted'){needPerm=true;return}}
+      try{names=await libStore.list()}catch(e){needPerm=libStore===FolderStore}};
+    await loadNames();
     const cnKey=String(item.cn||'').toLowerCase().replace(/[^a-z0-9]/g,''),pw=words(item.title);
     const score=n=>{const l=n.toLowerCase();let s=0;if(cnKey&&l.replace(/[^a-z0-9]/g,'').includes(cnKey))s+=10;pw.forEach(w=>{if(l.includes(w))s++});return s};
-    const ranked=names.map(n=>({n,s:score(n)})).sort((a,b)=>b.s-a.s||a.n.localeCompare(b.n));
+    let ranked=[];const rank=()=>{ranked=names.map(n=>({n,s:score(n)})).sort((a,b)=>b.s-a.s||a.n.localeCompare(b.n))};rank();
+    const slotNote=item.files.some(f=>f.slot)?'<div style="font-size:12px;background:#eef6ff;border:1px solid #c9dcf5;border-radius:6px;padding:7px 9px;margin-top:8px">A <b>consolidated</b> PDF replaces the earlier consolidated copy in the matter you choose, so it always holds the latest. Your notes and excerpts on it are kept.</div>':'';
     const box=document.createElement('div');
     box.style.cssText='position:fixed;inset:0;background:rgba(10,18,32,.5);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;font:14px/1.45 system-ui,Segoe UI,Arial,sans-serif';
     const fl=item.files.map(f=>'<li>'+esc(f.name)+'</li>').join('');
     box.innerHTML='<div style="background:#fff;color:#1a2233;border-radius:12px;max-width:560px;width:100%;box-shadow:0 14px 40px rgba(0,0,0,.3)">'+
       '<div style="padding:14px 18px;border-bottom:1px solid #e3e6ea"><b style="font-size:16px">From Charpe Suite</b><div style="font-size:12.5px;color:#5b6474;margin-top:2px">'+esc(item.title)+(item.cn?' · '+esc(item.cn):'')+(item.court?' · '+esc(item.court):'')+'</div></div>'+
-      '<div style="padding:12px 18px"><div style="font-size:12.5px;margin-bottom:8px">'+item.files.length+' PDF'+(item.files.length===1?'':'s')+':<ul style="margin:4px 0 0 18px;padding:0">'+fl+'</ul></div>'+
+      '<div style="padding:12px 18px"><div style="font-size:12.5px;margin-bottom:8px">'+item.files.length+' PDF'+(item.files.length===1?'':'s')+':<ul style="margin:4px 0 0 18px;padding:0">'+fl+'</ul></div>'+slotNote+
       '<label style="display:block;font-size:11px;font-weight:700;color:#5b6474;text-transform:uppercase;letter-spacing:.4px;margin:10px 0 4px">Add them to which matter? Search by case number or party name</label>'+
       '<input id="xinQ" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #c9ced6;border-radius:6px;font:inherit" placeholder="Type to search your matters">'+
       '<div id="xinL" style="max-height:260px;overflow:auto;margin-top:8px;border:1px solid #eef0f2;border-radius:6px"></div>'+
@@ -2784,17 +2789,41 @@ window.addEventListener('beforeunload',e=>{
     document.body.append(box);
     const L=box.querySelector('#xinL'),Q=box.querySelector('#xinQ');
     const paint=()=>{const q=Q.value.trim().toLowerCase();const rows=ranked.filter(r=>!q||r.n.toLowerCase().includes(q));
+      if(needPerm){L.innerHTML='<div style="padding:12px;font-size:13px">Your matters are in the folder <b>'+esc(rootHandle?rootHandle.name:'')+'</b> on this PC. Allow Excerpt Desk to open it again to see them.<br><button class="btn" id="xinPerm" style="margin-top:8px;font-weight:700">Open my matters folder</button></div>';
+        L.querySelector('#xinPerm').onclick=async()=>{try{await rootHandle.requestPermission({mode:'readwrite'})}catch(e){}await loadNames();rank();paint()};return}
       L.innerHTML=rows.length?rows.slice(0,80).map(r=>'<div style="display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid #f1f2f4"><span style="flex:1">'+esc(r.n)+(r.s>=10?' <b style="color:#127a4b;font-size:11px">same case number</b>':'')+'</span><button class="btn" data-n="'+esc(r.n)+'">Add here</button></div>').join(''):'<div style="padding:12px;color:#5b6474;font-size:13px">No matter matches. Use “New matter”.</div>';
       L.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>finish(b.dataset.n))};
     Q.oninput=paint;paint();Q.focus();
     const files=()=>item.files.map(f=>new File([f.blob],f.name,{type:'application/pdf'}));
+    /* consolidated PDFs (slot set) overwrite the same-named file in the matter, keeping the tab and its notes;
+       everything else is added as a new PDF */
+    async function place(){
+      let rep=0,add=0,last=null;const plain=[];
+      for(const f of item.files){
+        if(!f.slot){plain.push(new File([f.blob],f.name,{type:'application/pdf'}));continue}
+        const nm=safeName(f.name.replace(/\.pdf$/i,''))+'.pdf',bytes=new Uint8Array(await f.blob.arrayBuffer());
+        try{await proj.store.writeFile(proj.name,nm,bytes)}catch(e){console.error(e);toast('Could not save '+nm+' into the matter.'+(libStore===FolderStore?' Reconnect the folder in Library.':''));continue}
+        P.hiddenFiles=(P.hiddenFiles||[]).filter(h=>h!==nm);P.deletedFiles=(P.deletedFiles||[]).filter(h=>h!==nm);
+        let d=P.docs.find(x=>eqName(x.file,nm));
+        if(d){dropRT(d.id);views.forEach(v=>{if(v.doc===d.id)v.doc=null});rep++}
+        else{d={id:uid(),file:nm,title:nm.replace(/\.pdf$/i,'')};P.docs.push(d);rebindAnchors(d);add++}
+        last=d;
+      }
+      if(plain.length){await addPdfs(plain);add+=plain.length}
+      touch();renderItems();renderTabs();
+      for(const v of views)if(!v.doc&&P.docs[0])await viewShow(v,(last||P.docs[0]).id,{record:false});
+      if(last)await viewShow(V(),last.id);
+      return {rep,add};
+    }
+    const doneMsg=(r,name)=>toast((r.rep?r.rep+' consolidated PDF'+(r.rep===1?'':'s')+' replaced with the latest':'')+(r.rep&&r.add?' and ':'')+(r.add?r.add+' PDF'+(r.add===1?'':'s')+' added':'')+' — '+name);
     async function finish(name){
-      if(!confirm('Add '+item.files.length+' PDF'+(item.files.length===1?'':'s')+' to “'+name+'”?'))return;
-      box.remove();await openProject(libStore,name);await addPdfs(files());await delItem();
-      history.replaceState(null,'',location.pathname);toast('Added '+item.files.length+' PDF'+(item.files.length===1?'':'s')+' from Charpe Suite to '+name);
+      const n=item.files.length,hasSlot=item.files.some(f=>f.slot);
+      if(!confirm((hasSlot?'Put the PDFs into “'+name+'”? A consolidated PDF already there is replaced by this latest one.':'Add '+n+' PDF'+(n===1?'':'s')+' to “'+name+'”?')))return;
+      box.remove();await openProject(libStore,name);const r=await place();await delItem();
+      history.replaceState(null,'',location.pathname);doneMsg(r,name);
     }
     box.querySelector('#xinNew').onclick=async()=>{const nm=prompt('Name of the new matter',((item.cn?item.cn+' ':'')+item.title).slice(0,90));if(!nm)return;
-      box.remove();await newMatter(nm,files(),false);await delItem();history.replaceState(null,'',location.pathname)};
+      box.remove();await newMatter(nm,[],false);if(!proj||untitled()){toast('The matter could not be created.');return}const r=await place();await delItem();history.replaceState(null,'',location.pathname);doneMsg(r,proj.name)};
     box.querySelector('#xinNo').onclick=()=>{box.remove();history.replaceState(null,'',location.pathname);toast('Nothing added. The PDFs stay waiting until you send them again.')};
   }
   setTimeout(run,600);
