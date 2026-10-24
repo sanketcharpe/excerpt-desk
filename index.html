@@ -841,7 +841,7 @@ const fsSupported='showDirectoryPicker' in window;
 
 /* ================= project state ================= */
 let P=null, proj=null;
-const blank=name=>({format:FMT,name,docs:[],items:[],links:[],marks:[],ink:[],sheets:[{id:'s1',name:'Sheet 1'}],hiddenFiles:[],deletedFiles:[]});
+const blank=name=>({format:FMT,name,docs:[],items:[],links:[],marks:[],ink:[],sheets:[{id:'s1',name:'Sheet 1'}],hiddenFiles:[],deletedFiles:[],pins:[]});
 const byId=id=>P.items.find(i=>i.id===id);
 const docById=id=>P&&P.docs.find(d=>d.id===id);
 const stripName=s=>String(s||'').toLowerCase().replace(/\.pdf$/,'').replace(/\s*\(annotated\)$/,'').replace(/\s+/g,' ').trim();
@@ -891,7 +891,7 @@ function undoRedo(dir){
   to.push(snap());const s=from.pop();lastSnap=s;applySnap(s);updUndo();
 }
 $('#undoBtn').onclick=()=>undoRedo(-1);$('#redoBtn').onclick=()=>undoRedo(1);
-function serial(){return {format:FMT,name:P.name,updated:new Date().toISOString(),docs:P.docs,items:P.items,links:P.links,marks:P.marks,ink:P.ink||[],sheets:P.sheets,sheet:curSheet,hiddenFiles:P.hiddenFiles||[],deletedFiles:P.deletedFiles||[]}}
+function serial(){return {format:FMT,name:P.name,updated:new Date().toISOString(),docs:P.docs,items:P.items,links:P.links,marks:P.marks,ink:P.ink||[],sheets:P.sheets,sheet:curSheet,hiddenFiles:P.hiddenFiles||[],deletedFiles:P.deletedFiles||[],pins:P.pins||[]}}
 async function saveNow(){
   if(!proj)return false;clearTimeout(saveT);saveT=null;
   try{
@@ -2077,7 +2077,8 @@ function autoLayout(list,baseY){
 function loadProjectJson(json,name){
   P=blank(name);curSheet='s1';
   if(json){P.hiddenFiles=Array.isArray(json.hiddenFiles)?json.hiddenFiles:[];P.deletedFiles=Array.isArray(json.deletedFiles)?json.deletedFiles.map(String):[];importInto(json,true);
-    allAnchors().forEach(({a})=>{if(a.missing&&!a.rects)delete a.missing})}
+    allAnchors().forEach(({a})=>{if(a.missing&&!a.rects)delete a.missing});
+    P.pins=Array.isArray(json.pins)?json.pins.filter(x=>x&&x.d).map(x=>Object.assign({},x,{id:x.id||'pin-'+x.d})):[]}
 }
 
 /* ================= open a matter ================= */
@@ -2093,7 +2094,7 @@ async function openProject(store,name){
   proj={store,name,mtime:0,blocked:false};crumb('opened matter ('+store.kind+') · '+P.docs.length+' PDFs · '+P.items.length+' items');
   if(store.kind==='folder'){try{proj.mtime=await FolderStore.mtime(name)}catch(e){}}
   if(store.kind!=='memory'){try{localStorage.setItem('xdesk:last',JSON.stringify({kind:store.kind,name}))}catch(e){}noteRecent(name,store.kind)}
-  setStatus(savedLabel());deskPane.scrollTo(0,0);try{renderDayBar()}catch(e){}
+  setStatus(savedLabel());deskPane.scrollTo(0,0);try{buildDays()}catch(e){}
   if(!views.length)await setViews(1);
   views.forEach(v=>{v.cache={};v.back=[];v.fwd=[];v.doc=null;v.pages=[];v.zoom=1;v.pagesEl.innerHTML=''});
   active=null;renderTabs();renderItems();renderSheets();rememberOpen();
@@ -2364,9 +2365,37 @@ function pleadOrder(docs){return docs.map((d,i)=>({d,i,r:pleadRank(d.title)})).s
 
 /* ================= day list: matters on board for a date, with serial numbers =================
    Kept on this device (localStorage 'xdesk:days'): { "2026-10-26": { t:"CAT Nagpur", items:[{m:"<matter>", sr:"5", no:"O.A. 297/2026", who:"Manish Kumar v. UOI"}] } } */
+/* Oct 2026: each pin is kept INSIDE its matter (worksheet "pins": [{d, sr, no, who, st, t}]), so the day list
+   travels with the matter through Google Drive sync — made on the clerk's PC, it shows on the iPad.
+   DAYS is the index built from all matters in the Library. */
 const DKEY='xdesk:days';
-function dayAll(){try{return JSON.parse(localStorage.getItem(DKEY)||'{}')||{}}catch(e){return {}}}
-function daySave(o){try{localStorage.setItem(DKEY,JSON.stringify(o))}catch(e){toast('Could not save the day list on this device.')}}
+let DAYS={},PINS={},dayFlushT=null;
+function dayAll(){return JSON.parse(JSON.stringify(DAYS))}
+function daySave(o){DAYS=o;clearTimeout(dayFlushT);dayFlushT=setTimeout(dayFlush,700)}
+function pinsFromDays(){const m={};Object.entries(DAYS).forEach(([d,L])=>(L.items||[]).forEach(x=>{(m[x.m]=m[x.m]||[]).push({id:'pin-'+d,d,sr:x.sr||'',no:x.no||'',who:x.who||'',st:x.st||'',t:L.t||''})}));
+  Object.values(m).forEach(a=>a.sort((p,q)=>p.d<q.d?-1:1));return m}
+async function writePins(n,a){
+  if(proj&&proj.store===libStore&&proj.name===n&&P){P.pins=a;touch();return}
+  const j=await libStore.readJson(n);if(!j)throw new Error('no worksheet');j.pins=a;j.updated=new Date().toISOString();await libStore.writeJson(n,j);
+  if(libStore===BrowserStore&&typeof syncOn==='function'&&syncOn())requestSync(n,1500)}
+async function dayFlush(){dayFlushT=null;const want=pinsFromDays(),names=new Set([...Object.keys(want),...Object.keys(PINS)]);
+  for(const n of names){const a=want[n]||[],js=JSON.stringify(a);if(JSON.stringify(PINS[n]||[])===js)continue;
+    try{await writePins(n,a);if(a.length)PINS[n]=JSON.parse(js);else delete PINS[n]}catch(e){console.warn('pins',n,e)}}}
+let dayBuilding=null;
+function buildDays(){if(dayBuilding)return dayBuilding;dayBuilding=(async()=>{try{
+  if(dayFlushT){clearTimeout(dayFlushT);await dayFlush()}
+  let names=[];try{names=await libStore.list()}catch(e){}
+  const D={},PP={};
+  for(const n of names){let pins=[];
+    if(proj&&proj.store===libStore&&proj.name===n&&P)pins=P.pins||[];else{try{const j=await libStore.readJson(n);pins=(j&&Array.isArray(j.pins))?j.pins:[]}catch(e){}}
+    if(!pins.length)continue;PP[n]=JSON.parse(JSON.stringify(pins.map(p=>({id:p.id||'pin-'+p.d,d:p.d,sr:p.sr||'',no:p.no||'',who:p.who||'',st:p.st||'',t:p.t||''}))));
+    pins.forEach(p=>{if(!p.d)return;const L=D[p.d]=D[p.d]||{t:'',items:[]};if(p.t&&!L.t)L.t=p.t;L.items.push({m:n,sr:p.sr||'',no:p.no||'',who:p.who||'',st:p.st||''})})}
+  DAYS=D;PINS=PP;
+  /* once: lists made earlier on this device (kept only here) move into their matters */
+  try{if(!localStorage.getItem('xdesk:days:moved')){const old=JSON.parse(localStorage.getItem(DKEY)||'{}');let any=false;
+    Object.entries(old).forEach(([d,L])=>(L.items||[]).forEach(x=>{if(!names.includes(x.m))return;const T=DAYS[d]=DAYS[d]||{t:L.t||'',items:[]};if(!T.t&&L.t)T.t=L.t;if(!T.items.some(y=>y.m===x.m)){T.items.push(x);any=true}}));
+    localStorage.setItem('xdesk:days:moved','1');if(any)await dayFlush()}}catch(e){}
+  renderDayBar();if(!$('#dayPanel').hidden&&dyDate&&!$('#dayPanel').contains(document.activeElement))drawDay()}finally{dayBuilding=null}})();return dayBuilding}
 const isoDay=d=>{const x=new Date(d.getTime()-d.getTimezoneOffset()*60000);return x.toISOString().slice(0,10)};
 const todayIso=()=>isoDay(new Date());
 function dayFmt(iso){try{const d=new Date(iso+'T00:00:00');return d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}catch(e){return iso}}
@@ -2570,7 +2599,7 @@ $('#brPin').onclick=()=>{
   toast('Pinned '+pick.length+' matter'+(pick.length===1?'':'s')+' for '+dayFmt(d)+', in board order.');
 };
 /* keep the list when a matter is renamed in the Library */
-function dayRename(a,b){const all=dayAll();let ch=false;Object.values(all).forEach(L=>(L.items||[]).forEach(x=>{if(x.m===a){x.m=b;ch=true}}));if(ch){daySave(all);renderDayBar()}}
+function dayRename(a,b){buildDays()}
 window.addEventListener('storage',e=>{if(e.key===DKEY)renderDayBar()});
 
 /* ================= delete pages (the one on screen, or several chosen) ================= */
@@ -3074,7 +3103,7 @@ const isOpenLocal=n=>proj&&proj.store===BrowserStore&&proj.name===n;
 const CH=2621440; /* 2.5 MB pieces */
 
 /* ---- three-way merge: keeps changes made on both devices, item by item ---- */
-const WSKEYS=['docs','items','links','marks','ink','sheets'];
+const WSKEYS=['docs','items','links','marks','ink','sheets','pins'];
 /* compare content, not the order fields happen to be written in */
 function canon(x){if(Array.isArray(x))return '['+x.map(canon).join(',')+']';if(x&&typeof x==='object')return '{'+Object.keys(x).filter(k=>x[k]!==undefined&&k!=='missing').sort().map(k=>JSON.stringify(k)+':'+canon(x[k])).join(',')+'}';return JSON.stringify(x)}
 function stableWs(j){if(!j)return '';const o={};WSKEYS.forEach(k=>o[k]=(Array.isArray(j[k])?[...j[k]]:[]).sort((a,b)=>String(a&&a.id)<String(b&&b.id)?-1:1));if(Array.isArray(j.sheets))o.sheetOrder=j.sheets.map(x=>x&&x.id);o.hiddenFiles=Array.isArray(j.hiddenFiles)?[...j.hiddenFiles].sort():[];o.deletedFiles=Array.isArray(j.deletedFiles)?[...j.deletedFiles].sort():[];return canon(o)}
@@ -3222,6 +3251,7 @@ async function runSync(manual){
     else if(manual)toast('Synced with Google Drive'+(pulled||pushed?' ('+(pulled?pulled+' received':'')+(pulled&&pushed?', ':'')+(pushed?pushed+' sent':'')+')':': everything is up to date'));
     if(manual&&srvV<2)toast('Tip: update the Google script to version 2 for faster sync and large PDFs (see the setup guide).');
     if($('#libPanel')&&!$('#libPanel').hidden)refreshLibrary();
+    if(pulled)try{buildDays()}catch(e){}
     if(untitled()&&P&&!P.docs.length&&!P.items.length)showWelcome();
   }catch(e){console.warn(e);updSyncBtn('☁ Not synced');if(manual)toast('Could not sync: '+e.message+'.');syncing=false;syncMsg='';if(!/key/.test(e.message))requestSync(null,30000);return}
   finally{if(syncing){syncing=false;syncMsg='';updSyncBtn()}if(syncAgain||pendingNames.size||pendingFull){syncAgain=false;clearTimeout(syncTimer);syncTimer=setTimeout(()=>runSync(false),800)}}
