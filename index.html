@@ -37,7 +37,7 @@ html{box-sizing:border-box;height:100%}
 *,*::before,*::after{box-sizing:inherit}
 body{height:100%;margin:0;background:var(--desk);color:var(--ink);font-family:var(--f-ui);font-size:14px;overflow:hidden}
 button,label.btn,input,select,textarea{font:inherit;color:inherit}
-.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr)}
+.app{height:100%;display:grid;grid-template-rows:auto auto minmax(0,1fr)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
@@ -142,6 +142,49 @@ button,label.btn,input,select,textarea{font:inherit;color:inherit}
 .pgf-arrows{display:flex;gap:3px}
 .pgf-arrows button{width:22px;height:18px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--muted);font-size:12px;line-height:1;cursor:pointer;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.1)}
 .pgf-arrows button:hover,.pgf-row button:hover{border-color:var(--accent);color:var(--accent)}
+.pgfloat.away{display:none}
+/* day list strip under the header */
+.daybar{display:flex;align-items:center;gap:6px;padding:5px 12px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--accent) 6%,var(--surface));overflow-x:auto;scrollbar-width:thin}
+.daybar:empty{display:block;padding:0;border:0}
+.daybar .dd{flex:none;height:30px;border:1px solid var(--line);border-radius:7px;background:var(--surface);font:600 12.5px var(--f-ui);color:var(--ink);padding:0 10px;cursor:pointer;white-space:nowrap}
+.daybar .dc{flex:none;display:flex;align-items:center;gap:6px;height:30px;border:1px solid var(--line);border-radius:16px;background:var(--surface);font:500 12.5px var(--f-ui);color:var(--ink);padding:0 11px 0 4px;cursor:pointer;white-space:nowrap;max-width:300px}
+.daybar .dc b{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;border-radius:11px;background:var(--accent);color:var(--accent-ink);font-size:12px;padding:0 6px}
+.daybar .dc span{overflow:hidden;text-overflow:ellipsis}
+.daybar .dc small{color:var(--muted);font-size:11.5px}
+.daybar .dc:hover{border-color:var(--accent)}
+.daybar .dc.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}.daybar .dc.on b{background:var(--accent-ink);color:var(--accent)}.daybar .dc.on small{color:inherit;opacity:.85}
+.daybar .dc.miss{opacity:.55}
+.daybar .ic{flex:none}
+.dylist li input{height:32px;border:1px solid var(--line);border-radius:6px;padding:0 7px;font:inherit;color:var(--ink);background:var(--bg,#fff);min-width:0}
+.dylist li .srn{width:56px;text-align:center;font-weight:600}.dylist li .no{width:150px}.dylist li .who{flex:1}
+.dylist li .mn{display:block;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dylist li .wrapf{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.dylist li .wrapf>div{display:flex;gap:6px}
+.dylist li .st{width:130px}
+#brdPanel .row>.field,#dayPanel .row>.field{flex-direction:column;display:flex;gap:4px}#brdPanel .field input,#dayPanel .field input{height:34px;flex:none;box-sizing:border-box}
+.brtab{width:100%;border-collapse:collapse;font-size:12.5px}
+.brtab th{text-align:left;font-size:11px;color:var(--muted);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface)}
+.brtab td{padding:4px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.brtab td input[type=text]{width:100%;box-sizing:border-box;height:28px;border:1px solid var(--line);border-radius:5px;padding:0 6px;font:inherit;color:var(--ink);background:var(--bg,#fff)}
+.brtab td select{width:100%;height:28px;font:inherit}
+.brtab td.srn input{width:52px;text-align:center;font-weight:600}
+.brtab tr.off td{opacity:.5}
+.brtab .why{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
+.brsec{font-size:12px;font-weight:700;margin:12px 0 4px;color:var(--ink)}
+.brwrap{max-height:48vh;overflow:auto;border:1px solid var(--line);border-radius:8px}
+/* the page box on the worksheet: a little bigger */
+.pghost{position:absolute;right:16px;bottom:60px;z-index:8}
+.pghost:empty{display:none}
+.pghost .pgfloat{position:static;gap:5px}
+.pghost .pgf-row{gap:6px;padding:5px 6px 5px 9px;border-radius:10px;font-size:13.5px;box-shadow:0 3px 14px rgba(0,0,0,.18)}
+.pghost .pgf-row input{width:64px;height:34px;font-size:17px;border-radius:7px}
+.pghost .pgf-row button{height:34px;min-width:34px;font-size:15px;border-radius:7px;padding:0 12px}
+.pghost .pgf-row .pdfp{font-size:12.5px}
+.pghost .pgf-row .gear{font-size:17px;padding:0 4px}
+.pghost .pgf-arrows{gap:6px}
+.pghost .pgf-arrows button{width:40px;height:28px;font-size:17px;border-radius:7px}
+.pghost .pgf-set{font-size:13px;padding:7px 9px}.pghost .pgf-set input{width:56px;height:30px;font-size:15px}.pghost .pgf-set button{height:30px;padding:0 10px}
+.pghost .pf-part{font-size:12.5px;max-width:260px}
 .pgf-row button.go:hover{color:#fff;filter:brightness(1.08)}
 .pages{display:flex;flex-direction:column;align-items:center;gap:22px;padding:20px 16px 96px;min-width:min-content}
 #docArea.multi .pages{padding:12px 10px 60px;gap:16px}
@@ -410,6 +453,7 @@ details.drive ol b{color:var(--ink)}
     </div>
   </header>
 
+  <div class="daybar" id="daybar"></div>
   <main class="split">
     <section class="wrap docwrap" aria-label="PDF">
       <div class="dtools">
@@ -462,6 +506,7 @@ details.drive ol b{color:var(--ink)}
         <div id="desk"><svg id="links" xmlns="http://www.w3.org/2000/svg"></svg><div id="cards"></div><svg id="inkDesk" xmlns="http://www.w3.org/2000/svg"></svg></div>
       </div>
       <div class="banner" id="deskBanner" hidden><span>Click on the worksheet where you want to type the linked note.</span><span class="grow"></span><button class="btn" data-cancel>Cancel</button></div>
+      <div class="pghost" id="pgHost"></div>
       <div class="desk-tools">
         <button class="btn" id="clearBtn" aria-haspopup="menu" title="Remove everything from this sheet">Clear sheet</button>
       </div>
@@ -595,6 +640,33 @@ details.drive ol b{color:var(--ink)}
   <div class="row end"><button class="btn" data-close>Cancel</button><button class="btn primary" id="maGo">Add</button></div>
 </div></div>
 
+<div class="panel" id="dayPanel" hidden><div class="pc" role="dialog" aria-labelledby="dyTitle" style="width:min(760px,100%)">
+  <h2 id="dyTitle">Day list — matters on board</h2>
+  <div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end">
+    <div class="field" style="margin:0"><label for="dyDate">Date</label><input type="date" id="dyDate"></div>
+    <div class="field" style="margin:0;flex:1;min-width:180px"><label for="dyTitleIn">Court / forum (optional)</label><input type="text" id="dyTitleIn" maxlength="60" placeholder="e.g. CAT Nagpur, Court Hall 1"></div>
+  </div>
+  <p class="muted" style="margin:0;font-size:12.5px">Add the matters listed that day with their <b>serial numbers</b>. They show in that order as a strip at the top of the screen; click one to open it (the open matter is saved first).</p>
+  <ol class="olist dylist" id="dyList"></ol>
+  <div class="row" style="gap:8px;flex-wrap:wrap"><select id="dyAdd" style="flex:1;min-width:220px;height:34px"></select><button class="btn" id="dyAddBtn">+ Add to this day</button></div>
+  <div class="row end"><button class="btn warn" id="dyClear" style="margin-right:auto">Remove this day's list</button><button class="btn" id="dyBoard" title="Read a cause list (PDF or text) and pin your matters from it">📥 Upload board</button><button class="btn" data-close>Close</button><button class="btn primary" id="dyShow">Show at the top</button></div>
+</div></div>
+
+<div class="panel" id="brdPanel" hidden><div class="pc" role="dialog" aria-labelledby="brTitle" style="width:min(900px,100%)">
+  <h2 id="brTitle">Upload the daily board</h2>
+  <p class="muted" style="margin:0;font-size:12.5px">Choose the board (cause list) as a PDF — or paste its text. The tool reads each entry's <b>serial number, case number, parties and stage</b>, finds your matters in the Library by case number, and pins them to that day's list in board order. Check the list, then press <b>Pin</b>.</p>
+  <div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end">
+    <div class="field" style="margin:0"><label for="brDate">Board date</label><input type="date" id="brDate"></div>
+    <div class="field" style="margin:0;flex:1;min-width:160px"><label for="brCourt">Court / forum</label><input type="text" id="brCourt" maxlength="60" placeholder="e.g. CAT Nagpur"></div>
+    <div class="field" style="margin:0;min-width:150px"><label for="brAdv">Your name on the board</label><input type="text" id="brAdv" maxlength="40" placeholder="e.g. Charpe"></div>
+  </div>
+  <div class="row" style="gap:8px;flex-wrap:wrap"><label class="btn primary" for="brFile">Choose board PDF…</label><input class="sr" type="file" id="brFile" accept="application/pdf,.pdf,.txt,text/plain"><button class="btn" id="brPasteBtn">…or paste the text</button><span id="brMsg" class="muted" style="font-size:12.5px"></span></div>
+  <textarea id="brText" hidden rows="6" placeholder="Paste the board text here, then press Read" style="width:100%;box-sizing:border-box;font:12.5px/1.4 ui-monospace,monospace;border:1px solid var(--line);border-radius:6px;padding:8px"></textarea>
+  <div class="row" id="brReadRow" hidden><button class="btn" id="brRead">Read the pasted text</button></div>
+  <div id="brOut"></div>
+  <div class="row end"><button class="btn" data-close>Cancel</button><button class="btn primary" id="brPin" disabled>Pin</button></div>
+</div></div>
+
 <!-- Library -->
 <div class="panel" id="libPanel" hidden><div class="pc" role="dialog" aria-labelledby="libTitle">
   <h2 id="libTitle">Library</h2>
@@ -609,7 +681,7 @@ details.drive ol b{color:var(--ink)}
       <li>From then on notes, highlights, drawings, sheets and PDFs sync by themselves. The <b>☁</b> button shows when it last synced.</li>
     </ol>
   </details>
-  <div class="row"><h3 style="flex:1">Matters</h3><button class="btn primary" id="libNew">New matter</button></div>
+  <div class="row"><h3 style="flex:1">Matters</h3><button class="btn" id="libDay" title="List the matters on board for a date, with their serial numbers; they show as a strip at the top">📅 Day list</button><button class="btn" id="libBoard" title="Read the day's board (cause list) and pin your matters from it automatically">📥 Upload board</button><button class="btn primary" id="libNew">New matter</button></div>
   <div class="libsearch"><input type="text" id="libQ" placeholder="Search by matter or PDF file name" aria-label="Search matters and PDF file names" autocomplete="off"></div>
   <ul class="plist" id="projList"></ul>
   <div class="row end"><button class="btn" id="openSample">Open the sample</button><button class="btn" data-close>Close</button></div>
@@ -898,7 +970,7 @@ function parsePage(doc,t){t=String(t||'').trim();let m;
   if((m=t.match(/^-?\d+$/))){const k=parseInt(t,10);return k+p1Of(doc)-1}
   return 0}
 function updateFloat(v){
-  const f=v.el.querySelector('.pgfloat');if(!f)return;const doc=docById(v.doc),n=v.pages.length;f.hidden=!n;if(!n)return;
+  const f=v.pf;if(!f)return;const doc=docById(v.doc),n=v.pages.length;f.hidden=!n;if(!n)return;
   const inp=f.querySelector('.pf-in'),s=p1Of(doc);if(document.activeElement!==inp)inp.value=pageLabel(doc,v.cur);
   f.querySelector('.pdfp').textContent=s>1?'PDF '+v.cur+'/'+n:'/ '+n;
   f.querySelector('.pf-prev').disabled=v.cur<=1;f.querySelector('.pf-next').disabled=v.cur>=n;
@@ -907,7 +979,7 @@ function updateFloat(v){
 /* the parts of a combined PDF (OA, Reply, Rejoinder…): which part a page belongs to */
 function partOf(doc,n){if(!doc||!Array.isArray(doc.parts)||!doc.parts.length)return null;let r=null;for(const x of doc.parts)if(x.p<=n)r=x;return r}
 function wirePgFloat(v){
-  const f=v.el.querySelector('.pgfloat'),inp=f.querySelector('.pf-in'),set=f.querySelector('.pgf-set'),p1=f.querySelector('.pf-p1');
+  const f=v.pf,inp=f.querySelector('.pf-in'),set=f.querySelector('.pgf-set'),p1=f.querySelector('.pf-p1');
   const go=()=>{const doc=docById(v.doc);if(!doc)return;const n=parsePage(doc,inp.value);if(!n||n<1||n>v.pages.length){toast('No such page in this PDF.');updateFloat(v);return}
     goPageView(v,n,{record:true});inp.blur()};
   f.querySelector('.pf-go').onclick=go;
@@ -930,13 +1002,27 @@ function makeView(){
     '<div class="pf-part" hidden></div><div class="pgf-row"><input class="pf-in" inputmode="numeric" aria-label="Page number" title="Type a page number and press Go (or Enter). f2 = 2nd front page, p7 = PDF page 7"><button class="go pf-go" title="Go to this page">Go</button><span class="pdfp"></span><button class="gear pf-gear" title="Set which PDF page counts as page 1">⚙</button></div>'+
     '<div class="pgf-arrows"><button class="pf-prev" title="Previous page" aria-label="Previous page">‹</button><button class="pf-next" title="Next page" aria-label="Next page">›</button></div></div>';
   const v={el,scroller:el.querySelector('.vscroll'),pagesEl:el.querySelector('.pages'),doc:null,pages:[],cache:{},zoom:1,cur:1,back:[],fwd:[],io:null,tok:0};
+  v.pf=el.querySelector('.pgfloat');v.pfHome=v.pf.parentNode;
   wirePgFloat(v);
   v.scroller.addEventListener('scroll',()=>{clearTimeout(v.st);v.st=setTimeout(()=>{updateCur(v)},60);if(!selbar.hidden)updateSelbar();hlMenu.hidden=true},{passive:true});
   el.addEventListener('pointerdown',()=>{const i=views.indexOf(v);if(i!==av)setActiveView(i)},true);
   el.querySelector('.vx').onclick=e=>{e.stopPropagation();closeView(v)};
   return v;
 }
-function setActiveView(i){av=Math.max(0,Math.min(views.length-1,i));views.forEach((v,k)=>v.el.classList.toggle('on',k===av));active=V()?V().doc:null;renderTabs();updateNav()}
+function setActiveView(i){av=Math.max(0,Math.min(views.length-1,i));views.forEach((v,k)=>v.el.classList.toggle('on',k===av));active=V()?V().doc:null;renderTabs();updateNav();placeFloats()}
+/* the page box (number + Go, ⚙ page 1, ‹ ›) sits at the bottom right of the WORKSHEET for the active view;
+   on a phone (one side at a time) it stays on the PDF */
+const narrowMQ=window.matchMedia('(max-width:700px)');
+function placeFloats(){
+  const host=$('#pgHost');if(!host)return;const wide=!narrowMQ.matches,cur=V();
+  views.forEach(v=>{if(!v.pf)return;
+    if(wide&&v===cur){if(v.pf.parentNode!==host)host.replaceChildren(v.pf)}
+    else if(v.pf.parentNode!==v.pfHome)v.pfHome.append(v.pf);
+    v.pf.classList.toggle('away',wide&&v!==cur)});
+  if(wide&&!cur)host.replaceChildren();
+  if(cur)updateFloat(cur);
+}
+narrowMQ.addEventListener&&narrowMQ.addEventListener('change',placeFloats);
 function updateViewBtns(){
   document.querySelectorAll('#viewSeg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.v===views.length));
   docArea.classList.toggle('multi',views.length>1);docArea.classList.toggle('stack',settings.viewDir==='stack');
@@ -2007,7 +2093,7 @@ async function openProject(store,name){
   proj={store,name,mtime:0,blocked:false};crumb('opened matter ('+store.kind+') · '+P.docs.length+' PDFs · '+P.items.length+' items');
   if(store.kind==='folder'){try{proj.mtime=await FolderStore.mtime(name)}catch(e){}}
   if(store.kind!=='memory'){try{localStorage.setItem('xdesk:last',JSON.stringify({kind:store.kind,name}))}catch(e){}noteRecent(name,store.kind)}
-  setStatus(savedLabel());deskPane.scrollTo(0,0);
+  setStatus(savedLabel());deskPane.scrollTo(0,0);try{renderDayBar()}catch(e){}
   if(!views.length)await setViews(1);
   views.forEach(v=>{v.cache={};v.back=[];v.fwd=[];v.doc=null;v.pages=[];v.zoom=1;v.pagesEl.innerHTML=''});
   active=null;renderTabs();renderItems();renderSheets();rememberOpen();
@@ -2276,6 +2362,217 @@ function pleadRank(t){t=String(t||'').toLowerCase().replace(/[._]/g,' ');
   return 6}
 function pleadOrder(docs){return docs.map((d,i)=>({d,i,r:pleadRank(d.title)})).sort((a,b)=>a.r-b.r||a.i-b.i).map(x=>x.d)}
 
+/* ================= day list: matters on board for a date, with serial numbers =================
+   Kept on this device (localStorage 'xdesk:days'): { "2026-10-26": { t:"CAT Nagpur", items:[{m:"<matter>", sr:"5", no:"O.A. 297/2026", who:"Manish Kumar v. UOI"}] } } */
+const DKEY='xdesk:days';
+function dayAll(){try{return JSON.parse(localStorage.getItem(DKEY)||'{}')||{}}catch(e){return {}}}
+function daySave(o){try{localStorage.setItem(DKEY,JSON.stringify(o))}catch(e){toast('Could not save the day list on this device.')}}
+const isoDay=d=>{const x=new Date(d.getTime()-d.getTimezoneOffset()*60000);return x.toISOString().slice(0,10)};
+const todayIso=()=>isoDay(new Date());
+function dayFmt(iso){try{const d=new Date(iso+'T00:00:00');return d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}catch(e){return iso}}
+const srNum=x=>{const m=String(x.sr||'').match(/\d+/);return m?+m[0]:1e9};
+function daySort(items){return items.sort((a,b)=>srNum(a)-srNum(b)||String(a.sr).localeCompare(String(b.sr)))}
+/* a first guess at case number and short party names from the matter's name, e.g. "OA 297-2026 Manish Kumar v UOI" */
+function dayGuess(name){const s=String(name||'');
+  const m=s.match(/\b((?:O\.?\s?A|W\.?\s?P|C\.?\s?P|M\.?\s?A|R\.?\s?A|T\.?\s?A|ULP|U\.L\.P|RCS|R\.C\.S|SCS|RCA|MCA|STN|LPA|CRA|CRWP|APL|ABA|Complaint|Revision|Appeal)\.?\s*(?:\(?ULP\)?\s*)?(?:No\.?\s*)?\d+\s*[\/\-]\s*\d{2,4})/i);
+  if(!m)return {no:'',who:s.slice(0,60)};
+  return {no:m[1].replace(/\s*-\s*/,'/').replace(/\s+/g,' ').trim(),who:(s.slice(0,m.index)+' '+s.slice(m.index+m[1].length)).replace(/^[\s,.\-–]+|[\s,.\-–]+$/g,'').replace(/\s+/g,' ').slice(0,60)}}
+let dayOn=null,dayHidden=false;
+function dayPick(){const all=dayAll(),ds=Object.keys(all).filter(d=>all[d].items&&all[d].items.length).sort(),t=todayIso();
+  if(dayOn&&all[dayOn]&&all[dayOn].items.length)return dayOn;
+  return ds.find(d=>d>=t)||ds[ds.length-1]||null}
+function renderDayBar(){
+  const bar=$('#daybar');if(!bar)return;const d=dayHidden?null:dayPick();bar.innerHTML='';if(!d)return;
+  const all=dayAll(),L=all[d];dayOn=d;
+  const b=document.createElement('button');b.className='dd';b.title='Change the date, or edit this list';b.textContent='📅 '+dayFmt(d)+(L.t?' · '+L.t:'')+(d===todayIso()?' (today)':'')+' ▾';
+  b.onclick=()=>{const ds=Object.keys(all).filter(x=>all[x].items&&all[x].items.length).sort();
+    popMenu(b,ds.map(x=>({label:(x===d?'✓ ':'')+dayFmt(x)+(all[x].t?' · '+all[x].t:''),hint:all[x].items.length+' matter'+(all[x].items.length===1?'':'s'),run:()=>{dayOn=x;renderDayBar()}}))
+      .concat([{label:'Edit this list…',run:()=>openDay(d)},{label:'Upload a board…',hint:'Read a cause list and pin your matters',run:()=>openBoard(d)},{label:'New day list…',run:()=>openDay(null)},{label:'Hide the strip',hint:'Comes back when you open a day list',run:()=>{dayHidden=true;renderDayBar()}}]))};
+  bar.append(b);
+  const have=new Set(libNames||[]);
+  daySort(L.items.slice()).forEach(it=>{const c=document.createElement('button');c.className='dc'+(proj&&proj.name===it.m?' on':'')+(libNames&&libNames.length&&!have.has(it.m)?' miss':'');
+    c.title=(it.no?it.no+' — ':'')+(it.who||it.m)+(it.st?'\nStage: '+it.st:'')+'\nMatter: '+it.m+(proj&&proj.name===it.m?'\n(open now)':'\nClick to open');
+    c.innerHTML='<b>'+esc(it.sr||'–')+'</b><span>'+(it.no?esc(it.no)+' ':'')+'<small>'+esc(it.who||it.m)+(it.st?' · '+esc(it.st):'')+'</small></span>';
+    c.onclick=()=>dayOpen(it.m);bar.append(c)});
+  const e=document.createElement('button');e.className='btn sq ic';e.title='Edit this day list';e.textContent='✎';e.onclick=()=>openDay(d);bar.append(e);
+  const cur=bar.querySelector('.dc.on');if(cur)cur.scrollIntoView({block:'nearest',inline:'nearest'});
+}
+async function dayOpen(name){
+  if(proj&&proj.name===name&&proj.store===libStore)return;
+  if(untitled()&&P&&(P.docs.length||P.items.length)){toast('This matter is not saved yet. Save it first, then open the next one.',{label:'Save',run:openSaveAs});return}
+  try{if(proj&&!scratch()){clearTimeout(saveT);await saveNow()}}catch(e){console.warn(e)}
+  try{const names=await libStore.list();if(!names.includes(name)){toast('"'+name+'" is not in the Library on this device. Check the name in the day list.');return}}catch(e){}
+  try{await openProject(libStore,name)}catch(e){console.error(e);toast('Could not open "'+name+'".');return}
+  renderDayBar();
+}
+function dayPin(name){
+  const d=dayOn&&dayOn>=todayIso()?dayOn:isoDay(new Date(Date.now()+864e5));
+  openDay(d,name);
+}
+let dyDate=null;
+function openDay(d,addName){
+  d=d||isoDay(new Date(Date.now()+864e5));dyDate=d;$('#dyDate').value=d;
+  const all=dayAll();all[d]=all[d]||{t:'',items:[]};
+  if(addName&&!all[d].items.some(x=>x.m===addName)){const g=dayGuess(addName);all[d].items.push({m:addName,sr:'',no:g.no,who:g.who});daySave(all)}
+  $('#dyTitleIn').value=all[d].t||'';drawDay(addName);openPanel('dayPanel');
+}
+function drawDay(focusName){
+  const all=dayAll(),L=all[dyDate]||{t:'',items:[]},ol=$('#dyList');ol.innerHTML='';
+  daySort(L.items);
+  if(!L.items.length){const li=document.createElement('li');li.innerHTML='<span class="muted">No matters on this date yet. Add them below, or use 📌 Pin to a day in the Library.</span>';ol.append(li)}
+  L.items.forEach((it,i)=>{const li=document.createElement('li');
+    li.innerHTML='<input class="srn" inputmode="numeric" placeholder="Sr." aria-label="Serial number"><div class="wrapf"><div><input class="no" placeholder="Case no., e.g. O.A. 297/2026" aria-label="Case number"><input class="who" placeholder="Parties in short" aria-label="Parties in short"><input class="st" placeholder="Stage" aria-label="Stage"></div><span class="mn"></span></div><button class="btn sq" title="Open this matter">↗</button><button class="btn sq" title="Remove from this day">×</button>';
+    const [sr,no,who,st]=li.querySelectorAll('input');sr.value=it.sr||'';no.value=it.no||'';who.value=it.who||'';st.value=it.st||'';li.querySelector('.mn').textContent='Matter: '+it.m;
+    const upd=()=>{const a=dayAll();const x=(a[dyDate]||{items:[]}).items.find(y=>y.m===it.m);if(!x)return;x.sr=sr.value.trim();x.no=no.value.trim();x.who=who.value.trim();x.st=st.value.trim();daySave(a);renderDayBar()};
+    [sr,no,who,st].forEach(inp=>{inp.oninput=upd;inp.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')inp.blur()}});sr.onchange=()=>drawDay();
+    const [go,x]=li.querySelectorAll('button');go.onclick=()=>{$('#dayPanel').hidden=true;dayOn=dyDate;dayHidden=false;dayOpen(it.m)};
+    x.onclick=()=>{const a=dayAll();a[dyDate].items=a[dyDate].items.filter(y=>y.m!==it.m);daySave(a);drawDay();renderDayBar()};
+    ol.append(li);if(focusName===it.m)setTimeout(()=>sr.focus(),60)});
+  all[dyDate]=L;daySave(all);
+  const sel=$('#dyAdd'),inList=new Set(L.items.map(x=>x.m));
+  sel.innerHTML='<option value="">— choose a matter from the Library —</option>'+(libNames||[]).filter(n=>!inList.has(n)).map(n=>'<option>'+esc(n)+'</option>').join('');
+}
+$('#dyDate').onchange=()=>{const v=$('#dyDate').value;if(!v)return;const all=dayAll();if(all[dyDate]&&!all[dyDate].items.length&&!all[dyDate].t){delete all[dyDate];daySave(all)}dyDate=v;const a=dayAll();$('#dyTitleIn').value=(a[v]&&a[v].t)||'';drawDay()};
+$('#dyTitleIn').oninput=()=>{const a=dayAll();a[dyDate]=a[dyDate]||{t:'',items:[]};a[dyDate].t=$('#dyTitleIn').value.trim();daySave(a);renderDayBar()};
+$('#dyTitleIn').onkeydown=e=>e.stopPropagation();
+$('#dyAddBtn').onclick=()=>{const n=$('#dyAdd').value;if(!n){toast('Choose a matter first.');return}const a=dayAll();a[dyDate]=a[dyDate]||{t:'',items:[]};const g=dayGuess(n);a[dyDate].items.push({m:n,sr:'',no:g.no,who:g.who});daySave(a);drawDay(n);renderDayBar()};
+$('#dyShow').onclick=()=>{const a=dayAll();if(!(a[dyDate]&&a[dyDate].items.length)){toast('Add at least one matter to this day first.');return}dayOn=dyDate;dayHidden=false;$('#dayPanel').hidden=true;renderDayBar()};
+$('#dyClear').onclick=e=>popMenu(e.currentTarget,[{label:'Yes, remove the list for '+dayFmt(dyDate),hint:'Only the list goes; the matters themselves are not touched.',run:()=>{const a=dayAll();delete a[dyDate];daySave(a);if(dayOn===dyDate)dayOn=null;$('#dayPanel').hidden=true;renderDayBar()}},{label:'No, keep it',run:()=>{}}]);
+$('#libDay').onclick=()=>openDay(dayPick()||null);
+/* ---------- upload the day's board (cause list) and pin your matters from it ---------- */
+const CASE_STOP=new Set(['BOARD','LIST','DAILY','CAUSE','DATE','DATED','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY','NO','OF','DT','ON','IN','AT','TO','BY','SR','PAGE','DATED','DATE','THE','AND','COURT','HALL','ITEM','YEAR','DAY','TIME','ROOM','PIN','PH','TEL','MOB','FAX','GR','RES','REG']);
+function normType(t){let x=String(t||'').toUpperCase().replace(/[^A-Z]/g,'');
+  if(/^ORIGINALAPPLICATION/.test(x))x='OA';if(/^WRITPETITION/.test(x))x='WP';if(/^CONTEMPTPETITION/.test(x))x='CP';if(/^REVIEWAPPLICATION/.test(x))x='RA';if(/^MISC(ELLANEOUS)?APPLICATION/.test(x))x='MA';
+  if(/^COMPLAINT(ULP)?$/.test(x)||x==='CULP')x='ULP';return x}
+/* every case reference in a piece of text → [{key:'OA:297:2026', disp:'OA/297/2026', i}] */
+function caseRefs(text){
+  const out=[],seen=new Set(),T=String(text||'').replace(/\b0(\.?\s?A\.?)(?=[\s\/.:\-]|No)/g,'O$1').replace(/\b0\.A\b/g,'O.A');
+  const add=(type,num,yr,i)=>{type=normType(type);if(!type||type.length>8||CASE_STOP.has(type))return;num=parseInt(num,10);if(!num)return;yr=String(yr);if(yr.length===2)yr='20'+yr;if(+yr<1950||+yr>2100)return;
+    const key=type+':'+num+':'+yr;if(seen.has(key))return;seen.add(key);out.push({key,disp:type+' '+num+'/'+yr,i})};
+  let m;const r4=/\b([A-Za-z][A-Za-z.()]{0,14})\s*\/\s*(\d{2,4})\s*\/\s*(\d{1,6})\s*\/\s*(\d{4})\b/g;
+  while((m=r4.exec(T)))add(m[1],m[3],m[4],m.index);
+  const r3=/\b((?:Complaint\s*\(?\s*U\.?\s*L\.?\s*P\.?\s*\)?)|(?:Original\s+Application)|(?:Writ\s+Petition)|(?:Contempt\s+Petition)|(?:Review\s+Application)|(?:Misc(?:ellaneous)?\.?\s+Application)|(?:[A-Za-z][A-Za-z.()]{0,12}(?:\s?\(\s?[A-Za-z.]{2,6}\s?\))?))\s*[\/.\-:]?\s*(?:No\.?\s*|Nos\.?\s*)?(\d{1,6})\s*(?:\/|-|\s+of\s+|\s+OF\s+)\s*(\d{4}|\d{2})\b/g;
+  while((m=r3.exec(T))){const pre=T.slice(Math.max(0,m.index-6),m.index),post=T.slice(m.index+m[0].length,m.index+m[0].length+3);if(/\/\s*$/.test(pre)||/^[\/.\-]\d/.test(post))continue;add(m[1],m[2],m[3],m.index)}
+  return out.sort((a,b)=>a.i-b.i)}
+const STAGE_RE=/\b(admission|hearing|final hearing|orders?|mention(?:ing)?|directions?|fresh|after notice|notice|pronouncement|judgment|motion|regular|circulation|disposal|arguments?|evidence|reply|filing|compliance|appearance|interim relief|stay|framing of issues|cross|chief|chamber|registrar|for speaking to minutes|part[\s-]heard|to be mentioned|consideration)\b/i;
+function cleanStage(t){t=String(t).replace(/^[\W_]+|[\W_]+$/g,'').replace(/\s+/g,' ').trim();if(t.length>40)t=(t.match(/(?:for\s+)?[A-Za-z ]*?(admission|final hearing|hearing|orders?|mention|directions|fresh|after notice|notice|pronouncement|judgment|motion|regular|circulation|disposal|arguments?|evidence|reply|filing|compliance|appearance|interim relief|stay|part[\s-]heard)/i)||[t.slice(0,40)])[0];
+  return t.toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase())}
+function shortParty(t){
+  t=String(t).replace(/^\s*(in|with|and|along\s*with|c\/w)\b/i,' ');
+  const cut=t.slice(1).search(/\s(shri|sh\.|adv\.?|advocate|mr\.|counsel|ld\.)\s/i);if(cut>0)t=t.slice(0,cut+1);
+  t=t.replace(/\b[A-Z]\.\s?(?:[A-Z]\.\s?)*(?=\s|$)/g,' ').replace(/^\s*the\s+/i,' ').replace(/\b(shri|smt|kum|mr|mrs|ms|dr|sh|adv|advocate|counsel|applicant|applicants|petitioner|petitioners|respondents?|and others|& others|& ors|and ors|ors|anr|another)\b\.?/gi,' ').replace(/[^A-Za-zऀ-ॿ .&]/g,' ').replace(/\s+/g,' ').trim();
+  const w=t.split(' ').filter(x=>x.length>1);let r=w.slice(0,3).join(' ');if(r&&r===r.toUpperCase())r=r.toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase());return r}
+function shortRes(t){t=String(t);
+  if(/union\s+of\s+india|\bU\.?\s?O\.?\s?I\b/i.test(t))return 'UOI';if(/state\s+of\s+maharashtra/i.test(t))return 'State';
+  if(/M\.?\s?S\.?\s?R\.?\s?T\.?\s?C|maharashtra\s+state\s+road/i.test(t))return 'MSRTC';if(/municipal\s+corporation/i.test(t))return 'Mun. Corp.';
+  return shortParty(t)}
+function boardEntries(lines){
+  const E=[];let stage='',cur=null;
+  const startOf=(ln,i)=>{const refs=caseRefs(ln);if(!refs.length)return null;let sr=(ln.match(/^\s*(?:Sr\.?\s*No\.?\s*)?(\d{1,4})(?![\d\/\-])\s*[.)]?\s+/)||[])[1]||'';
+    if(!sr&&i>0&&/^\s*\d{1,4}\s*[.)]?\s*$/.test(lines[i-1]))sr=lines[i-1].trim().replace(/\D/g,'');return {refs,sr}};
+  lines.forEach((ln,i)=>{
+    const t=ln.trim();if(!t)return;
+    const st=startOf(t,i);
+    if(!st){if(t.length<80&&STAGE_RE.test(t)&&!/\b(v\/?s\.?|versus)\b/i.test(t)&&(t===t.toUpperCase()||/^for\s/i.test(t)||/^\W*[A-Z][A-Z\s]{3,}\W*$/.test(t))){stage=cleanStage(t);cur=null;return}
+      if(cur&&cur.lines<4){cur.text+=' '+t;cur.lines++}return}
+    if(cur&&!st.sr&&/^\s*(with|in|&|and|alongwith|along with|c\/w|connected)\b/i.test(t)){cur.refs.push(...st.refs);cur.text+=' '+t;cur.lines++;return}
+    cur={sr:st.sr,refs:st.refs,text:t,stage,lines:1};E.push(cur)});
+  E.forEach(e=>{
+    let body=e.text;e.refs.forEach(r=>{});body=body.replace(/^\s*\d{1,4}\s*[.)]?\s+/,'');
+    const inline=body.match(/\b(?:for\s+)?(admission|final hearing|orders|order|mention|directions|fresh|after notice|pronouncement|judgment|motion|regular|circulation|disposal|arguments|evidence|reply|filing|compliance|appearance|interim relief|part[\s-]heard)\b/i);
+    if(!e.stage&&inline)e.stage=cleanStage(inline[0]);
+    let txt=body;caseRefs(body).forEach(r=>{});txt=txt.replace(/\b[A-Za-z][A-Za-z.()]{0,14}\s*\/\s*\d{2,4}\s*\/\s*\d{1,6}\s*\/\s*\d{4}\b/g,' ').replace(/\b[A-Za-z][A-Za-z.()]{0,12}\s*[\/.\-:]?\s*(?:No\.?\s*)?\d{1,6}\s*(?:\/|-|\s+of\s+)\s*\d{2,4}\b/gi,' ');
+    const parts=txt.split(/\b(?:v\/s\.?|vs\.?|v\.|versus)\s/i);
+    const pet=shortParty(parts[0]),res=parts[1]?shortRes(parts[1]):'';
+    e.who=(pet+(res?' v '+res:'')).trim();e.no=e.refs[0].disp;e.keys=e.refs.map(r=>r.key)});
+  return E}
+function boardDate(text){
+  const T=String(text).slice(0,4000);let m=T.match(/\b(\d{1,2})[.\/-](\d{1,2})[.\/-](20\d{2})\b/);
+  if(m)return m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
+  m=T.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?,?\s+(20\d{2})\b/i);
+  if(m){const mo='janfebmaraprmayjunjulaugsepoctnovdec'.indexOf(m[2].toLowerCase().slice(0,3))/3+1;return m[3]+'-'+String(mo).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0')}
+  return ''}
+async function pdfLines(bytes){
+  const doc=await pdfjsLib.getDocument({data:bytes}).promise,lines=[];let chars=0;
+  for(let n=1;n<=doc.numPages;n++){const pg=await doc.getPage(n),tc=await pg.getTextContent(),rows=[];
+    tc.items.forEach(it=>{if(!it.str||!it.str.trim())return;chars+=it.str.length;const x=it.transform[4],y=it.transform[5];let r=rows.find(q=>Math.abs(q.y-y)<3.2);if(!r){r={y,its:[]};rows.push(r)}r.its.push({x,s:it.str,w:it.width||0})});
+    rows.sort((a,b)=>b.y-a.y).forEach(r=>{r.its.sort((a,b)=>a.x-b.x);let s='',end=null;r.its.forEach(it=>{if(end!=null)s+=(it.x-end>14?'   ':it.x-end>1.5?' ':'');s+=it.s;end=it.x+it.w});lines.push(s)});
+    pg.cleanup()}
+  return {lines,chars,doc}}
+async function ocrLines(doc,say){
+  await loadTess();const w=await Tesseract.createWorker(['eng'],1,{logger:()=>{}}),lines=[];
+  try{for(let n=1;n<=doc.numPages;n++){say('Reading scanned page '+n+' of '+doc.numPages+'…');const pg=await doc.getPage(n),vp=pg.getViewport({scale:3}),c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;
+      const cx=c.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,c.width,c.height);await pg.render({canvasContext:cx,viewport:vp}).promise;const {data}=await w.recognize(c);lines.push(...String(data.text||'').split('\n'));c.width=c.height=0}}
+  finally{try{await w.terminate()}catch(e){}}
+  return lines}
+let BR={rows:[],date:''};
+async function openBoard(d){
+  BR={rows:[],date:d||dayOn||isoDay(new Date(Date.now()+864e5))};$('#brDate').value=BR.date;
+  const a=dayAll();$('#brCourt').value=(a[BR.date]&&a[BR.date].t)||'';
+  try{$('#brAdv').value=localStorage.getItem('xdesk:advname')||'Charpe'}catch(e){$('#brAdv').value='Charpe'}
+  $('#brOut').innerHTML='';$('#brMsg').textContent='';$('#brText').hidden=true;$('#brReadRow').hidden=true;$('#brPin').disabled=true;
+  try{libNames=await libStore.list()}catch(e){}
+  openPanel('brdPanel')}
+$('#libBoard').onclick=()=>openBoard(dayPick());
+$('#dyBoard').onclick=()=>openBoard(dyDate);
+$('#brAdv').onchange=()=>{try{localStorage.setItem('xdesk:advname',$('#brAdv').value.trim())}catch(e){}if(BR.lines)boardShow(BR.lines)};
+$('#brPasteBtn').onclick=()=>{$('#brText').hidden=false;$('#brReadRow').hidden=false;$('#brText').focus()};
+$('#brText').onkeydown=e=>e.stopPropagation();
+$('#brRead').onclick=()=>{const t=$('#brText').value;if(!t.trim()){toast('Paste the board text first.');return}boardShow(t.split(/\r?\n/))};
+$('#brFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const msg=$('#brMsg');
+  try{
+    if(/\.txt$/i.test(f.name)||/^text\//.test(f.type)){boardShow((await f.text()).split(/\r?\n/));return}
+    if(!window.pdfjsLib){toast('The PDF reader did not load. Check the connection and reload.');return}
+    msg.textContent='Reading '+f.name+'…';
+    const r=await pdfLines(new Uint8Array(await f.arrayBuffer()));
+    if(r.chars<80){msg.innerHTML='This board is a scan (pictures only). <button class="btn" id="brOcr">Read it with OCR</button>';
+      $('#brOcr').onclick=async()=>{try{const L=await ocrLines(r.doc,t=>msg.textContent=t);msg.textContent='';boardShow(L)}catch(err){msg.textContent='OCR failed: '+err.message}};return}
+    msg.textContent=f.name+' · '+r.doc.numPages+' page'+(r.doc.numPages===1?'':'s');boardShow(r.lines)}
+  catch(err){console.error(err);msg.textContent='Could not read that file: '+(err.message||err)}};
+function libKeyMap(){const m={};(libNames||[]).forEach(n=>caseRefs(n).forEach(r=>{(m[r.key]=m[r.key]||[]).push(n)}));return m}
+function nameHit(entryText,matter){const stop=/^(oa|wp|ulp|ma|cp|ra|rcs|scs|rca|mca|stn|the|and|vs|uoi|union|india|state|maharashtra|msrtc|others|ors|nagpur|matter|case|cat|of|no)$/i;
+  const w=String(matter).replace(/[\d\/\-.,()]+/g,' ').split(/\s+/).filter(x=>x.length>=4&&!stop.test(x));if(w.length<2)return false;
+  const T=entryText.slice(0,260).toLowerCase();return w.filter(x=>T.includes(x.toLowerCase())).length>=Math.min(2,w.length)}
+function boardShow(lines){
+  BR.lines=lines;const d=boardDate(lines.join('\n'));if(d&&!BR.dateTouched){BR.date=d;$('#brDate').value=d;const a=dayAll();if(a[d]&&a[d].t&&!$('#brCourt').value)$('#brCourt').value=a[d].t}
+  const E=boardEntries(lines),km=libKeyMap(),adv=$('#brAdv').value.trim().toLowerCase();BR.rows=[];
+  const used=new Set();
+  E.forEach(e=>{let m=null,why='';for(const k of e.keys){if(km[k]){m=km[k][0];why='same case number';break}}
+    const mine=adv&&e.text.toLowerCase().includes(adv);
+    if(!m&&mine){m=(libNames||[]).find(n=>!used.has(n)&&nameHit(e.text,n))||null;if(m)why='party names match'}
+    if(m)used.add(m);
+    if(m||mine)BR.rows.push({on:!!m,m:m||'',sr:e.sr,no:e.no,who:e.who,st:e.stage||'',why:m?why:'your name is on it; matter not found in the Library',found:!!m})});
+  const found=BR.rows.filter(r=>r.found),other=BR.rows.filter(r=>!r.found);
+  const opts=sel=>'<option value="">— choose matter —</option>'+(libNames||[]).map(n=>'<option'+(n===sel?' selected':'')+'>'+esc(n)+'</option>').join('');
+  const row=(r,i)=>'<tr data-i="'+i+'"'+(r.on?'':' class="off"')+'><td><input type="checkbox"'+(r.on?' checked':'')+' aria-label="Pin"></td><td class="srn"><input type="text" value="'+esc(r.sr)+'" data-k="sr"></td><td><input type="text" value="'+esc(r.no)+'" data-k="no"></td><td><input type="text" value="'+esc(r.who)+'" data-k="who"></td><td><input type="text" value="'+esc(r.st)+'" data-k="st"></td><td><select>'+opts(r.m)+'</select><span class="why">'+esc(r.why)+'</span></td></tr>';
+  const head='<thead><tr><th></th><th>Sr.</th><th>Case no.</th><th>Parties (short)</th><th>Stage</th><th>Matter in Library</th></tr></thead>';
+  let h='<div class="note" style="font-size:12.5px;margin:6px 0">Read <b>'+E.length+'</b> entries on the board. Found <b>'+found.length+'</b> of your matters'+(other.length?'; '+other.length+' more entr'+(other.length===1?'y has':'ies have')+' your name but no matching matter — choose one to pin it, or leave it.':'.')+'</div>';
+  if(!E.length)h='<div class="note" style="font-size:12.5px;margin:6px 0">No case numbers could be read from this board. If it is a scan, use OCR; or paste the text instead.</div>';
+  if(BR.rows.length){h+='<div class="brwrap"><table class="brtab">'+head+'<tbody>';
+    if(found.length)h+='<tr><td colspan="6" class="brsec">Your matters on this board</td></tr>'+BR.rows.map((r,i)=>r.found?row(r,i):'').join('');
+    if(other.length)h+='<tr><td colspan="6" class="brsec">Your name is on these, but no matter was found in the Library</td></tr>'+BR.rows.map((r,i)=>!r.found?row(r,i):'').join('');
+    h+='</tbody></table></div>'}
+  $('#brOut').innerHTML=h;
+  $('#brOut').querySelectorAll('tr[data-i]').forEach(tr=>{const r=BR.rows[+tr.dataset.i],cb=tr.querySelector('input[type=checkbox]'),sel=tr.querySelector('select');
+    const upd=()=>{tr.classList.toggle('off',!r.on);brCount()};
+    cb.onchange=()=>{r.on=cb.checked;upd()};sel.onchange=()=>{r.m=sel.value;if(r.m&&!r.on){r.on=true;cb.checked=true}upd()};
+    tr.querySelectorAll('input[type=text]').forEach(inp=>{inp.oninput=()=>{r[inp.dataset.k]=inp.value};inp.onkeydown=e=>e.stopPropagation()})});
+  brCount()}
+function brCount(){const n=BR.rows.filter(r=>r.on&&r.m).length;$('#brPin').disabled=!n;$('#brPin').textContent=n?'Pin '+n+' matter'+(n===1?'':'s')+' to '+dayFmt($('#brDate').value||BR.date):'Pin'}
+$('#brDate').onchange=()=>{BR.date=$('#brDate').value;BR.dateTouched=true;brCount()};
+$('#brPin').onclick=()=>{
+  const d=$('#brDate').value||BR.date;if(!d){toast('Choose the board date.');return}
+  const pick=BR.rows.filter(r=>r.on&&r.m);if(!pick.length)return;
+  const a=dayAll();a[d]=a[d]||{t:'',items:[]};const ct=$('#brCourt').value.trim();if(ct)a[d].t=ct;
+  pick.forEach(r=>{const x={m:r.m,sr:String(r.sr||'').trim(),no:String(r.no||'').trim(),who:String(r.who||'').trim(),st:String(r.st||'').trim()};
+    const i=a[d].items.findIndex(y=>y.m===r.m);if(i>=0)a[d].items[i]=x;else a[d].items.push(x)});
+  daySort(a[d].items);daySave(a);dayOn=d;dayHidden=false;$('#brdPanel').hidden=true;renderDayBar();
+  toast('Pinned '+pick.length+' matter'+(pick.length===1?'':'s')+' for '+dayFmt(d)+', in board order.');
+};
+/* keep the list when a matter is renamed in the Library */
+function dayRename(a,b){const all=dayAll();let ch=false;Object.values(all).forEach(L=>(L.items||[]).forEach(x=>{if(x.m===a){x.m=b;ch=true}}));if(ch){daySave(all);renderDayBar()}}
+window.addEventListener('storage',e=>{if(e.key===DKEY)renderDayBar()});
+
 /* ================= delete pages (the one on screen, or several chosen) ================= */
 let lastPgDel=null;
 function syncFile(){try{if(proj&&proj.store===BrowserStore&&typeof syncOn==='function'&&syncOn())requestSync(proj.name,500)}catch(e){}}
@@ -2518,13 +2815,14 @@ function renderLibList(){
   if(!rows.length){const li=document.createElement('li');li.className='empty';li.textContent=q?'No matter or PDF file name contains "'+q+'".':'No matters yet. Press New matter.';list.append(li);return}
   rows.forEach(({n,fileHits})=>{const li=document.createElement('li');if(proj&&proj.store===libStore&&proj.name===n)li.className='cur';
     const folderM=libStore===FolderStore,sy=libSync[n];
-    li.innerHTML='<span class="n"></span>'+(folderM&&syncOn()?'<button class="btn" data-a="tosync" title="Copy this matter into this browser\'s storage, which syncs with Google Drive and the iPad">Move to synced storage</button>':'')+'<button class="btn" data-a="ren">Rename</button><button class="btn del" data-a="del" title="Delete this matter (asks twice)">Delete</button><button class="btn primary" data-a="open">Open</button>';li.querySelector('.n').innerHTML=q?markHit(n,q):esc(n);
+    li.innerHTML='<span class="n"></span>'+(folderM&&syncOn()?'<button class="btn" data-a="tosync" title="Copy this matter into this browser\'s storage, which syncs with Google Drive and the iPad">Move to synced storage</button>':'')+'<button class="btn" data-a="pin" title="Put this matter on a day list (with its serial number)">📌 Pin to a day</button><button class="btn" data-a="ren">Rename</button><button class="btn del" data-a="del" title="Delete this matter (asks twice)">Delete</button><button class="btn primary" data-a="open">Open</button>';li.querySelector('.n').innerHTML=q?markHit(n,q):esc(n);
     if(!folderM&&syncOn()){const sm=document.createElement('small');sm.className='sy';sm.textContent=!sy||(!sy.ok&&!sy.err)?'☁ not synced yet':sy.err?'☁ ⚠ not synced: '+sy.err:'☁ synced '+new Date(sy.ok).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});if(sy&&sy.err)sm.classList.add('bad');li.append(sm)}
     const ts=li.querySelector('[data-a=tosync]');if(ts)ts.onclick=()=>moveToSynced(n,ts);
     if(fileHits.length){const ul=document.createElement('ul');ul.className='files';fileHits.slice(0,6).forEach(f=>{const l=document.createElement('li');l.innerHTML='PDF: '+markHit(f,q);ul.append(l)});li.append(ul)}
     li.querySelector('[data-a=open]').onclick=async()=>{$('#libPanel').hidden=true;await openProject(libStore,n);
       if(fileHits.length){const d=P.docs.find(x=>x.file===fileHits[0]);if(d&&V().doc!==d.id)viewShow(V(),d.id)}};
-    li.querySelector('[data-a=ren]').onclick=()=>startRename(li,n);li.querySelector('[data-a=del]').onclick=()=>deleteMatter(libStore,n);list.append(li)});
+    li.querySelector('[data-a=ren]').onclick=()=>startRename(li,n);li.querySelector('[data-a=del]').onclick=()=>deleteMatter(libStore,n);
+    li.querySelector('[data-a=pin]').onclick=()=>dayPin(n);list.append(li)});
 }
 $('#libQ').addEventListener('input',renderLibList);
 $('#libQ').addEventListener('keydown',e=>{if(e.key==='Enter'){const b=$('#projList [data-a=open]');if(b)b.click()}});
@@ -2546,7 +2844,7 @@ function startRename(li,old){
   const go=async()=>{const nn=safeName(inp.value).replace(/\.+$/,'');if(!nn||nn===old){refreshLibrary();return}
     let names=[];try{names=await libStore.list()}catch(e){}if(names.some(x=>x.toLowerCase()===nn.toLowerCase()&&x!==old)){toast('A matter called "'+nn+'" already exists.');return}
     ok.disabled=true;ok.textContent='Renaming…';const isCur=proj&&proj.store===libStore&&proj.name===old;
-    try{if(isCur)await saveNow();await libStore.rename(old,nn);try{localStorage.setItem('xdesk:recent',JSON.stringify(recentNames().map(r=>r.name===old&&r.kind===libStore.kind?{name:nn,kind:r.kind}:r)))}catch(e){}
+    try{if(isCur)await saveNow();await libStore.rename(old,nn);dayRename(old,nn);try{localStorage.setItem('xdesk:recent',JSON.stringify(recentNames().map(r=>r.name===old&&r.kind===libStore.kind?{name:nn,kind:r.kind}:r)))}catch(e){}
       if(isCur){await openProject(libStore,nn);P.name=nn;touch()}toast('Renamed to "'+nn+'"')}
     catch(e){console.error(e);toast('Could not rename. Close any open files from that folder and try again.')}refreshLibrary()};
   ok.onclick=go;no.onclick=refreshLibrary;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go();if(e.key==='Escape')refreshLibrary()});
