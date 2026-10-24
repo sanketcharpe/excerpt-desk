@@ -109,6 +109,40 @@ button,label.btn,input,select,textarea{font:inherit;color:inherit}
 .vhead .vp{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .view.on .vhead .vt{color:var(--accent)}
 .vscroll{position:relative;flex:1;min-height:0;overflow:auto}
+/* search panel */
+.srch{position:absolute;top:8px;right:14px;z-index:20;width:min(420px,calc(100% - 28px));max-height:calc(100% - 24px);display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.18);padding:9px 10px;font-size:13px}
+.srch .srow{display:flex;gap:5px;align-items:center}
+.srch .srow.sm{font-size:12px;color:var(--muted);gap:12px;flex-wrap:wrap}
+.srch .srow.sm label{display:flex;gap:4px;align-items:center;cursor:pointer}
+.srch #srchIn{flex:1;min-width:0;height:30px;border:1px solid var(--line);border-radius:6px;padding:0 9px;font:inherit;color:var(--ink);background:var(--bg,#fff)}
+.srch .scount{margin-left:auto;font-variant-numeric:tabular-nums}
+.slist{overflow:auto;min-height:0;border-top:1px solid var(--line);margin:0 -10px;padding:2px 0}
+.slist .sg{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:7px 10px 3px}
+.slist .sh{padding:5px 10px;cursor:pointer;line-height:1.4;border-left:3px solid transparent}
+.slist .sh:hover,.slist .sh.on{background:rgba(44,73,201,.07);border-left-color:var(--accent)}
+.slist .sh b.pg{color:var(--accent);font-weight:600;margin-right:6px;font-variant-numeric:tabular-nums}
+.slist .sh mark{background:#ffe27a;color:inherit;border-radius:2px;padding:0 1px}
+.slist .snote{padding:6px 10px;color:var(--muted);font-size:12.5px}
+.socr{background:#fff8e6;border:1px solid #f0d48a;border-radius:7px;padding:7px 9px;font-size:12.5px;line-height:1.45;color:#5a4a1a}
+.socr .btn{margin-top:6px}
+.socr .bar{height:6px;background:#efe3bf;border-radius:4px;overflow:hidden;margin-top:6px}.socr .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.textLayer span.shit{background:rgba(255,200,0,.42);border-radius:2px}
+/* page box at the bottom right of each view: number + Go, ⚙ "page 1 starts at", small ‹ › */
+.pgfloat{position:absolute;right:14px;bottom:12px;z-index:6;display:flex;flex-direction:column;align-items:flex-end;gap:3px;pointer-events:none}
+.pgfloat>*{pointer-events:auto}
+.pgf-row{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:3px 4px 3px 6px;box-shadow:0 2px 10px rgba(0,0,0,.14);font-size:12px;color:var(--muted)}
+.pgf-row input{width:44px;height:24px;border:1px solid var(--line);border-radius:5px;text-align:center;font:600 13px/1 var(--f-ui,inherit);color:var(--ink);background:var(--bg,#fff);padding:0 2px}
+.pgf-row button{height:24px;min-width:24px;border:1px solid var(--line);border-radius:5px;background:var(--bg,#fff);color:var(--ink);font:600 12px/1 inherit;cursor:pointer;padding:0 7px}
+.pgf-row button.go{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pgf-row .pdfp{font-size:10.5px;white-space:nowrap}
+.pgf-row .gear{border:none;background:none;color:var(--muted);padding:0 3px;min-width:18px;font-size:13px}
+.pgf-set{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:5px 7px;box-shadow:0 2px 10px rgba(0,0,0,.14);font-size:11.5px;color:var(--ink)}
+.pgf-set input{width:44px;height:22px;border:1px solid var(--line);border-radius:5px;text-align:center}
+.pgf-set button{height:22px;border:1px solid var(--line);border-radius:5px;background:var(--bg,#fff);cursor:pointer;font-size:11px;padding:0 6px}
+.pgf-arrows{display:flex;gap:3px}
+.pgf-arrows button{width:22px;height:18px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--muted);font-size:12px;line-height:1;cursor:pointer;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.pgf-arrows button:hover,.pgf-row button:hover{border-color:var(--accent);color:var(--accent)}
+.pgf-row button.go:hover{color:#fff;filter:brightness(1.08)}
 .pages{display:flex;flex-direction:column;align-items:center;gap:22px;padding:20px 16px 96px;min-width:min-content}
 #docArea.multi .pages{padding:12px 10px 60px;gap:16px}
 .docmsg{max-width:32em;margin:10vh auto 0;padding:0 16px;text-align:center;color:var(--muted);line-height:1.55}
@@ -213,6 +247,17 @@ button,label.btn,input,select,textarea{font:inherit;color:inherit}
 .olist li .pg{color:var(--muted);font-size:12px;white-space:nowrap}
 .olist li .btn.sq{width:36px;height:34px;font-size:16px}
 .olist li input{width:18px;height:18px}
+.malist li input[type=text]{flex:1;width:auto;height:32px;min-width:0;border:1px solid var(--line);border-radius:6px;padding:0 8px;font:inherit;color:var(--ink);background:var(--bg,#fff)}
+.malist li .fn{color:var(--muted);font-size:11.5px;max-width:34%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pgdelPanel .field{flex:none}#pdPages{height:34px;flex:none;width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:6px;padding:0 9px;font:inherit}
+.pdgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px;max-height:52vh;overflow:auto;padding:2px}
+.pdgrid .pt{position:relative;border:2px solid var(--line);border-radius:6px;background:#fff;cursor:pointer;aspect-ratio:.72;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pdgrid .pt canvas{max-width:100%;max-height:100%}
+.pdgrid .pt b{position:absolute;left:4px;bottom:4px;background:rgba(255,255,255,.92);border-radius:4px;padding:0 5px;font-size:12px;font-weight:600;color:#333}
+.pdgrid .pt i{position:absolute;right:5px;top:5px;width:20px;height:20px;border-radius:50%;border:2px solid #999;background:#fff;font-style:normal;font-size:13px;line-height:16px;text-align:center;color:#fff}
+.pdgrid .pt.on{border-color:var(--danger,#c62828)}.pdgrid .pt.on::after{content:'';position:absolute;inset:0;background:rgba(198,40,40,.16)}
+.pdgrid .pt.on i{background:var(--danger,#c62828);border-color:var(--danger,#c62828)}.pdgrid .pt.cur{box-shadow:0 0 0 2px var(--accent)}
+.pf-part{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:1px 7px !important;font-size:11px;font-weight:600;color:var(--accent);text-align:right;padding:0 2px 3px;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:auto}
 #cmbName{flex:none;height:36px}
 .plist li small.sy{flex-basis:100%;color:var(--muted);font-size:12px}
 .plist li small.sy.bad{color:var(--danger)}
@@ -263,6 +308,7 @@ button,label.btn,input,select,textarea{font:inherit;color:inherit}
 .menu.col>button{border:0;background:transparent;text-align:left;padding:8px 12px;border-radius:5px;cursor:pointer;font-weight:500;white-space:nowrap}
 .menu.col>button:hover,.menu.col>button:focus-visible{background:color-mix(in srgb,var(--accent) 12%,transparent)}
 .menu.col button small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+#popMenu{z-index:80;max-width:min(440px,calc(100vw - 16px))}#popMenu button small{white-space:normal}
 .rotm{flex-direction:column;align-items:stretch;gap:8px;padding:10px;width:260px}
 .rotm .arrows{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .rotm .arrows button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font-weight:600}
@@ -370,6 +416,7 @@ details.drive ol b{color:var(--ink)}
         <div class="drow">
           <div class="dtabs" id="dtabs" role="tablist" aria-label="PDFs in this matter"></div>
           <button class="btn" id="addBtn" aria-haspopup="menu">+ Add PDF</button>
+          <button class="btn" id="cmbBtn" title="Join this matter's PDFs (OA, reply, rejoinder…) into one PDF, in the order you choose">⧉ Combine</button>
           <input class="sr" type="file" id="pdfIn" multiple accept="application/pdf,.pdf">
           <input class="sr" type="file" id="appendIn" multiple accept="application/pdf,.pdf">
         </div>
@@ -384,7 +431,9 @@ details.drive ol b{color:var(--ink)}
             <button class="btn sq" id="nextBtn" title="Next page (page after this one)">›</button>
           </div>
           <span class="grp hide-sm"><button class="btn sq" id="zOut" aria-label="Zoom out">−</button><span class="zoomv" id="zVal">100%</span><button class="btn sq" id="zIn" aria-label="Zoom in">+</button></span>
+          <button class="btn" id="srchBtn" title="Search the PDFs by words (Ctrl+F). Scanned PDFs can be made searchable here with one click (OCR).">🔍 Search</button>
           <button class="btn" id="rotBtn" aria-haspopup="true" title="Rotate pages">⟳ Rotate</button>
+          <button class="btn" id="pdelBtn" aria-haspopup="menu" title="Delete the page on screen, or choose several pages to delete">🗑 Pages</button>
           <span class="grp"><span class="lbl">Views</span><span class="seg" id="viewSeg" role="group" aria-label="Number of views"><button data-v="1" aria-pressed="true" title="One view">1</button><button data-v="2" aria-pressed="false" title="Two views">2</button><button data-v="3" aria-pressed="false" title="Three views">3</button></span><button class="btn sq" id="dirBtn" hidden title="Side by side or stacked">⇆</button></span>
           <button class="btn" id="cropBtn" title="Draw a box on the page; that area goes onto the worksheet as a linked picture">✂ Crop</button>
           <button class="btn" id="spotBtn" title="Click a spot on the page, then click on the worksheet to type a linked note">Link a spot</button>
@@ -392,6 +441,15 @@ details.drive ol b{color:var(--ink)}
       </div>
       <div class="dbody">
         <div id="docArea"></div>
+        <div class="srch" id="srchBox" hidden>
+          <div class="srow"><input id="srchIn" type="search" placeholder="Search words in the PDFs…" autocomplete="off" aria-label="Search words">
+            <button class="btn sq" id="srchPrev" title="Previous match (Shift+Enter)">‹</button><button class="btn sq" id="srchNext" title="Next match (Enter)">›</button>
+            <button class="ic" id="srchX" title="Close (Esc)" aria-label="Close search">×</button></div>
+          <div class="srow sm"><label><input type="radio" name="srchScope" value="all" checked> All PDFs</label><label><input type="radio" name="srchScope" value="one"> This PDF</label>
+            <label><input type="checkbox" id="srchNotes" checked> Notes too</label><span id="srchCount" class="scount"></span></div>
+          <div id="srchOcr" class="socr" hidden></div>
+          <div id="srchList" class="slist"></div>
+        </div>
         <div class="drophint" id="dropHint" hidden>Drop PDFs to add them to this matter</div>
         <div class="banner" id="docBanner" hidden><span id="docBannerText"></span><span class="grow"></span><button class="btn" data-cancel>Cancel</button></div>
       </div>
@@ -516,6 +574,25 @@ details.drive ol b{color:var(--ink)}
   <div class="field"><label for="cmbName">Name of the combined PDF</label><input type="text" id="cmbName" maxlength="100"></div>
   <label class="chk"><input type="checkbox" id="cmbDel"> Delete the separate PDFs afterwards (you will be asked twice). If not ticked, they are only closed and kept.</label>
   <div class="row end"><button class="btn" data-close>Cancel</button><button class="btn primary" id="cmbGo">Combine</button></div>
+</div></div>
+
+<div class="panel" id="pgdelPanel" hidden><div class="pc" role="dialog" aria-labelledby="pdTitle" style="width:min(820px,100%)">
+  <h2 id="pdTitle">Delete pages</h2>
+  <p id="pdInfo" style="margin:0"></p>
+  <div class="field"><label for="pdPages">Pages to delete — click the pages below, or type them (e.g. <b>3, 7-9</b>; PDF page numbers)</label><input type="text" id="pdPages" autocomplete="off"></div>
+  <div class="pdgrid" id="pdGrid"></div>
+  <div class="row end"><span class="muted" id="pdCount" style="margin-right:auto"></span><button class="btn" data-close>Cancel</button><button class="btn warn" id="pdGo" disabled>Delete</button></div>
+</div></div>
+
+<div class="panel" id="maPanel" hidden><div class="pc" role="dialog" aria-labelledby="maTitle" style="width:min(640px,100%)">
+  <h2 id="maTitle">Add PDFs</h2>
+  <div class="xsub" style="display:flex;flex-direction:column;gap:6px">
+    <label class="chk"><input type="radio" name="maMode" value="tabs" checked> <span><b>Into this matter</b>, each PDF as a separate tab</span></label>
+    <label class="chk"><input type="radio" name="maMode" value="cases"> <span><b>Each PDF as its own new matter (case)</b> — the name below becomes the matter's name</span></label>
+  </div>
+  <p class="muted" style="margin:0;font-size:12.5px">Names: change any of them, or keep the file names.</p>
+  <ol class="olist malist" id="maList"></ol>
+  <div class="row end"><button class="btn" data-close>Cancel</button><button class="btn primary" id="maGo">Add</button></div>
 </div></div>
 
 <!-- Library -->
@@ -684,7 +761,7 @@ function MemoryStore(label){const json={},files={};return {kind:'memory',label,
   async readJson(p){return json[p]?JSON.parse(JSON.stringify(json[p])):null},async writeJson(p,o){json[p]=JSON.parse(JSON.stringify(o))},
   async files(p){return Object.keys(files).filter(k=>k.startsWith(p+'/')).map(k=>k.slice(p.length+1)).filter(n=>!n.includes('/'))},
   async readFile(p,n){const v=files[p+'/'+n];if(!v)throw new Error('missing');return v.slice().buffer},
-  async writeFile(p,n,d){files[p+'/'+n]=new Uint8Array(toBuf(d)).slice()},
+  async writeFile(p,n,d){files[p+'/'+n]=new Uint8Array(toBuf(d)).slice();mirrorDirty.add(n)},
   async delFile(p,n){delete files[p+'/'+n]},async delMatter(p){delete json[p]},
   async rename(){throw new Error('memory')}}}
 let libStore=BrowserStore;
@@ -812,10 +889,48 @@ function dropRT(id){const rt=RT[id];if(rt){try{rt.pdf.destroy()}catch(e){}delete
 /* ================= views (1 to 3) ================= */
 let views=[],av=0,active=null;
 const V=()=>views[av];
+/* ---- your own page numbering: "page 1 starts at PDF page N" (kept per PDF) ---- */
+function p1Of(doc){return Math.max(1,parseInt(doc&&doc.p1,10)||1)}
+function pageLabel(doc,n){const s=p1Of(doc);return s<=1?String(n):(n>=s?String(n-s+1):'f'+n)}
+function parsePage(doc,t){t=String(t||'').trim();let m;
+  if((m=t.match(/^f(?:ront)?\s*(\d+)$/i)))return +m[1];          /* front pages before page 1 */
+  if((m=t.match(/^p(?:df)?\s*(\d+)$/i)))return +m[1];            /* the PDF's own page number */
+  if((m=t.match(/^-?\d+$/))){const k=parseInt(t,10);return k+p1Of(doc)-1}
+  return 0}
+function updateFloat(v){
+  const f=v.el.querySelector('.pgfloat');if(!f)return;const doc=docById(v.doc),n=v.pages.length;f.hidden=!n;if(!n)return;
+  const inp=f.querySelector('.pf-in'),s=p1Of(doc);if(document.activeElement!==inp)inp.value=pageLabel(doc,v.cur);
+  f.querySelector('.pdfp').textContent=s>1?'PDF '+v.cur+'/'+n:'/ '+n;
+  f.querySelector('.pf-prev').disabled=v.cur<=1;f.querySelector('.pf-next').disabled=v.cur>=n;
+  const pt=f.querySelector('.pf-part'),part=partOf(doc,v.cur);if(pt){pt.hidden=!part;if(part){pt.textContent=part.t;pt.title='Part of the combined PDF: '+part.t+' (starts at PDF page '+part.p+')'}}
+}
+/* the parts of a combined PDF (OA, Reply, Rejoinder…): which part a page belongs to */
+function partOf(doc,n){if(!doc||!Array.isArray(doc.parts)||!doc.parts.length)return null;let r=null;for(const x of doc.parts)if(x.p<=n)r=x;return r}
+function wirePgFloat(v){
+  const f=v.el.querySelector('.pgfloat'),inp=f.querySelector('.pf-in'),set=f.querySelector('.pgf-set'),p1=f.querySelector('.pf-p1');
+  const go=()=>{const doc=docById(v.doc);if(!doc)return;const n=parsePage(doc,inp.value);if(!n||n<1||n>v.pages.length){toast('No such page in this PDF.');updateFloat(v);return}
+    goPageView(v,n,{record:true});inp.blur()};
+  f.querySelector('.pf-go').onclick=go;
+  inp.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();go()}if(e.key==='Escape'){inp.blur()}});
+  inp.addEventListener('focus',()=>inp.select());inp.addEventListener('blur',()=>setTimeout(()=>updateFloat(v),0));
+  f.querySelector('.pf-prev').onclick=()=>goPageView(v,v.cur-1,{record:false});
+  f.querySelector('.pf-next').onclick=()=>goPageView(v,v.cur+1,{record:false});
+  f.querySelector('.pf-gear').onclick=()=>{const doc=docById(v.doc);set.hidden=!set.hidden;if(!set.hidden){p1.value=p1Of(doc);p1.focus();p1.select()}};
+  const save=()=>{const doc=docById(v.doc);if(!doc)return;let k=parseInt(p1.value,10);if(!k||k<1)k=1;if(k>v.pages.length)k=v.pages.length;
+    if(k>1)doc.p1=k;else delete doc.p1;touch();set.hidden=true;views.forEach(x=>{if(x.doc===doc.id){setHead(x);updateFloat(x)}});updateNav();
+    toast(k>1?'Page 1 of "'+doc.title+'" is now PDF page '+k+'. Pages before it show as f1, f2…':'"'+doc.title+'" now counts pages as the PDF does.')};
+  f.querySelector('.pf-ok').onclick=save;
+  p1.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();save()}if(e.key==='Escape')set.hidden=true});
+  f.addEventListener('pointerdown',e=>e.stopPropagation());
+}
 function makeView(){
   const el=document.createElement('section');el.className='view';
-  el.innerHTML='<div class="vhead"><span class="vt"></span><span class="vp"></span><button class="ic vx" aria-label="Close this view" title="Close this view">×</button></div><div class="vscroll"><div class="pages"></div></div>';
+  el.innerHTML='<div class="vhead"><span class="vt"></span><span class="vp"></span><button class="ic vx" aria-label="Close this view" title="Close this view">×</button></div><div class="vscroll"><div class="pages"></div></div>'+
+    '<div class="pgfloat" hidden><div class="pgf-set" hidden>Page 1 is PDF page <input class="pf-p1" inputmode="numeric" aria-label="PDF page that counts as page 1"><button class="pf-ok">Set</button></div>'+
+    '<div class="pf-part" hidden></div><div class="pgf-row"><input class="pf-in" inputmode="numeric" aria-label="Page number" title="Type a page number and press Go (or Enter). f2 = 2nd front page, p7 = PDF page 7"><button class="go pf-go" title="Go to this page">Go</button><span class="pdfp"></span><button class="gear pf-gear" title="Set which PDF page counts as page 1">⚙</button></div>'+
+    '<div class="pgf-arrows"><button class="pf-prev" title="Previous page" aria-label="Previous page">‹</button><button class="pf-next" title="Next page" aria-label="Next page">›</button></div></div>';
   const v={el,scroller:el.querySelector('.vscroll'),pagesEl:el.querySelector('.pages'),doc:null,pages:[],cache:{},zoom:1,cur:1,back:[],fwd:[],io:null,tok:0};
+  wirePgFloat(v);
   v.scroller.addEventListener('scroll',()=>{clearTimeout(v.st);v.st=setTimeout(()=>{updateCur(v)},60);if(!selbar.hidden)updateSelbar();hlMenu.hidden=true},{passive:true});
   el.addEventListener('pointerdown',()=>{const i=views.indexOf(v);if(i!==av)setActiveView(i)},true);
   el.querySelector('.vx').onclick=e=>{e.stopPropagation();closeView(v)};
@@ -899,7 +1014,7 @@ async function renderPage(pg){
 }
 document.addEventListener('mouseup',()=>document.querySelectorAll('.textLayer.selecting').forEach(t=>t.classList.remove('selecting')));
 function viewMsg(v,html){if(v.io)v.io.disconnect();v.pages=[];v.pagesEl.innerHTML='<div class="docmsg">'+html+'</div>';setHead(v);if(v===V())updateNav()}
-function setHead(v){const d=docById(v.doc);v.el.querySelector('.vt').textContent=d?d.title:'';v.el.querySelector('.vp').textContent=v.pages.length?'p. '+v.cur+' / '+v.pages.length:'';v.el.querySelector('.vx').hidden=views.length<2}
+function setHead(v){const d=docById(v.doc);v.el.querySelector('.vt').textContent=d?d.title:'';v.el.querySelector('.vp').textContent=v.pages.length?'p. '+pageLabel(d,v.cur)+(p1Of(d)>1?' (PDF '+v.cur+')':'')+' / '+v.pages.length:'';v.el.querySelector('.vx').hidden=views.length<2;updateFloat(v)}
 async function viewShow(v,docId,o={}){
   const doc=docById(docId);if(!doc)return;
   if(o.record!==false&&v.doc&&v.pages.length&&(v.doc!==docId))pushHist(v);
@@ -923,7 +1038,7 @@ function updateCur(v){
 }
 function updateNav(){
   const v=V();if(!v)return;const n=v.pages.length;
-  $('#pgTot').textContent='/ '+n;if(document.activeElement!==$('#pgIn'))$('#pgIn').value=n?v.cur:'';
+  const dd=docById(v.doc);$('#pgTot').textContent=(dd&&p1Of(dd)>1?'(PDF '+v.cur+') ':'')+'/ '+n;if(document.activeElement!==$('#pgIn'))$('#pgIn').value=n?pageLabel(dd,v.cur):'';
   $('#prevBtn').disabled=!n||v.cur<=1;$('#nextBtn').disabled=!n||v.cur>=n;
   const lbl=l=>{const d=docById(l.doc);return (d?d.title+', ':'')+'page '+l.page};
   $('#backBtn').disabled=!v.back.length;$('#fwdBtn').disabled=!v.fwd.length;
@@ -950,7 +1065,7 @@ async function histMove(dir){
 $('#backBtn').onclick=()=>histMove(-1);$('#fwdBtn').onclick=()=>histMove(1);
 $('#prevBtn').onclick=()=>goPage(V().cur-1,false);
 $('#nextBtn').onclick=()=>goPage(V().cur+1,false);
-$('#pgIn').addEventListener('keydown',e=>{if(e.key==='Enter'){const n=parseInt($('#pgIn').value,10);if(n)goPage(n,true);$('#pgIn').blur()}});
+$('#pgIn').addEventListener('keydown',e=>{if(e.key==='Enter'){const v=V(),n=parsePage(v&&docById(v.doc),$('#pgIn').value);if(n)goPage(n,true);$('#pgIn').blur()}});
 $('#pgIn').addEventListener('focus',e=>e.target.select());
 $('#pgIn').addEventListener('blur',updateNav);
 
@@ -1457,11 +1572,12 @@ window.addEventListener('error',e=>onAppError(e.error||e.message));
 window.addEventListener('unhandledrejection',e=>onAppError(e.reason));
 /* unsaved (Untitled) work is mirrored to this device, so a reload or crash does not lose it */
 const REC='recover:untitled';
+var mirrorDirty=new Set();   /* files changed after they were first kept for recovery (rotate, add pages, OCR) */
 let recT=null;
 function mirrorUntitled(now){if(!untitled()||!P)return;clearTimeout(recT);recT=setTimeout(async()=>{recT=null;try{
   if(!P.docs.length&&!P.items.length&&!(P.ink||[]).length){await idb.del('kv',REC);return}
   await idb.set('kv',REC,JSON.stringify(serial()));
-  for(const d of P.docs){const k='~untitled/'+d.file;if(!(await idb.get('files',k))){try{await idb.set('files',k,toBuf(await proj.store.readFile(proj.name,d.file)))}catch(e){}}}
+  for(const d of P.docs){const k='~untitled/'+d.file;if(mirrorDirty.delete(d.file)||!(await idb.get('files',k))){try{await idb.set('files',k,toBuf(await proj.store.readFile(proj.name,d.file)))}catch(e){}}}
 }catch(e){}},now?0:500)}
 async function forgetUntitled(){try{await idb.del('kv',REC);for(const k of await idb.keys('files'))if(String(k).startsWith('~untitled/'))await idb.del('files',k)}catch(e){}}
 async function recoverUntitled(store){try{const j=await idb.get('kv',REC);if(!j)return false;const o=JSON.parse(j);if(!o||!Array.isArray(o.items))return false;
@@ -1580,6 +1696,32 @@ function finishPen(e,cancel){
 }
 window.addEventListener('pointerup',e=>finishPen(e,false));
 window.addEventListener('pointercancel',e=>finishPen(e,true));
+
+/* ---- linking without the Link pen (LiquidText style): press on the PDF — a spot, a highlight or text —
+   and drag across onto the worksheet. Inside the PDF the press still selects text as usual; the link
+   line appears only once the pointer reaches the worksheet. Drop on empty worksheet = new linked note,
+   on a note = link that note. A finger on a touch screen still scrolls; the Link pen stays available. */
+let autoPen=null;
+function overDesk(x,y){const r=deskPane.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom}
+document.addEventListener('pointerdown',e=>{
+  autoPen=null;
+  if(penMode||e.button>0||e.pointerType==='touch'||(typeof drawMode!=='undefined'&&drawMode))return;
+  if(!e.target.closest||!e.target.closest('.page')||!docArea.contains(e.target))return;
+  if(e.target.closest('.bar,.dtools,.panel,.selbar,.menu,.ibar,.banner,.toast,.vhead,.pgfloat'))return;
+  const src=penEnd(e.clientX,e.clientY);if(!src||src.type==='desk')return;
+  autoPen={src,x0:e.clientX,y0:e.clientY};
+},true);
+window.addEventListener('pointermove',e=>{
+  if(!autoPen||pen)return;
+  if(Math.hypot(e.clientX-autoPen.x0,e.clientY-autoPen.y0)<16||!overDesk(e.clientX,e.clientY))return;
+  /* reached the worksheet: this is a link, not a text selection */
+  try{window.getSelection().removeAllRanges()}catch(_){}
+  hideBars();hlMenu.hidden=true;
+  pen={src:autoPen.src,x0:autoPen.x0,y0:autoPen.y0,x:e.clientX,y:e.clientY,moved:true};autoPen=null;drawPen();
+  if(!settings.autoPenTip){settings.autoPenTip=1;try{localStorage.setItem('xdesk:settings',JSON.stringify(settings))}catch(_){}toast('Drop on the worksheet to link — no Link pen needed. Drop on a note to link that note.')}
+});
+window.addEventListener('pointerup',()=>{autoPen=null},true);
+window.addEventListener('pointercancel',()=>{autoPen=null},true);
 
 /* ================= screen share: drag handle between the PDF and the worksheet ================= */
 const splitEl=$('#splitter'),splitMain=$('main.split');
@@ -1725,12 +1867,12 @@ $('#addBtn').onclick=e=>popMenu(e.currentTarget,[
   {label:'Add as new PDF',hint:'Each file gets its own tab in this matter',run:()=>$('#pdfIn').click()},
   {label:'Add pages to this PDF',hint:'Appends the files to the end of the open PDF, same file name',run:()=>{if(!active){toast('Open a PDF first, or use Add as new PDF.');return}$('#appendIn').click()}},
   {label:'Combine PDFs into one…',hint:'Merge this matter\'s PDFs into a single PDF, in the order you choose',run:()=>openCombine()}]);
-$('#pdfIn').addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)addPdfs(fs)});
+$('#pdfIn').addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)addPdfsAsk(fs)});
 $('#appendIn').addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)appendToActive(fs)});
 const docWrap=document.querySelector('.docwrap');
 docWrap.addEventListener('dragover',e=>{if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')){e.preventDefault();$('#dropHint').hidden=false}});
 docWrap.addEventListener('dragleave',e=>{if(!docWrap.contains(e.relatedTarget))$('#dropHint').hidden=true});
-docWrap.addEventListener('drop',e=>{$('#dropHint').hidden=true;const fs=e.dataTransfer?[...e.dataTransfer.files]:[];if(!fs.length)return;e.preventDefault();addPdfs(fs)});
+docWrap.addEventListener('drop',e=>{$('#dropHint').hidden=true;const fs=e.dataTransfer?[...e.dataTransfer.files]:[];if(!fs.length)return;e.preventDefault();addPdfsAsk(fs)});
 const isPdf=f=>/pdf$/i.test(f.type)||/\.pdf$/i.test(f.name);
 function uniqueFile(name,taken){name=safeName(name);if(!/\.pdf$/i.test(name))name+='.pdf';const base=name.replace(/\.pdf$/i,'');let n=name,k=2;
   while(taken.some(t=>t.toLowerCase()===n.toLowerCase()))n=`${base} (${k++}).pdf`;return n}
@@ -1806,8 +1948,8 @@ function normInk(s){
 function maxBottom(){return P.items.filter(onSheet).reduce((m,i)=>Math.max(m,i.y+itemH(i)),0)}
 function importInto(src,fresh){
   const report={items:0,unmatched:new Set()};
-  const srcDocs=(src.docs||[]).map(d=>({id:d.id!=null?String(d.id):uid(),file:d.file||d.name||'',title:d.title||'',rot:d.rot}));
-  if(fresh)srcDocs.forEach(d=>{if(!d.file)return;const nd={id:d.id,file:d.file,title:d.title||d.file.replace(/\.pdf$/i,'')};if(d.rot&&typeof d.rot==='object')nd.rot=d.rot;P.docs.push(nd)});
+  const srcDocs=(src.docs||[]).map(d=>({id:d.id!=null?String(d.id):uid(),file:d.file||d.name||'',title:d.title||'',rot:d.rot,p1:d.p1}));
+  if(fresh)srcDocs.forEach(d=>{if(!d.file)return;const nd={id:d.id,file:d.file,title:d.title||d.file.replace(/\.pdf$/i,'')};if(d.rot&&typeof d.rot==='object')nd.rot=d.rot;if(parseInt(d.p1,10)>1)nd.p1=parseInt(d.p1,10);P.docs.push(nd)});
   const resolveDoc=r=>{
     if(r==null||r==='')return P.docs.length===1?P.docs[0].id:{missing:''};
     const sd=srcDocs.find(d=>d.id===String(r))||srcDocs.find(d=>eqName(d.file,r)||eqName(d.title,r))||{file:String(r),title:String(r)};
@@ -2004,7 +2146,7 @@ function wsFor(docIds){
   const set=new Set(docIds);const all=docIds.length===P.docs.length;let items;
   if(all)items=P.items;else{const keep=new Set(P.items.filter(i=>i.anchor&&set.has(i.anchor.doc)).map(i=>i.id));P.links.forEach(l=>{if(keep.has(l.a))keep.add(l.b);if(keep.has(l.b))keep.add(l.a)});items=P.items.filter(i=>keep.has(i.id))}
   const ids=new Set(items.map(i=>i.id));
-  const c=JSON.parse(JSON.stringify({format:FMT,name:P.name,sheets:P.sheets,docs:P.docs.filter(d=>set.has(d.id)).map(d=>({id:d.id,file:d.file,title:d.title})),items,links:P.links.filter(l=>ids.has(l.a)&&ids.has(l.b)),marks:P.marks.filter(m=>set.has(m.anchor.doc)),ink:(P.ink||[]).filter(k=>k.doc==null?all:set.has(k.doc))}));
+  const c=JSON.parse(JSON.stringify({format:FMT,name:P.name,sheets:P.sheets,docs:P.docs.filter(d=>set.has(d.id)).map(d=>Object.assign({id:d.id,file:d.file,title:d.title},d.p1?{p1:d.p1}:{})),items,links:P.links.filter(l=>ids.has(l.a)&&ids.has(l.b)),marks:P.marks.filter(m=>set.has(m.anchor.doc)),ink:(P.ink||[]).filter(k=>k.doc==null?all:set.has(k.doc))}));
   const bake=a=>{if(!a||!a.doc)return;const r=getRot(a.doc,a.page);if(!r)return;if(a.rects)a.rects=a.rects.map(x=>rotRect(r,x));if(a.x!=null){const [x,y]=rotPt(r,[a.x,a.y]);a.x=x;a.y=y}};
   c.items.forEach(i=>bake(i.anchor));c.marks.forEach(m=>bake(m.anchor));
   c.ink.forEach(k=>{if(k.doc==null)return;const r=getRot(k.doc,k.page);if(!r)return;for(let i=0;i<k.p.length;i+=2){const [x,y]=rotPt(r,[k.p[i],k.p[i+1]]);k.p[i]=+x.toFixed(4);k.p[i+1]=+y.toFixed(4)}});return c;
@@ -2073,7 +2215,7 @@ function xOrderRefresh(){
 let cmbRows=[];
 async function openCombine(){
   if(!P||P.docs.length<2){toast('Add at least two PDFs to this matter first.');return}
-  cmbRows=P.docs.map(d=>({id:d.id,title:d.title,on:true}));
+  cmbRows=pleadOrder(P.docs).map(d=>({id:d.id,title:d.title,on:true,pages:RT[d.id]?RT[d.id].pageData.length:0}));
   $('#cmbName').value=P.name;$('#cmbDel').checked=false;
   const draw=()=>orderList($('#cmbList'),cmbRows,{check:true,change:upd});
   const upd=()=>{const n=cmbRows.filter(r=>r.on).length;$('#cmbGo').disabled=n<2;$('#cmbGo').textContent=n<2?'Choose at least two':'Combine '+n+' PDFs'};
@@ -2100,6 +2242,9 @@ $('#cmbGo').onclick=async()=>{
     /* move every note, excerpt, highlight and drawing to the right page of the combined PDF */
     const nd={id:uid(),file,title:file.replace(/\.pdf$/i,'')},ids=new Set(sel.map(d=>d.id));
     const rot={};sel.forEach(d=>{if(d.rot)Object.entries(d.rot).forEach(([k,v])=>{rot[+k+offs[d.id]]=v})});if(Object.keys(rot).length)nd.rot=rot;
+    /* remember where each part starts, so the page box can show "Reply", "Rejoinder"… */
+    nd.parts=[];sel.forEach(d=>{if(Array.isArray(d.parts)&&d.parts.length)d.parts.forEach(x=>nd.parts.push({t:x.t,p:x.p+offs[d.id]}));else nd.parts.push({t:d.title,p:offs[d.id]+1})});
+    if(sel[0].p1>1&&!offs[sel[0].id])nd.p1=sel[0].p1;
     const mv=a=>{if(a&&ids.has(a.doc)){a.page=(+a.page||1)+offs[a.doc];a.doc=nd.id}};
     P.items.forEach(i=>mv(i.anchor));P.marks.forEach(m=>mv(m.anchor));(P.ink||[]).forEach(k=>{if(ids.has(k.doc)){k.page+=offs[k.doc];k.doc=nd.id}});
     const at=P.docs.indexOf(sel[0]);P.docs=P.docs.filter(d=>!ids.has(d.id));P.docs.splice(Math.max(0,Math.min(at,P.docs.length)),0,nd);
@@ -2115,6 +2260,121 @@ $('#cmbGo').onclick=async()=>{
     toast('Combined '+sel.length+' PDFs into "'+nd.title+'" ('+off+' pages). Each part has a bookmark.'+(delAfter?'':' The separate PDFs are closed, not deleted.'));
   }catch(e){console.error(e);toast('Could not combine: '+(e&&/encrypt/i.test(e.message)?'one PDF is password-protected.':'please try again.'))}
   finally{btn.disabled=false;btn.textContent='Combine'}
+};
+$('#cmbBtn').onclick=()=>openCombine();
+/* read-only peek used by the self-tests */
+Object.defineProperty(window,'__xd',{value:{get P(){return P},V:()=>V()}});
+/* the usual order of pleadings: main case, reply, rejoinder, sur-rejoinder, further affidavits, other papers, written submissions, orders */
+function pleadRank(t){t=String(t||'').toLowerCase().replace(/[._]/g,' ');
+  if(/sur[\s-]*rejoinder|surrejoinder|sur[\s-]*rej\b/.test(t))return 4;
+  if(/rejoinder|\brej\b/.test(t))return 3;
+  if(/written\s*(submission|argument|notes)|notes?\s*of\s*argument|synopsis/.test(t))return 7;
+  if(/\b(reply|written\s*statement|w\s*s\b|counter|say|affidavit\s*in\s*reply|return)\b/.test(t))return 2;
+  if(/(additional|further|supplementary)\s*(affidavit|reply|documents?)|\bcompilation\b/.test(t))return 5;
+  if(/\b(judg(e)?ment|order|award|decree)s?\b/.test(t)&&!/\bapplication\b/.test(t))return 8;
+  if(/\b(o\s*a|oa|original\s*application|petition|writ|w\s*p|wp|appeal|application|plaint|complaint|ulp|suit|revision|reference|memo|main)\b/.test(t))return 1;
+  return 6}
+function pleadOrder(docs){return docs.map((d,i)=>({d,i,r:pleadRank(d.title)})).sort((a,b)=>a.r-b.r||a.i-b.i).map(x=>x.d)}
+
+/* ================= delete pages (the one on screen, or several chosen) ================= */
+let lastPgDel=null;
+function syncFile(){try{if(proj&&proj.store===BrowserStore&&typeof syncOn==='function'&&syncOn())requestSync(proj.name,500)}catch(e){}}
+$('#pdelBtn').onclick=e=>{const v=V(),doc=docById(v&&v.doc);if(!doc||!v.pages.length){toast('Open a PDF first.');return}
+  const items=[{label:'Delete this page (p. '+pageLabel(doc,v.cur)+(p1Of(doc)>1?', PDF page '+v.cur:'')+')',hint:'Removes the page on screen from "'+doc.title+'"',run:()=>confirmPgDel(doc,[v.cur],$('#pdelBtn'))},
+    {label:'Choose pages to delete…',hint:'Pick several pages at once',run:()=>openPgDel(doc,v.cur)}];
+  if(lastPgDel)items.push({label:'Undo last page deletion',hint:'Puts back the pages deleted from "'+(docById(lastPgDel.docId)||{}).title+'"',run:undoPgDel});
+  popMenu(e.currentTarget,items)};
+function pgDelEffects(doc,set){
+  let notes=0,hl=0,dr=0;P.items.forEach(i=>{if(i.anchor&&i.anchor.doc===doc.id&&set.has(+i.anchor.page))notes++});
+  P.marks.forEach(m=>{if(m.anchor.doc===doc.id&&set.has(+m.anchor.page))hl++});(P.ink||[]).forEach(k=>{if(k.doc===doc.id&&set.has(+k.page))dr++});
+  const parts=[notes?notes+' linked note'+(notes===1?'':'s')+'/excerpt'+(notes===1?'':'s'):'',hl?hl+' highlight'+(hl===1?'':'s'):'',dr?dr+' drawing'+(dr===1?'':'s'):''].filter(Boolean);
+  return parts.length?' Also removed from those pages: '+parts.join(', ')+' (linked typed notes stay on the worksheet, unlinked).':''}
+function confirmPgDel(doc,pages,btn){
+  const n=pages.length,N=RT[doc.id]?RT[doc.id].pageData.length:0;
+  if(n>=N){toast('That would delete every page. To remove the whole PDF, use × on its tab.');return}
+  const lbl=n===1?'page '+pageLabel(doc,pages[0]):n+' pages';
+  popMenu(btn,[{label:'Yes, delete '+lbl,hint:'From "'+doc.title+'".'+pgDelEffects(doc,new Set(pages))+' You can Undo right after.',run:()=>deletePages(doc,pages)},{label:'No, keep it',run:()=>{}}]);
+}
+let pdSel=new Set(),pdDoc=null,pdTok=0;
+function parseRanges(t,N){const set=new Set();String(t||'').split(/[,;\s]+/).forEach(x=>{const m=x.match(/^(\d+)(?:-(\d+))?$/);if(!m)return;let a=+m[1],b=m[2]?+m[2]:a;if(a>b)[a,b]=[b,a];for(let i=Math.max(1,a);i<=Math.min(N,b);i++)set.add(i)});return set}
+function rangesOf(set){const a=[...set].sort((x,y)=>x-y),out=[];for(let i=0;i<a.length;i++){let j=i;while(j+1<a.length&&a[j+1]===a[j]+1)j++;out.push(j>i?a[i]+'-'+a[j]:''+a[i]);i=j}return out.join(', ')}
+async function openPgDel(doc,cur){
+  pdDoc=doc;pdSel=new Set();const my=++pdTok,rt=await ensureRT(doc),N=rt.pageData.length;
+  $('#pdTitle').textContent='Delete pages from "'+doc.title+'"';$('#pdInfo').textContent=N+' pages. Click the pages to delete (they turn red), then press Delete.';
+  $('#pdPages').value='';const g=$('#pdGrid');g.innerHTML='';
+  const upd=()=>{g.querySelectorAll('.pt').forEach(el=>el.classList.toggle('on',pdSel.has(+el.dataset.n)));const n=pdSel.size;
+    $('#pdCount').textContent=n?n+' page'+(n===1?'':'s')+' chosen':'';$('#pdGo').disabled=!n;$('#pdGo').textContent=n?'Delete '+n+' page'+(n===1?'':'s'):'Delete'};
+  for(let i=1;i<=N;i++){const el=document.createElement('div');el.className='pt'+(i===cur?' cur':'');el.dataset.n=i;el.innerHTML='<i>✓</i><b>'+esc(pageLabel(doc,i))+'</b>';
+    el.title='PDF page '+i;el.onclick=()=>{pdSel.has(i)?pdSel.delete(i):pdSel.add(i);$('#pdPages').value=rangesOf(pdSel);upd()};g.append(el)}
+  $('#pdPages').oninput=()=>{pdSel=parseRanges($('#pdPages').value,N);upd()};
+  $('#pdGo').onclick=()=>{if(pdSel.size)confirmPgDel(doc,[...pdSel],$('#pdGo'))};
+  upd();openPanel('pgdelPanel');
+  const io=new IntersectionObserver(es=>es.forEach(async en=>{if(!en.isIntersecting||en.target.dataset.done)return;en.target.dataset.done=1;io.unobserve(en.target);
+    if(my!==pdTok)return;try{const pp=rt.pageData[+en.target.dataset.n-1].pdfPage,vp0=pp.getViewport({scale:1,rotation:(pp.rotate+getRot(doc.id,+en.target.dataset.n))%360}),sc=220/Math.max(vp0.width,vp0.height),vp=pp.getViewport({scale:sc,rotation:vp0.rotation});
+      const c=document.createElement('canvas');c.width=Math.ceil(vp.width);c.height=Math.ceil(vp.height);await pp.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;if(my===pdTok)en.target.prepend(c)}catch(e){}}),{root:g,rootMargin:'300px'});
+  g.querySelectorAll('.pt').forEach(el=>io.observe(el));
+  setTimeout(()=>{const c=g.querySelector('.pt.cur');if(c)c.scrollIntoView({block:'center'})},60);
+}
+async function deletePages(doc,pages){
+  if(!window.PDFLib){toast('The PDF writer did not load. Check the connection and reload.');return}
+  const del=new Set(pages.map(Number)),sorted=[...del].sort((a,b)=>b-a);
+  try{
+    const old=new Uint8Array(await proj.store.readFile(proj.name,doc.file));
+    const out=await PDFLib.PDFDocument.load(old,{ignoreEncryption:true}),N=out.getPageCount();if(del.size>=N)return;
+    sorted.forEach(n=>{if(n>=1&&n<=N)out.removePage(n-1)});
+    const bytes=await out.save();
+    const state=JSON.stringify({docs:P.docs,items:P.items,marks:P.marks,ink:P.ink||[],links:P.links});
+    await proj.store.writeFile(proj.name,doc.file,bytes);
+    lastPgDel={docId:doc.id,file:doc.file,bytes:old,state,title:doc.title};
+    /* old page number → new page number (0 = deleted) */
+    const map=[0];let k=0;for(let i=1;i<=N;i++){if(del.has(i))map.push(0);else map.push(++k)}
+    const after=n=>{for(let i=n;i<=N;i++)if(map[i])return map[i];for(let i=n;i>=1;i--)if(map[i])return map[i];return 1};
+    P.items=P.items.filter(i=>!(i.type==='excerpt'&&i.anchor&&i.anchor.doc===doc.id&&!map[+i.anchor.page]));
+    P.items.forEach(i=>{const a=i.anchor;if(a&&a.doc===doc.id){if(map[+a.page])a.page=map[+a.page];else delete i.anchor}});
+    P.marks=P.marks.filter(m=>!(m.anchor.doc===doc.id&&!map[+m.anchor.page]));P.marks.forEach(m=>{if(m.anchor.doc===doc.id)m.anchor.page=map[+m.anchor.page]});
+    P.ink=(P.ink||[]).filter(x=>!(x.doc===doc.id&&!map[+x.page]));P.ink.forEach(x=>{if(x.doc===doc.id)x.page=map[+x.page]});
+    const ids=new Set(P.items.map(i=>i.id));P.links=P.links.filter(l=>ids.has(l.a)&&ids.has(l.b));
+    if(doc.rot){const r={};Object.entries(doc.rot).forEach(([n,val])=>{if(map[+n])r[map[+n]]=val});doc.rot=r}
+    if(doc.p1>1){const np=after(doc.p1);if(np>1)doc.p1=np;else delete doc.p1}
+    if(Array.isArray(doc.parts)){const seen=new Set();doc.parts=doc.parts.map((x,j)=>{const end=j+1<doc.parts.length?doc.parts[j+1].p-1:N;let np=0;for(let i=x.p;i<=end;i++)if(map[i]){np=map[i];break}return np?{t:x.t,p:np}:null}).filter(x=>x&&!seen.has(x.p)&&seen.add(x.p))}
+    views.forEach(v=>{const fx=l=>{if(l.doc===doc.id)l.page=after(+l.page)};v.back.forEach(fx);v.fwd.forEach(fx)});
+    const curs=views.map(v=>v.doc===doc.id?after(v.cur):null);
+    dropRT(doc.id);for(let j=0;j<views.length;j++){const v=views[j];if(v.doc===doc.id){v.doc=null;await viewShow(v,doc.id,{page:curs[j],record:false})}}
+    for(const key in SR.text)if(key.startsWith(doc.id+'|'))delete SR.text[key];
+    resetHistory();touch();renderItems();drawMarks();updateNav();syncFile();
+    toast('Deleted '+(del.size===1?'1 page':del.size+' pages')+' from "'+doc.title+'". Now '+(N-del.size)+' pages.',{label:'Undo',run:undoPgDel});
+    $('#pgdelPanel').hidden=true;
+  }catch(e){console.error(e);toast('Could not delete the pages: '+(e&&/encrypt/i.test(e.message)?'the PDF is password-protected.':'please try again.'))}
+}
+async function undoPgDel(){
+  const u=lastPgDel;if(!u)return;lastPgDel=null;
+  try{await proj.store.writeFile(proj.name,u.file,u.bytes);const o=JSON.parse(u.state);P.docs=o.docs;P.items=o.items;P.marks=o.marks;P.ink=o.ink;P.links=o.links;
+    dropRT(u.docId);for(const v of views)if(v.doc===u.docId){const c=v.cur;v.doc=null;await viewShow(v,u.docId,{page:c,record:false})}
+    for(const key in SR.text)if(key.startsWith(u.docId+'|'))delete SR.text[key];
+    resetHistory();touch();renderTabs();renderItems();drawMarks();updateNav();syncFile();toast('The deleted pages are back in "'+u.title+'".')}
+  catch(e){console.error(e);toast('Could not undo.')}
+}
+
+/* ================= add several PDFs at once, each with its own name ================= */
+let maFiles=[];
+function addPdfsAsk(files){
+  const pdfs=files.filter(isPdf);if(pdfs.length<2){addPdfs(files);return}
+  maFiles=pdfs.map(f=>({f,name:f.name.replace(/\.pdf$/i,'')}));
+  const ol=$('#maList');ol.innerHTML='';
+  maFiles.forEach((r,i)=>{const li=document.createElement('li');li.innerHTML='<span class="on">'+(i+1)+'.</span><input type="text" maxlength="100" aria-label="Name"><span class="fn"></span>';
+    const inp=li.querySelector('input');inp.value=r.name;inp.oninput=()=>{r.name=inp.value};li.querySelector('.fn').textContent=r.f.name;li.querySelector('.fn').title=r.f.name;ol.append(li)});
+  const tabs=document.querySelector('input[name=maMode][value=tabs]');tabs.checked=true;
+  tabs.closest('label').querySelector('span').innerHTML='<b>Into this matter'+(P&&!untitled()?' ("'+esc(P.name)+'")':'')+'</b>, each PDF as a separate tab';
+  const upd=()=>{const m=(document.querySelector('input[name=maMode]:checked')||{}).value;$('#maGo').textContent=m==='cases'?'Create '+maFiles.length+' matters':'Add '+maFiles.length+' PDFs'};
+  document.querySelectorAll('input[name=maMode]').forEach(r=>r.onchange=upd);upd();
+  $('#maTitle').textContent='Add '+maFiles.length+' PDFs';openPanel('maPanel');setTimeout(()=>ol.querySelector('input').focus(),40);
+}
+$('#maGo').onclick=async()=>{
+  const mode=(document.querySelector('input[name=maMode]:checked')||{}).value,rows=maFiles.slice();maFiles=[];$('#maPanel').hidden=true;
+  const named=rows.map(r=>{const n=safeName((r.name||'').trim()||r.f.name).replace(/\.pdf$/i,'');return new File([r.f],n+'.pdf',{type:'application/pdf'})});
+  if(mode!=='cases'){await addPdfs(named);return}
+  let made=0;for(const f of named){toast('Creating matter '+(made+1)+' of '+named.length+'…');try{await newMatter(f.name.replace(/\.pdf$/i,''),[f],false);made++}catch(e){console.error(e)}}
+  toast('Created '+made+' matters, one for each PDF. They are in Library; the last one is open.',{label:'Library',run:openLibrary});
 };
 
 /* ================= Export ================= */
@@ -2752,6 +3012,151 @@ window.addEventListener('beforeunload',e=>{
   }
   await openUntitled(true);
 })();
+
+/* ================= Search the PDFs (Ctrl+F) and OCR for scanned PDFs (Oct 2026) =================
+   Searches the text inside every PDF of the matter (and the worksheet notes). A scanned PDF has
+   no text, only pictures of pages: "Make searchable" reads the pictures (OCR, English + Marathi,
+   done here in the browser — nothing leaves the PC) and puts invisible text under the page, so the
+   PDF can then be searched, and text in it selected and excerpted. The page looks exactly the same. */
+const SR={hits:[],i:-1,text:{},run:0,ocrBusy:false,cancel:false};
+const srchBox=$('#srchBox'),srchIn=$('#srchIn');
+function srEsc(t){return String(t).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+function srRegex(q){q=String(q||'').trim();if(!q)return null;
+  /* spaces and line breaks inside the PDF's text do not matter */
+  return new RegExp(Array.from(q.replace(/\s+/g,'')).map(srEsc).join('\\s*'),'gi')}
+async function srDocText(doc){
+  const key=doc.id+'|'+(doc.ocr||'')+'|'+doc.file;if(SR.text[key])return SR.text[key];
+  const rt=await ensureRT(doc);rtHold++;
+  try{const pages=[];for(let i=0;i<rt.pageData.length;i++){const tc=await rt.pageData[i].pdfPage.getTextContent();
+      pages.push({n:i+1,s:tc.items.map(it=>it.str).join(' ').replace(/\s+/g,' ').trim()})}
+    SR.text[key]=pages;return pages}finally{rtHold--}
+}
+function srScanned(pages){const t=pages.reduce((a,p)=>a+p.s.replace(/\s/g,'').length,0);return t<Math.max(30,pages.length*15)}
+function srOpen(){if(!P||!P.docs.length){toast('Add a PDF first.');return}srchBox.hidden=false;srchIn.focus();srchIn.select();srCheckOcr();if(srchIn.value.trim())srRun()}
+function srClose(){srchBox.hidden=true;document.querySelectorAll('.textLayer span.shit').forEach(x=>x.classList.remove('shit'))}
+$('#srchBtn').onclick=()=>srchBox.hidden?srOpen():srClose();
+$('#srchX').onclick=srClose;
+let srT=0;srchIn.addEventListener('input',()=>{clearTimeout(srT);srT=setTimeout(srRun,250)});
+srchIn.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();srStep(e.shiftKey?-1:1)}if(e.key==='Escape')srClose()});
+$('#srchNext').onclick=()=>srStep(1);$('#srchPrev').onclick=()=>srStep(-1);
+document.querySelectorAll('input[name=srchScope]').forEach(r=>r.onchange=()=>{srCheckOcr();srRun()});$('#srchNotes').onchange=srRun;
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&(e.key==='f'||e.key==='F')&&P&&P.docs.length){e.preventDefault();srOpen()}},true);
+function srScope(){return (document.querySelector('input[name=srchScope]:checked')||{}).value||'all'}
+function srDocs(){if(srScope()==='one'){const d=docById(V()&&V().doc);return d?[d]:[]}return P.docs.slice()}
+function srSnip(s,i,len){const a=Math.max(0,i-45),b=Math.min(s.length,i+len+60);return (a?'…':'')+esc(s.slice(a,i))+'<mark>'+esc(s.slice(i,i+len))+'</mark>'+esc(s.slice(i+len,b))+(b<s.length?'…':'')}
+async function srRun(){
+  const my=++SR.run,re=srRegex(srchIn.value),list=$('#srchList');SR.hits=[];SR.i=-1;
+  if(!re){list.innerHTML='';$('#srchCount').textContent='';return}
+  list.innerHTML='<div class="snote">Searching…</div>';let html='',scans=[];
+  for(const d of srDocs()){
+    let pages;try{pages=await srDocText(d)}catch(e){continue}if(my!==SR.run)return;
+    if(srScanned(pages)){scans.push(d);continue}
+    let g='';
+    for(const pg of pages){re.lastIndex=0;let m,k=0;while((m=re.exec(pg.s))&&k<50){
+      SR.hits.push({doc:d.id,n:pg.n});g+='<div class="sh" data-i="'+(SR.hits.length-1)+'"><b class="pg">p. '+esc(pageLabel(d,pg.n))+'</b>'+srSnip(pg.s,m.index,m[0].length)+'</div>';k++;if(!m[0].length)re.lastIndex++}}
+    if(g)html+='<div class="sg">'+esc(d.title)+'</div>'+g;
+    if(SR.hits.length>800)break;
+  }
+  if($('#srchNotes').checked){let g='';P.items.forEach(it=>{const t=[it.text,it.quote,it.comment,it.title].filter(Boolean).join(' ').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');
+      re.lastIndex=0;const m=re.exec(t);if(m){SR.hits.push({item:it.id});g+='<div class="sh" data-i="'+(SR.hits.length-1)+'"><b class="pg">note</b>'+srSnip(t,m.index,m[0].length)+'</div>'}});
+    if(g)html+='<div class="sg">Worksheet notes</div>'+g}
+  if(scans.length)html+='<div class="snote">Not searched — scanned (pictures only): '+scans.map(d=>'<b>'+esc(d.title)+'</b>').join(', ')+'. Use <b>Make searchable</b> above.</div>';
+  list.innerHTML=html||'<div class="snote">No match.</div>';
+  $('#srchCount').textContent=SR.hits.length?SR.hits.length+' found':'0 found';
+  list.querySelectorAll('.sh').forEach(el=>el.onclick=()=>srGo(+el.dataset.i));
+  srCheckOcr(scans);
+}
+function srStep(d){if(!SR.hits.length){srRun();return}srGo((SR.i+d+SR.hits.length)%SR.hits.length)}
+async function srGo(i){
+  const h=SR.hits[i];if(!h)return;SR.i=i;$('#srchCount').textContent=(i+1)+' of '+SR.hits.length;
+  $('#srchList').querySelectorAll('.sh').forEach(el=>el.classList.toggle('on',+el.dataset.i===i));
+  const el=$('#srchList').querySelector('.sh[data-i="'+i+'"]');if(el)el.scrollIntoView({block:'nearest'});
+  if(h.item){if(byId(h.item))flashItem(h.item);return}
+  const v=V();if(!v)return;
+  if(v.doc!==h.doc)await viewShow(v,h.doc,{page:h.n});else goPageView(v,h.n,{record:true});
+  srMark(v,h.n);
+}
+function srMark(v,n,tries){
+  document.querySelectorAll('.textLayer span.shit').forEach(x=>x.classList.remove('shit'));
+  const pg=v.pages[n-1],re=srRegex(srchIn.value);if(!pg||!re)return;
+  const spans=[...pg.el.querySelectorAll('.textLayer span')];
+  if(!spans.length){if((tries||0)<20)setTimeout(()=>srMark(v,n,(tries||0)+1),150);return}
+  const words=srchIn.value.trim().split(/\s+/).filter(w=>w.length>1).map(w=>w.toLowerCase());
+  spans.forEach(sp=>{const t=sp.textContent.toLowerCase();if(re.test(sp.textContent)||words.some(w=>t.includes(w)))sp.classList.add('shit');re.lastIndex=0});
+}
+/* ---- OCR: "Make searchable" ---- */
+async function srCheckOcr(scans){
+  const box=$('#srchOcr');if(SR.ocrBusy)return;
+  const d=docById(V()&&V().doc);if(!d){box.hidden=true;return}
+  let pages;try{pages=await srDocText(d)}catch(e){box.hidden=true;return}
+  const scanned=srScanned(pages),empty=pages.filter(p=>p.s.replace(/\s/g,'').length<15).length;
+  if(!empty){box.hidden=true;return}
+  box.hidden=false;
+  box.innerHTML=(scanned?'<b>'+esc(d.title)+'</b> is a scan (pictures of pages), so its words cannot be searched yet.':'<b>'+esc(d.title)+'</b> has '+empty+' scanned page'+(empty===1?'':'s')+' without text.')+
+    '<br><button class="btn primary" id="ocrGo">Make searchable (OCR · English + मराठी)</button><span class="muted" style="font-size:11.5px;margin-left:6px">'+empty+' page'+(empty===1?'':'s')+', about '+Math.max(1,Math.round(empty*6/60))+' min</span>';
+  $('#ocrGo').onclick=()=>ocrDoc(d);
+}
+let tessP=null;
+function loadTess(){if(window.Tesseract)return Promise.resolve();if(tessP)return tessP;
+  tessP=new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';s.onload=res;s.onerror=()=>{tessP=null;rej(new Error('The OCR engine could not be downloaded. Check the internet connection.'))};document.head.append(s)});
+  return tessP}
+function loadJs(srcs){return srcs.reduce((p,src)=>p.catch(()=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.append(s)})),Promise.reject())}
+async function ocrFonts(out){
+  /* the Marathi + English fonts kept with Charpe Suite on the same site */
+  if(!window.regeneratorRuntime)await loadJs(['../Charpe-suite/regenerator-runtime.js','../Charpe-suite/vendor/regenerator-runtime.js']).catch(()=>{});
+  if(!window.fontkit)await loadJs(['../Charpe-suite/fontkit.umd.min.js','../Charpe-suite/vendor/fontkit.umd.min.js']);
+  out.registerFontkit(window.fontkit);
+  const get=async n=>{for(const u of ['../Charpe-suite/'+n,'../Charpe-suite/fonts/'+n]){try{const r=await fetch(u);if(r.ok)return await r.arrayBuffer()}catch(e){}}throw new Error('font '+n)};
+  const [lat,dev]=await Promise.all([get('Hind-Regular.ttf'),get('NotoSansDevanagari-Regular.ttf')]);
+  return {lat:await out.embedFont(lat,{subset:true}),dev:await out.embedFont(dev,{subset:true})};
+}
+function ocrRuns(t){const out=[];let cur='',dev=null;for(const ch of t){const d=/[ऀ-ॿ‌‍]/.test(ch);if(dev===null||d===dev){cur+=ch;if(dev===null)dev=d}else{out.push([cur,dev]);cur=ch;dev=d}}if(cur)out.push([cur,!!dev]);return out}
+async function ocrDoc(doc){
+  if(SR.ocrBusy)return;if(!window.PDFLib){toast('The PDF writer did not load. Check the connection and reload.');return}
+  const box=$('#srchOcr');SR.ocrBusy=true;SR.cancel=false;let worker=null;rtHold++;
+  const say=(html,pct)=>{box.hidden=false;box.innerHTML=html+'<div class="bar"><i style="width:'+(pct||0)+'%"></i></div><button class="btn" id="ocrStop" style="margin-top:6px">Stop</button>';$('#ocrStop').onclick=()=>{SR.cancel=true}};
+  try{
+    say('Preparing the OCR engine (first time: downloads about 15 MB)…',2);
+    await loadTess();
+    worker=await Tesseract.createWorker(['eng','mar'],1,{logger:()=>{}});
+    const rt=await ensureRT(doc),N=rt.pageData.length;
+    const out=await PDFLib.PDFDocument.load(new Uint8Array(await proj.store.readFile(proj.name,doc.file)),{ignoreEncryption:true});
+    const F=await ocrFonts(out);let done=0,words=0;
+    for(let i=0;i<N;i++){
+      if(SR.cancel)throw new Error('stopped');
+      const pp=rt.pageData[i].pdfPage,tc=await pp.getTextContent();
+      if(tc.items.map(x=>x.str).join('').replace(/\s/g,'').length>=15){done++;continue}   /* already has text */
+      say('Reading page '+(i+1)+' of '+N+'…',Math.round(i/N*100));
+      const base=pp.getViewport({scale:1,rotation:0}),sc=Math.min(3,Math.sqrt(9e6/Math.max(1,base.width*base.height)));
+      const vp=pp.getViewport({scale:sc,rotation:0}),cv=document.createElement('canvas');cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);
+      const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);
+      await pp.render({canvasContext:cx,viewport:vp}).promise;
+      const {data}=await worker.recognize(cv);
+      const page=out.getPage(i),view=pp.view;   /* [x0,y0,x1,y1] in PDF units */
+      for(const w of (data.words||[])){
+        const t=String(w.text||'').trim();if(!t||w.confidence<25)continue;
+        const b=w.bbox,x=view[0]+b.x0/sc,yTop=view[3]-b.y0/sc,h=Math.max(2,(b.y1-b.y0)/sc),wd=Math.max(1,(b.x1-b.x0)/sc);
+        let size=h*.8;const runs=ocrRuns(t),tw=runs.reduce((a,r)=>a+(r[1]?F.dev:F.lat).widthOfTextAtSize(r[0],size),0);
+        if(tw>0)size=Math.max(h*.35,Math.min(h*1.3,size*wd/tw));
+        let xx=x;for(const [r,dv] of runs){const f=dv?F.dev:F.lat;page.drawText(r,{x:xx,y:yTop-h*.82,size,font:f,opacity:0});xx+=f.widthOfTextAtSize(r,size)}
+        words++;
+      }
+      cv.width=cv.height=0;done++;
+    }
+    say('Saving the searchable PDF…',98);
+    const bytes=await out.save();
+    await proj.store.writeFile(proj.name,doc.file,bytes);
+    doc.ocr=new Date().toISOString();dropRT(doc.id);syncFile();
+    for(const v of views)if(v.doc===doc.id){const n=v.cur;v.doc=null;await viewShow(v,doc.id,{page:n,record:false})}
+    touch();SR.ocrBusy=false;box.hidden=true;
+    toast('"'+doc.title+'" is now searchable ('+words+' words read). Its pages look the same; text can now be searched and selected.');
+    if(srchIn.value.trim())srRun();
+  }catch(e){
+    SR.ocrBusy=false;console.warn(e);
+    box.innerHTML=(e.message==='stopped'?'OCR stopped; the PDF was not changed.':'OCR could not finish: '+esc(e.message||String(e))+'. The PDF was not changed.')+' <button class="btn" id="ocrAgain">Try again</button>';
+    const a=$('#ocrAgain');if(a)a.onclick=()=>ocrDoc(doc);
+  }finally{rtHold--;if(worker)try{await worker.terminate()}catch(e){}}
+}
 
 /* ================= hand-over from Charpe Suite (Oct 2026) =================
    Charpe Suite (same web address, sanketcharpe.github.io) places order PDFs in a
