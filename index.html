@@ -435,6 +435,15 @@ details.drive ol b{color:var(--ink)}
   .tabs{display:flex}
   .hide-sm{display:none}
 }
+
+.rcvbox{position:fixed;inset:0;background:rgba(10,18,32,.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto}
+.rcvc{background:var(--panel,#fff);color:var(--ink,#1a2233);border-radius:12px;max-width:580px;width:100%;box-shadow:0 14px 40px rgba(0,0,0,.3);font-size:14px;line-height:1.45}
+.rcvh{padding:14px 18px;border-bottom:1px solid var(--line,#e3e6ea)}.rcvh b{font-size:16px;display:block}.rcvh small{color:var(--muted);font-size:12.5px}
+.rcvb{padding:12px 18px 16px}.rcvlab{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:10px 0 4px}
+.rcvf{margin:0;padding-left:20px}.rcvf input,.rcvq{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line,#c9ced6);border-radius:6px;font:inherit;margin:2px 0;background:var(--bg2,#fff);color:inherit}
+.rcvl{max-height:260px;overflow:auto;margin-top:8px;border:1px solid var(--line,#eef0f2);border-radius:6px}
+.rcvr{display:flex;gap:8px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line,#f1f2f4)}.rcvr span{flex:1;min-width:0;overflow-wrap:anywhere}.rcvr .good{color:#127a4b;font-size:11px}
+#bkPill{position:fixed;left:12px;bottom:12px;z-index:800;background:#fff4d6;color:#7a4b00;border:1px solid #e8c96a;border-radius:16px;padding:6px 12px;font:600 12.5px/1.2 system-ui,Segoe UI,Arial,sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15)}
 @media (prefers-reduced-motion:reduce){.hl.flash,.item.flash,.pin.flash{animation:none;outline:3px solid var(--accent)}}
 </style>
 </head>
@@ -461,7 +470,7 @@ details.drive ol b{color:var(--ink)}
     </div>
   </header>
 
-  <div class="daybar" id="daybar"></div>
+  <button id="bkPill" hidden></button><div class="daybar" id="daybar"></div>
   <main class="split">
     <section class="wrap docwrap" aria-label="PDF">
       <div class="dtools">
@@ -657,7 +666,7 @@ details.drive ol b{color:var(--ink)}
   <p class="muted" style="margin:0;font-size:12.5px">Add the matters listed that day with their <b>serial numbers</b>. They show in that order as a strip at the top of the screen; click one to open it (the open matter is saved first).</p>
   <ol class="olist dylist" id="dyList"></ol>
   <div class="row" style="gap:8px;flex-wrap:wrap"><select id="dyAdd" style="flex:1;min-width:220px;height:34px"></select><button class="btn" id="dyAddBtn">+ Add to this day</button></div>
-  <div class="row end"><button class="btn warn" id="dyClear" style="margin-right:auto">Remove this day's list</button><button class="btn" id="dyBoard" title="Read a cause list (PDF or text) and pin your matters from it">📥 Upload board</button><button class="btn" data-close>Close</button><button class="btn primary" id="dyShow">Show at the top</button></div>
+  <div class="row end"><button class="btn warn" id="dyClear">Remove this day's list</button><button class="btn warn" id="dyClearPast" title="Remove the pins of every date before today">Clear past dates</button><button class="btn warn" id="dyClearAll" style="margin-right:auto" title="Remove every pinned case on every date">Clear all pinned cases</button><button class="btn" id="dyBoard" title="Read a cause list (PDF or text) and pin your matters from it">📥 Upload board</button><button class="btn" data-close>Close</button><button class="btn primary" id="dyShow">Show at the top</button></div>
 </div></div>
 
 <div class="panel" id="brdPanel" hidden><div class="pc" role="dialog" aria-labelledby="brTitle" style="width:min(900px,100%)">
@@ -689,7 +698,7 @@ details.drive ol b{color:var(--ink)}
       <li>From then on notes, highlights, drawings, sheets and PDFs sync by themselves. The <b>☁</b> button shows when it last synced.</li>
     </ol>
   </details>
-  <div class="row"><h3 style="flex:1">Matters</h3><button class="btn" id="libDay" title="List the matters on board for a date, with their serial numbers; they show as a strip at the top">📅 Day list</button><button class="btn" id="libBoard" title="Read the day's board (cause list) and pin your matters from it automatically">📥 Upload board</button><button class="btn primary" id="libNew">New matter</button></div>
+  <div class="row"><h3 style="flex:1">Matters</h3><button class="btn" id="libDay" title="List the matters on board for a date, with their serial numbers; they show as a strip at the top">📅 Day list</button><button class="btn" id="libBoard" title="Read the day's board (cause list) and pin your matters from it automatically">📥 Upload board</button><button class="btn" id="libRcv" title="Add a PDF or photo you received (WhatsApp, e-mail, Files) to a matter">📎 Add a received file</button><input class="sr" type="file" id="rcvIn" multiple accept="application/pdf,.pdf,image/jpeg,image/png,.jpg,.jpeg,.png"><button class="btn primary" id="libNew">New matter</button></div>
   <div class="libsearch"><input type="text" id="libQ" placeholder="Search by matter or PDF file name" aria-label="Search matters and PDF file names" autocomplete="off"></div>
   <ul class="plist" id="projList"></ul>
   <div class="row end"><button class="btn" id="openSample">Open the sample</button><button class="btn" data-close>Close</button></div>
@@ -725,6 +734,10 @@ details.drive ol b{color:var(--ink)}
   <div class="field"><label for="sUrl">Sync address (Apps Script web app URL)</label><input type="url" id="sUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
   <div class="field"><label for="sKey">Sync key</label><input type="text" id="sKey" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
   <div class="row"><button class="btn" id="sTest">Test connection</button><button class="btn primary" id="sSync">Sync now</button><span id="sInfo" style="color:var(--muted);font-size:13px"></span></div>
+  <h3>Backup on this device</h3>
+  <p id="bkInfo"></p>
+  <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="bkPick">Choose backup folder…</button><button class="btn primary" id="bkAllow" hidden>Allow access to the backup folder</button><button class="btn" id="bkNow" hidden>Back up now</button><button class="btn" id="bkRest" hidden title="Bring back matters that are in the backup folder but not in this browser">Restore from backup folder</button></div>
+  <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="bkZip" title="One .zip file with every matter, its notes and PDFs">Save a full backup file</button><button class="btn" id="bkZipIn">Restore from a backup file…</button><input class="sr" type="file" id="bkZipFile" accept=".zip,application/zip"></div>
   <div class="row end"><button class="btn primary" data-close>Done</button></div>
 </div></div>
 
@@ -1966,7 +1979,7 @@ $('#appendIn').addEventListener('change',e=>{const fs=[...e.target.files];e.targ
 const docWrap=document.querySelector('.docwrap');
 docWrap.addEventListener('dragover',e=>{if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')){e.preventDefault();$('#dropHint').hidden=false}});
 docWrap.addEventListener('dragleave',e=>{if(!docWrap.contains(e.relatedTarget))$('#dropHint').hidden=true});
-docWrap.addEventListener('drop',e=>{$('#dropHint').hidden=true;const fs=e.dataTransfer?[...e.dataTransfer.files]:[];if(!fs.length)return;e.preventDefault();addPdfsAsk(fs)});
+docWrap.addEventListener('drop',e=>{$('#dropHint').hidden=true;const fs=e.dataTransfer?[...e.dataTransfer.files]:[];if(!fs.length)return;e.preventDefault();if(scratch()&&!P.docs.length){receiveFiles(fs,'Dropped in');return}addPdfsAsk(fs)});
 const isPdf=f=>/pdf$/i.test(f.type)||/\.pdf$/i.test(f.name);
 function uniqueFile(name,taken){name=safeName(name);if(!/\.pdf$/i.test(name))name+='.pdf';const base=name.replace(/\.pdf$/i,'');let n=name,k=2;
   while(taken.some(t=>t.toLowerCase()===n.toLowerCase()))n=`${base} (${k++}).pdf`;return n}
@@ -2424,7 +2437,7 @@ function renderDayBar(){
   const b=document.createElement('button');b.className='dd';b.title='Change the date, or edit this list';b.textContent='📅 '+dayFmt(d)+(L.t?' · '+L.t:'')+(d===todayIso()?' (today)':'')+' ▾';
   b.onclick=()=>{const ds=Object.keys(all).filter(x=>all[x].items&&all[x].items.length).sort();
     popMenu(b,ds.map(x=>({label:(x===d?'✓ ':'')+dayFmt(x)+(all[x].t?' · '+all[x].t:''),hint:all[x].items.length+' matter'+(all[x].items.length===1?'':'s'),run:()=>{dayOn=x;renderDayBar()}}))
-      .concat([{label:'Edit this list…',run:()=>openDay(d)},{label:'Upload a board…',hint:'Read a cause list and pin your matters',run:()=>openBoard(d)},{label:'New day list…',run:()=>openDay(null)},{label:'Hide the strip',hint:'Comes back when you open a day list',run:()=>{dayHidden=true;renderDayBar()}}]))};
+      .concat([{label:'Edit this list…',run:()=>openDay(d)},{label:'Upload a board…',hint:'Read a cause list and pin your matters',run:()=>openBoard(d)},{label:'New day list…',run:()=>openDay(null)},{label:'Clear past dates…',hint:'Remove pins of every date before today',run:()=>clearPins('past')},{label:'Clear all pinned cases…',hint:'Every date; the matters are not touched',run:()=>clearPins('all')},{label:'Hide the strip',hint:'Comes back when you open a day list',run:()=>{dayHidden=true;renderDayBar()}}]))};
   bar.append(b);
   const have=new Set(libNames||[]);
   daySort(L.items.slice()).forEach(it=>{const c=document.createElement('button');c.className='dc'+(proj&&proj.name===it.m?' on':'')+(libNames&&libNames.length&&!have.has(it.m)?' miss':'');
@@ -2898,7 +2911,7 @@ $('#openSample').onclick=async()=>{$('#libPanel').hidden=true;await openSample()
 /* Settings */
 $('#setBtn').onclick=()=>{
   $('#sUrl').value=(syncCfg&&syncCfg.url)||'';$('#sKey').value=(syncCfg&&syncCfg.key)||'';updSyncBtn();
-  updPrInfo();$('#sStart').value=settings.startup;$('#sTap').value=settings.tap==='tap'?'tap':'hold';$('#sSize').value=settings.fontSize;$('#sFont').value=settings.font;$('#sWidth').value=settings.noteWidth;
+  updPrInfo();bkInfo();$('#sStart').value=settings.startup;$('#sTap').value=settings.tap==='tap'?'tap':'hold';$('#sSize').value=settings.fontSize;$('#sFont').value=settings.font;$('#sWidth').value=settings.noteWidth;
   const sc=$('#sColor');sc.innerHTML='';Object.keys(COLORS).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=CNAMES[k];sc.append(o)});sc.value=settings.color;
   openPanel('setPanel');
 };
@@ -3530,6 +3543,330 @@ async function ocrDoc(doc){
     const a=$('#ocrAgain');if(a)a.onclick=()=>ocrDoc(doc);
   }finally{rtHold--;if(worker)try{await worker.terminate()}catch(e){}}
 }
+
+
+/* ================= Clear pinned cases (Oct 2026) =================
+   Removes pins only: the matters, their PDFs and notes stay. Pins live inside the
+   matters, so the clearing reaches the iPad and the clerk's PC through the normal sync. */
+function clearPins(mode){
+  const all=dayAll(),t=todayIso();
+  const ds=Object.keys(all).filter(d=>all[d]&&all[d].items&&all[d].items.length);
+  const hit=mode==='past'?ds.filter(d=>d<t):ds;
+  if(!hit.length){toast(mode==='past'?'No pinned cases on past dates.':'There are no pinned cases.');return}
+  const n=hit.reduce((a,d)=>a+all[d].items.length,0);
+  const what=mode==='past'?'the '+n+' pinned case'+(n===1?'':'s')+' on '+hit.length+' past date'+(hit.length===1?'':'s'):'ALL '+n+' pinned case'+(n===1?'':'s')+' on '+hit.length+' date'+(hit.length===1?'':'s');
+  if(!confirm('Clear '+what+'?\n\nOnly the pins are removed. The matters, their PDFs and notes are not touched.\nThe day lists are cleared on your other devices too.'))return;
+  hit.forEach(d=>delete all[d]);daySave(all);
+  if(dayOn&&hit.includes(dayOn))dayOn=null;
+  $('#dayPanel').hidden=true;renderDayBar();
+  toast((mode==='past'?'Past day lists cleared':'All pinned cases cleared')+' ('+n+').');
+}
+
+/* ================= Receiving files: WhatsApp, Files app, "Open with", drag and drop (Oct 2026) =================
+   Whatever way a PDF (or a photo of a document) reaches Excerpt Desk, this asks which matter it goes to. */
+const isImg=f=>/^image\/(jpeg|jpg|png)$/i.test(f.type||'')||/\.(jpe?g|png)$/i.test(f.name||'');
+async function imagesToPdf(imgs,name){
+  const doc=await PDFLib.PDFDocument.create();
+  for(const f of imgs){const b=new Uint8Array(await f.arrayBuffer());
+    const png=/png/i.test(f.type||'')||/\.png$/i.test(f.name||'');
+    const im=png?await doc.embedPng(b):await doc.embedJpg(b);
+    const W=595.28,sc=Math.min(1,W/im.width),w=im.width*sc,h=im.height*sc;   /* A4 width, height follows the photo */
+    const pg=doc.addPage([w,h]);pg.drawImage(im,{x:0,y:0,width:w,height:h})}
+  return new File([await doc.save()],name,{type:'application/pdf'});
+}
+let rcvBusy=false;const rcvQueue=[];
+async function receiveFiles(list,from){
+  list=[...(list||[])].filter(Boolean);if(!list.length)return;
+  if(rcvBusy){rcvQueue.push([list,from]);return}
+  if(!proj){setTimeout(()=>receiveFiles(list,from),400);return}
+  rcvBusy=true;
+  const done=()=>{rcvBusy=false;const nx=rcvQueue.shift();if(nx)setTimeout(()=>receiveFiles(nx[0],nx[1]),300)};
+  let pdfs=list.filter(isPdf);const imgs=list.filter(f=>!isPdf(f)&&isImg(f));const other=list.filter(f=>!isPdf(f)&&!isImg(f));
+  if(imgs.length){try{const base=(imgs[0].name||'Photo').replace(/\.[a-z0-9]+$/i,'');pdfs.push(await imagesToPdf(imgs,(imgs.length>1?base+' and '+(imgs.length-1)+' more':base)+'.pdf'))}
+    catch(e){console.warn(e);toast('Could not turn the photo into a PDF.')}}
+  if(!pdfs.length){toast(other.length?'Only PDFs and photos (JPG/PNG) can be added. '+other.map(f=>f.name).join(', ')+' was skipped.':'Nothing to add.');done();return}
+  if(other.length)toast('Skipped (not a PDF or photo): '+other.map(f=>f.name).join(', '));
+  let names=[];try{names=await libStore.list()}catch(e){}
+  const rows=pdfs.map(f=>({f,name:f.name.replace(/\.pdf$/i,'')}));
+  const words=s=>String(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>2&&!['pdf','the','and','others','whatsapp','image','document','scan'].includes(w));
+  const fw=words(pdfs.map(f=>f.name).join(' ')),nums=(pdfs.map(f=>f.name).join(' ').match(/\d{2,5}/g)||[]);
+  const score=n=>{const l=n.toLowerCase();let s=0;fw.forEach(w=>{if(l.includes(w))s++});nums.forEach(x=>{if(new RegExp('\\b'+x+'\\b').test(l))s+=3});return s};
+  const ranked=names.map(n=>({n,s:score(n)})).sort((a,b)=>b.s-a.s||a.n.localeCompare(b.n));
+  const box=document.createElement('div');box.className='rcvbox';
+  box.innerHTML='<div class="rcvc" role="dialog" aria-label="Add received file to a matter"><div class="rcvh"><b>Add to a matter</b><small>'+esc(from||'Received')+' · '+pdfs.length+' PDF'+(pdfs.length===1?'':'s')+'</small></div>'+
+    '<div class="rcvb"><div class="rcvlab">Name in the matter (change if you like)</div><ol class="rcvf"></ol>'+
+    '<div class="rcvlab">Which matter? Search by case number or party name</div><input class="rcvq" placeholder="Type to search your matters"><div class="rcvl"></div>'+
+    '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button class="btn primary rcvnew">+ New matter…</button>'+(proj&&!scratch()?'<button class="btn rcvcur">Add to the open matter: '+esc(proj.name.slice(0,40))+'</button>':'')+'<button class="btn rcvno">Cancel</button></div></div></div>';
+  document.body.append(box);
+  const ol=box.querySelector('.rcvf');rows.forEach(r=>{const li=document.createElement('li');const inp=document.createElement('input');inp.value=r.name;inp.maxLength=100;inp.oninput=()=>{r.name=inp.value};inp.onkeydown=e=>e.stopPropagation();li.append(inp);ol.append(li)});
+  const L=box.querySelector('.rcvl'),Q=box.querySelector('.rcvq');
+  const paint=()=>{const q=Q.value.trim().toLowerCase();const rs=ranked.filter(r=>!q||r.n.toLowerCase().includes(q)).slice(0,100);
+    L.innerHTML=rs.length?rs.map(r=>'<div class="rcvr"><span>'+esc(r.n)+(r.s>=3?' <b class="good">likely</b>':'')+'</span><button class="btn" data-n="'+esc(r.n)+'">Add here</button></div>').join(''):'<div class="muted" style="padding:10px">'+(names.length?'No matter matches. Use “New matter”.':'No matters yet. Use “New matter”.')+'</div>';
+    L.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>finish(b.dataset.n))};
+  Q.oninput=paint;Q.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter'){const b=L.querySelector('[data-n]');if(b)b.click()}};paint();setTimeout(()=>Q.focus(),50);
+  const files=()=>rows.map(r=>new File([r.f],(safeName(r.name||r.f.name).replace(/\.pdf$/i,''))+'.pdf',{type:'application/pdf'}));
+  const close=()=>{box.remove();done()};
+  async function finish(name){
+    if(untitled()&&P&&(P.docs.length||P.items.length)){toast('The open work is not saved yet. Save it first, then add the file.',{label:'Save',run:openSaveAs});return}
+    const fs=files();box.remove();
+    try{if(!(proj&&proj.store===libStore&&proj.name===name)){if(proj&&!scratch()){clearTimeout(saveT);await saveNow()}await openProject(libStore,name)}
+      await addPdfs(fs);toast(fs.length+' PDF'+(fs.length===1?'':'s')+' added to "'+name+'"')}
+    catch(e){console.error(e);toast('Could not add the file to "'+name+'".')}
+    done();
+  }
+  box.querySelector('.rcvno').onclick=close;
+  box.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+  const cb=box.querySelector('.rcvcur');if(cb)cb.onclick=()=>finish(proj.name);
+  box.querySelector('.rcvnew').onclick=async()=>{const nm=prompt('Name of the new matter (put the case number in it, e.g. OA 297-2026 Manish Kumar)',rows[0].name.slice(0,90));if(!nm)return;
+    if(untitled()&&P&&(P.docs.length||P.items.length)){toast('The open work is not saved yet. Save it first, then add the file.',{label:'Save',run:openSaveAs});return}
+    const fs=files();box.remove();try{if(proj&&!scratch()){clearTimeout(saveT);await saveNow()}await newMatter(nm,fs,false)}catch(e){console.error(e);toast('The matter could not be created.')}done()};
+}
+/* 1. "Open with Excerpt Desk" on a PC (right-click a PDF in Downloads) — needs Excerpt Desk installed as an app */
+try{if('launchQueue' in window)window.launchQueue.setConsumer(async p=>{if(!p||!p.files||!p.files.length)return;const fs=[];for(const h of p.files){try{fs.push(await h.getFile())}catch(e){}}if(fs.length)receiveFiles(fs,'Opened with Excerpt Desk')})}catch(e){}
+/* 2. Share from WhatsApp / Files on Android (and Windows/ChromeOS where offered) — the service worker keeps the files until the app opens */
+(function(){
+  const openShare=()=>new Promise((res,rej)=>{const r=indexedDB.open('xdesk-share',1);r.onupgradeneeded=()=>r.result.createObjectStore('items',{keyPath:'id'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+  async function take(){
+    let d;try{d=await openShare()}catch(e){return}
+    const items=await new Promise(res=>{const t=d.transaction('items','readonly');const q=t.objectStore('items').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])});
+    for(const it of items){try{d.transaction('items','readwrite').objectStore('items').delete(it.id)}catch(e){}
+      const fs=(it.files||[]).map(f=>new File([f.blob],f.name||'Shared file.pdf',{type:f.type||f.blob.type||''}));if(fs.length)receiveFiles(fs,'Shared'+(it.title?' · '+it.title:''))}
+    if(/[?&]share=/.test(location.search))history.replaceState(null,'',location.pathname);
+  }
+  setTimeout(take,900);window.addEventListener('focus',()=>setTimeout(take,300));
+  if(/[?&]share=error/.test(location.search))setTimeout(()=>toast('The shared file could not be received. Try again, or use Library → Add a received file.'),1200);
+})();
+/* 3. Drag a file from Downloads (or from WhatsApp Desktop) anywhere outside the PDF pane */
+document.addEventListener('dragover',e=>{if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')&&!e.target.closest('.docwrap'))e.preventDefault()});
+document.addEventListener('drop',e=>{if(e.target.closest('.docwrap')||dragSel)return;const fs=e.dataTransfer?[...e.dataTransfer.files]:[];if(!fs.length)return;e.preventDefault();receiveFiles(fs,'Dropped in')});
+/* 4. Library → Add a received file (iPad: pick it from Files, where WhatsApp "Save to Files" puts it) */
+$('#rcvIn').addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';$('#libPanel').hidden=true;receiveFiles(fs,'From this device')});
+$('#libRcv').onclick=()=>$('#rcvIn').click();
+
+/* ================= Backup folder on this device (Oct 2026) =================
+   Browser storage can be cleared, so every matter (worksheet + PDFs) is also copied, as ordinary files,
+   into a folder you choose on the PC — outside the browser. Google Drive stays the second copy.
+   Layout:  <your folder>/Excerpt Desk Backup/excerpt-desk-backup.json  +  Matters/<matter>/...  +  _Deleted matters/...
+   iPad / Android browsers cannot write to a folder; there, use "Save a full backup file". */
+const BKDIR='Excerpt Desk Backup',BKMARK='excerpt-desk-backup.json';
+const bkSupported=fsSupported&&!inPreview;
+const BK={h:null,ok:false,dirty:new Map(),busy:false,again:false,t:null,last:0,restoring:false,err:''};
+try{BK.last=+localStorage.getItem('xdesk:bk:last')||0}catch(e){}
+async function bkLoad(){if(!bkSupported)return;try{BK.h=(await idb.get('kv','bk:root'))||null}catch(e){BK.h=null}}
+async function bkPerm(ask){if(!BK.h)return false;let s='prompt';
+  try{s=await BK.h.queryPermission({mode:'readwrite'});if(s!=='granted'&&ask)s=await BK.h.requestPermission({mode:'readwrite'})}catch(e){s='denied'}
+  BK.ok=s==='granted';bkPill();return BK.ok}
+async function bkSub(name,create){return BK.h.getDirectoryHandle(name,{create:!!create})}
+async function bkMatterDir(p,create){return (await bkSub('Matters',create)).getDirectoryHandle(p,{create:!!create})}
+async function bkWrite(dir,n,data){const fh=await dir.getFileHandle(n,{create:true});const w=await fh.createWritable();await w.write(data);await w.close()}
+async function bkSize(dir,n){try{return (await (await dir.getFileHandle(n)).getFile()).size}catch(e){return -1}}
+async function bkCopyDir(src,dst){for await(const [n,h] of src.entries()){if(h.kind==='file'){await bkWrite(dst,n,await h.getFile())}else await bkCopyDir(h,await dst.getDirectoryHandle(n,{create:true}))}}
+async function bkIndex(){
+  let names=[];try{names=await BrowserStore.list()}catch(e){}
+  const o={format:'excerpt-desk-backup/1',note:'Backup kept by Excerpt Desk. Each matter is a folder under Matters with its PDFs and worksheet.xdesk.json. Do not rename these folders.',
+    updated:new Date().toISOString(),device:navigator.userAgent.slice(0,120),matters:names,sync:syncOn()?{url:syncCfg.url,key:syncCfg.key}:null};
+  await bkWrite(BK.h,BKMARK,JSON.stringify(o,null,1));
+}
+/* every write to browser storage is noted and copied to the folder a moment later */
+function bkNote(op,a){
+  if(BK.restoring||!BK.h)return;const p=a[0];
+  if(op==='writeJson'||op==='create'){const m=BK.dirty.get(p)||{json:false,files:new Set(),del:new Set()};m.json=true;BK.dirty.set(p,m)}
+  else if(op==='writeFile'){const m=BK.dirty.get(p)||{json:false,files:new Set(),del:new Set()};m.files.add(a[1]);m.del.delete(a[1]);BK.dirty.set(p,m)}
+  else if(op==='delFile'){const m=BK.dirty.get(p)||{json:false,files:new Set(),del:new Set()};m.del.add(a[1]);m.files.delete(a[1]);BK.dirty.set(p,m)}
+  else if(op==='delMatter'){BK.dirty.set(p,{gone:true})}
+  else if(op==='rename'){BK.dirty.set(p,{moved:a[1]});BK.dirty.set(a[1],{full:true})}
+  clearTimeout(BK.t);BK.t=setTimeout(bkFlush,1500);
+}
+['create','writeJson','writeFile','delFile','delMatter','rename'].forEach(op=>{const orig=BrowserStore[op];
+  BrowserStore[op]=async function(...a){const r=await orig.apply(BrowserStore,a);try{bkNote(op,a)}catch(e){}return r}});
+async function bkMatterFull(p,force){
+  const j=await BrowserStore.readJson(p);if(!j)return;const d=await bkMatterDir(p,true);
+  const txt=JSON.stringify(j,null,1);let same=false;
+  if(!force){try{same=(await (await (await d.getFileHandle(WS)).getFile()).text())===txt}catch(e){}}
+  if(!same)await bkWrite(d,WS,txt);
+  let meta={};try{meta=(await idb.get('kv','fmeta:'+p))||{}}catch(e){}
+  for(const f of await BrowserStore.files(p)){const sz=meta[f]?meta[f].size:-2;if(!force&&sz>=0&&(await bkSize(d,f))===sz)continue;
+    await bkWrite(d,f,await BrowserStore.readFile(p,f))}
+}
+async function bkGone(p){
+  try{const src=await bkMatterDir(p,false);const del=await bkSub('_Deleted matters',true);
+    const dst=await del.getDirectoryHandle(safeName(p+' (deleted '+stamp().replace(/:/g,'')+')'),{create:true});await bkCopyDir(src,dst);
+    await (await bkSub('Matters',false)).removeEntry(p,{recursive:true})}catch(e){if(e&&e.name!=='NotFoundError')throw e}
+}
+async function bkFlush(){
+  if(!BK.h)return;if(BK.busy){BK.again=true;return}
+  if(!BK.ok&&!(await bkPerm(false))){bkPill();return}
+  BK.busy=true;bkPill();
+  try{const work=[...BK.dirty.entries()];BK.dirty.clear();
+    for(const [p,m] of work){try{
+      if(m.gone){await bkGone(p);continue}
+      if(m.moved){try{await (await bkSub('Matters',false)).removeEntry(p,{recursive:true})}catch(e){}continue}
+      if(m.full){await bkMatterFull(p,false);continue}
+      const d=await bkMatterDir(p,true);
+      if(m.json){const j=await BrowserStore.readJson(p);if(j)await bkWrite(d,WS,JSON.stringify(j,null,1))}
+      for(const f of m.files){try{await bkWrite(d,f,await BrowserStore.readFile(p,f))}catch(e){if(String(e.message)!=='missing')throw e}}
+      for(const f of m.del){try{await d.removeEntry(f)}catch(e){}}
+    }catch(e){console.warn('backup',p,e);const old=BK.dirty.get(p);if(!old)BK.dirty.set(p,{full:true});BK.err=e.message||String(e)}}
+    await bkIndex();BK.last=Date.now();try{localStorage.setItem('xdesk:bk:last',BK.last)}catch(e){}if(!BK.dirty.size)BK.err='';
+  }catch(e){console.warn(e);BK.err=e.message||String(e);if(e&&e.name==='NotAllowedError')BK.ok=false}
+  finally{BK.busy=false;bkPill();bkInfo();if(BK.again||BK.dirty.size&&!BK.err){BK.again=false;clearTimeout(BK.t);BK.t=setTimeout(bkFlush,3000)}}
+}
+/* full check: everything in browser storage is in the folder (run on start, when access is given, every 15 minutes) */
+async function bkAll(force,say){
+  if(!BK.h||!(await bkPerm(false)))return false;
+  let names=[];try{names=await BrowserStore.list()}catch(e){return false}
+  names.forEach(n=>BK.dirty.set(n,{full:true}));
+  if(force){BK.busy=true;try{let i=0;for(const n of names){i++;if(say)toast('Backing up '+i+' of '+names.length+': '+n);BK.dirty.delete(n);await bkMatterFull(n,false)}await bkIndex();
+      BK.last=Date.now();try{localStorage.setItem('xdesk:bk:last',BK.last)}catch(e){}BK.err=''}catch(e){BK.err=e.message||String(e);console.warn(e)}finally{BK.busy=false;bkPill();bkInfo()}}
+  else bkFlush();
+  return true;
+}
+setInterval(()=>{if(BK.h&&BK.ok&&document.visibilityState==='visible')bkAll(false)},15*60000);
+/* restore: the folder (or a backup file) back into this browser — only matters that are missing here */
+function folderSource(){return {
+  async matters(){const out=[];try{for await(const [n,h] of (await bkSub('Matters',false)).entries())if(h.kind==='directory')out.push(n)}catch(e){}return out.sort()},
+  async json(p){const d=await bkMatterDir(p,false);try{return JSON.parse(await (await (await d.getFileHandle(WS)).getFile()).text())}catch(e){return null}},
+  async files(p){const d=await bkMatterDir(p,false),o=[];for await(const [n,h] of d.entries())if(h.kind==='file'&&/\.pdf$/i.test(n))o.push(n);return o},
+  async file(p,f){return await (await (await bkMatterDir(p,false)).getFileHandle(f)).getFile()},
+  async index(){try{return JSON.parse(await (await (await BK.h.getFileHandle(BKMARK)).getFile()).text())}catch(e){return null}}}}
+async function restoreFrom(src,ask){
+  const have=new Set(await BrowserStore.list());const all=await src.matters();const miss=all.filter(n=>!have.has(n));
+  const idx=await src.index();
+  if(!miss.length){if(ask)toast('Nothing to restore: all '+all.length+' matters in the backup are already here.');return 0}
+  if(ask&&!confirm('The backup has '+all.length+' matter'+(all.length===1?'':'s')+'. '+miss.length+' of them '+(miss.length===1?'is':'are')+' not in Excerpt Desk on this device.\n\nRestore '+(miss.length===1?'it':'them')+' now? Nothing already here is changed.'))return 0;
+  BK.restoring=true;let n=0;
+  try{for(const p of miss){n++;toast('Restoring '+n+' of '+miss.length+': '+p);
+      const j=(await src.json(p))||blankJson(p);j.name=p;await BrowserStore.create(p);
+      for(const f of await src.files(p)){try{const b=await (await src.file(p,f)).arrayBuffer();await BrowserStore.writeFile(p,f,b)}catch(e){console.warn('restore file',p,f,e)}}
+      await BrowserStore.writeJson(p,j)}}
+  finally{BK.restoring=false}
+  if(idx&&idx.sync&&idx.sync.url&&!syncOn()){syncCfg={url:idx.sync.url,key:idx.sync.key};await saveSyncCfg()}
+  await refreshLibrary();try{await buildDays()}catch(e){}
+  if(syncOn())miss.forEach((p,i)=>requestSync(p,2000+i*200));
+  toast(miss.length+' matter'+(miss.length===1?'':'s')+' restored'+(syncOn()?' and being synced with Google Drive.':'.'));
+  if(untitled()&&P&&!P.docs.length)showWelcome();
+  return miss.length;
+}
+/* choosing the folder — asked the first time Excerpt Desk opens on a computer (and again if browser data was cleared) */
+async function bkChoose(){
+  let h;try{h=await window.showDirectoryPicker({id:'xdesk-backup',mode:'readwrite',startIn:'documents'})}catch(e){if(e&&e.name!=='AbortError')toast('Folder access is not available in this browser. Use Chrome or Edge on the PC.');return false}
+  let root=h;
+  try{await h.getFileHandle(BKMARK)}catch(e){
+    if(h.name!==BKDIR){let found=null;try{const c=await h.getDirectoryHandle(BKDIR);await c.getFileHandle(BKMARK);found=c}catch(x){}
+      root=found||await h.getDirectoryHandle(BKDIR,{create:true})}}
+  BK.h=root;BK.ok=true;try{await idb.set('kv','bk:root',root)}catch(e){}
+  try{localStorage.removeItem('xdesk:bk:no')}catch(e){}
+  const back=await folderSource().matters();
+  if(back.length)await restoreFrom(folderSource(),true);
+  toast('Backup folder: '+(root===h?h.name:h.name+' › '+BKDIR)+'. Copying your matters into it…');
+  await bkAll(true,false);toast('Backup complete: every matter is now also in the folder '+root.name+' on this computer.');
+  bkInfo();return true;
+}
+function bkFirstRun(){
+  if(document.querySelector('.rcvbox,.bkbox'))return;
+  let no=null,later=null;try{no=localStorage.getItem('xdesk:bk:no');later=sessionStorage.getItem('xdesk:bk:later')}catch(e){}
+  if(!bkSupported){
+    let seen=null;try{seen=localStorage.getItem('xdesk:bk:devnote')}catch(e){}
+    if(!seen&&!inPreview){try{localStorage.setItem('xdesk:bk:devnote','1')}catch(e){}
+      setTimeout(()=>toast('On this device Excerpt Desk keeps matters in the app and in Google Drive. For an extra copy in Files: Settings → Save a full backup file.'),2500)}
+    return}
+  if(BK.h||no||later)return;
+  const box=document.createElement('div');box.className='rcvbox bkbox';
+  box.innerHTML='<div class="rcvc" role="dialog" aria-label="Backup folder"><div class="rcvh"><b>Where should Excerpt Desk keep its backup on this computer?</b></div><div class="rcvb">'+
+    '<p style="margin:0 0 8px">Your matters are saved in the browser and in Google Drive. Browser storage can be wiped (clearing browsing data, a Chrome reset), so Excerpt Desk also keeps <b>every matter and PDF as ordinary files in a folder on this computer</b>, outside the browser, and keeps it up to date as you work.</p>'+
+    '<ol style="margin:0 0 8px 18px;padding:0"><li>Press <b>Choose folder</b>. It opens in <b>Documents</b>; just press <b>Select folder</b> there.</li><li>A folder <b>'+BKDIR+'</b> is made inside it.</li><li>If Excerpt Desk was used on this computer before, choose the <b>same</b> folder: it finds the backup and offers to restore it.</li><li>If Chrome asks, choose <b>Allow on every visit</b>.</li></ol>'+
+    '<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn primary bkgo">Choose folder</button><button class="btn bklater">Not now</button><button class="btn bkno">No backup folder on this computer</button></div></div></div>';
+  document.body.append(box);
+  box.querySelector('.bkgo').onclick=async()=>{if(await bkChoose())box.remove()};
+  box.querySelector('.bklater').onclick=()=>{try{sessionStorage.setItem('xdesk:bk:later','1')}catch(e){}box.remove();toast('Asked again next time. Or set it in Settings → Backup on this device.')};
+  box.querySelector('.bkno').onclick=()=>{if(!confirm('Keep no backup folder on this computer?\n\nMatters will be only in this browser and in Google Drive.'))return;try{localStorage.setItem('xdesk:bk:no','1')}catch(e){}box.remove()};
+}
+/* small reminder when Chrome needs your OK to write to the folder again */
+function bkPill(){let p=$('#bkPill');if(!p)return;
+  const need=BK.h&&!BK.ok;p.hidden=!need&&!BK.err;
+  p.textContent=need?'🔒 Backup folder paused — click to allow':BK.err?'⚠ Backup problem — click':'';
+  p.title=need?'Chrome needs your permission to keep writing the backup into '+(BK.h?BK.h.name:'the folder')+'.':'Backup problem: '+BK.err+'. Click to try again.'}
+async function bkPillClick(){if(BK.h&&!BK.ok){if(await bkPerm(true)){toast('Backup folder connected.');await bkAll(false);
+    if(!(await BrowserStore.list()).length&&(await folderSource().matters()).length)await restoreFrom(folderSource(),true)}else toast('Permission was not given.')}
+  else{BK.err='';bkAll(false)}}
+function bkInfo(){const el=$('#bkInfo');if(!el)return;
+  const zipNote=' A <b>full backup file</b> (one .zip with every matter and PDF) can be saved at any time below.';
+  if(!bkSupported){el.innerHTML='This browser cannot write to a folder by itself (iPad and Android browsers do not allow it). Your matters are kept in this app and in Google Drive.'+zipNote+' On the iPad choose <b>Save to Files</b> when asked.';
+    ['#bkPick','#bkNow','#bkRest'].forEach(s=>{const b=$(s);if(b)b.hidden=true});return}
+  el.innerHTML=BK.h?('Backup folder: <b>'+esc(BK.h.name)+'</b>'+(BK.ok?'':' — <b>paused</b>, Chrome needs your permission (press Allow)')+(BK.last?' · last copied '+new Date(BK.last).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'')+(BK.err?' · <span style="color:#b42318">problem: '+esc(BK.err)+'</span>':'')+'. Every matter and PDF is copied there as you work, outside the browser.'):
+    'No backup folder on this computer yet. Choose one so that clearing the browser never loses a matter.';
+  $('#bkPick').textContent=BK.h?'Change backup folder…':'Choose backup folder…';
+  $('#bkAllow').hidden=!(BK.h&&!BK.ok);$('#bkNow').hidden=!BK.h;$('#bkRest').hidden=!BK.h;
+}
+$('#bkPick').onclick=()=>bkChoose();
+$('#bkAllow').onclick=()=>bkPillClick();
+$('#bkNow').onclick=async()=>{if(!(await bkPerm(true))){toast('Permission was not given.');return}await bkAll(true,true);toast('Backup complete.')};
+$('#bkRest').onclick=async()=>{if(!(await bkPerm(true))){toast('Permission was not given.');return}await restoreFrom(folderSource(),true)};
+$('#bkPill').onclick=bkPillClick;
+
+/* ---- one-file backup (.zip, works everywhere incl. iPad) ---- */
+const CRCT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRCT[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+async function zipBlob(entries){/* entries: [{name, data:Uint8Array}] — stored, not compressed (PDFs are already compressed) */
+  const parts=[],cen=[];let off=0;const te=new TextEncoder();const d=new Date();
+  const dt=((d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1))&0xffff,dd=(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xffff;
+  for(const e of entries){const nm=te.encode(e.name),u=e.data,crc=crc32(u);
+    const h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(8,0,true);h.setUint16(10,dt,true);h.setUint16(12,dd,true);
+    h.setUint32(14,crc,true);h.setUint32(18,u.length,true);h.setUint32(22,u.length,true);h.setUint16(26,nm.length,true);h.setUint16(28,0,true);
+    parts.push(h.buffer,nm,u);
+    const c=new DataView(new ArrayBuffer(46));c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(10,0,true);c.setUint16(12,dt,true);c.setUint16(14,dd,true);
+    c.setUint32(16,crc,true);c.setUint32(20,u.length,true);c.setUint32(24,u.length,true);c.setUint16(28,nm.length,true);c.setUint32(42,off,true);cen.push(c.buffer,nm);
+    off+=30+nm.length+u.length;await new Promise(r=>setTimeout(r,0))}
+  const csize=cen.reduce((a,b)=>a+b.byteLength,0);const e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,entries.length,true);e.setUint16(10,entries.length,true);e.setUint32(12,csize,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...cen,e.buffer],{type:'application/zip'});
+}
+async function zipRead(blob){
+  const tail=new Uint8Array(await blob.slice(Math.max(0,blob.size-66000)).arrayBuffer());let p=-1;
+  for(let i=tail.length-22;i>=0;i--)if(tail[i]===0x50&&tail[i+1]===0x4b&&tail[i+2]===5&&tail[i+3]===6){p=i;break}
+  if(p<0)throw new Error('not a backup file');const ev=new DataView(tail.buffer,p);const n=ev.getUint16(10,true),csz=ev.getUint32(12,true),coff=ev.getUint32(16,true);
+  const cd=new Uint8Array(await blob.slice(coff,coff+csz).arrayBuffer()),dv=new DataView(cd.buffer),td=new TextDecoder(),out={};let q=0;
+  for(let i=0;i<n;i++){const meth=dv.getUint16(q+10,true),sz=dv.getUint32(q+20,true),nl=dv.getUint16(q+28,true),xl=dv.getUint16(q+30,true),cl=dv.getUint16(q+32,true),lo=dv.getUint32(q+42,true);
+    const name=td.decode(cd.subarray(q+46,q+46+nl));q+=46+nl+xl+cl;if(meth!==0||name.endsWith('/'))continue;
+    const lh=new DataView(await blob.slice(lo,lo+30).arrayBuffer());const start=lo+30+lh.getUint16(26,true)+lh.getUint16(28,true);out[name]=blob.slice(start,start+sz)}
+  return out}
+$('#bkZip').onclick=async()=>{
+  try{if(proj&&!scratch()&&saveT){clearTimeout(saveT);await saveNow()}
+    const names=await BrowserStore.list();if(!names.length){toast('There are no matters in this browser to back up.');return}
+    const te=new TextEncoder(),ent=[];let i=0;
+    for(const p of names){i++;toast('Packing '+i+' of '+names.length+': '+p);const j=await BrowserStore.readJson(p);ent.push({name:'Matters/'+p+'/'+WS,data:te.encode(JSON.stringify(j))});
+      for(const f of await BrowserStore.files(p))ent.push({name:'Matters/'+p+'/'+f,data:new Uint8Array(await BrowserStore.readFile(p,f))})}
+    ent.unshift({name:BKMARK,data:te.encode(JSON.stringify({format:'excerpt-desk-backup/1',updated:new Date().toISOString(),matters:names,sync:syncOn()?{url:syncCfg.url,key:syncCfg.key}:null}))});
+    const blob=await zipBlob(ent),fn='Excerpt Desk backup '+stamp().replace(/[: ]/g,'-')+'.zip',file=new File([blob],fn,{type:'application/zip'});
+    if(navigator.canShare&&navigator.maxTouchPoints>0&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:fn});toast('Backup file ready ('+Math.round(blob.size/1048576)+' MB). Choose Save to Files.');return}catch(e){if(e&&e.name==='AbortError')return}}
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
+    toast('Saved '+fn+' ('+Math.round(blob.size/1048576)+' MB, '+names.length+' matters) to Downloads.');
+  }catch(e){console.error(e);toast('Could not make the backup file: '+(e.message||e))}};
+$('#bkZipIn').onclick=()=>$('#bkZipFile').click();
+$('#bkZipFile').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{const Z=await zipRead(f);const keys=Object.keys(Z);const ms=[...new Set(keys.filter(k=>k.startsWith('Matters/')).map(k=>k.split('/')[1]))].sort();
+    if(!ms.length){toast('That file is not an Excerpt Desk backup.');return}
+    const src={matters:async()=>ms,
+      json:async p=>{const b=Z['Matters/'+p+'/'+WS];return b?JSON.parse(await b.text()):null},
+      files:async p=>keys.filter(k=>k.startsWith('Matters/'+p+'/')&&/\.pdf$/i.test(k)&&k.split('/').length===3).map(k=>k.split('/')[2]),
+      file:async(p,n)=>Z['Matters/'+p+'/'+n],
+      index:async()=>{try{return JSON.parse(await Z[BKMARK].text())}catch(x){return null}}};
+    $('#setPanel').hidden=true;await restoreFrom(src,true)}
+  catch(err){console.error(err);toast('Could not read that backup file: '+(err.message||err))}});
+
+/* start-up: connect the folder; if this browser was wiped but the folder has the matters, offer them back */
+(async()=>{
+  await bkLoad();
+  setTimeout(async()=>{
+    if(BK.h){const ok=await bkPerm(false);
+      if(ok){let empty=false;try{empty=!(await BrowserStore.list()).length}catch(e){}
+        if(empty&&(await folderSource().matters()).length)await restoreFrom(folderSource(),true);else bkAll(false)}
+      else bkPill()}
+    else bkFirstRun();
+    bkInfo();
+  },2200);
+})();
+
+$('#dyClearAll').onclick=()=>clearPins('all');$('#dyClearPast').onclick=()=>clearPins('past');
 
 /* ================= hand-over from Charpe Suite (Oct 2026) =================
    Charpe Suite (same web address, sanketcharpe.github.io) places order PDFs in a
