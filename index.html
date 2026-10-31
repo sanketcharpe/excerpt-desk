@@ -516,6 +516,20 @@ details.drive ol b{color:var(--ink)}
 @media print{body>*:not(.dxed){display:none!important}.dxed{position:static;background:#fff}.dxtb{display:none}.dxscroll{padding:0;overflow:visible}.dxpage{box-shadow:none;background-image:none;width:auto;min-height:0}}
 
 #bkPill{position:fixed;left:12px;bottom:12px;z-index:800;background:#fff4d6;color:#7a4b00;border:1px solid #e8c96a;border-radius:16px;padding:6px 12px;font:600 12.5px/1.2 system-ui,Segoe UI,Arial,sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+
+.wordview{display:flex;flex-direction:column;min-height:100%;width:100%;max-width:100%;box-sizing:border-box}
+.wordview .wbar,.wed-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 10px;border-bottom:1px solid var(--line);background:var(--surface);position:sticky;top:0;z-index:3;font-size:13px}
+.wordview .grow,.wed-bar .grow{flex:1}
+.whost{padding:8px 0;overflow-x:auto}
+.whost .docx-wrapper{background:transparent!important;padding:10px!important}
+.whost .docx-wrapper>section.docx{box-shadow:0 1px 6px rgba(0,0,0,.18);margin-bottom:14px!important}
+.wed{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;background:var(--desk,#eef1f5)}
+.wed-bar .btn{min-width:34px;height:30px;padding:0 8px}
+.wed-st{color:var(--muted);font-size:12px}
+.wed-scroll{flex:1;min-height:0;overflow:auto}
+.wed .docx-wrapper[contenteditable="true"]{outline:none;caret-color:#1a56db}
+.wed .docx-wrapper[contenteditable="true"]>section.docx{cursor:text}
+.dtab.wordtab .t{color:#1e4fa8}
 @media (prefers-reduced-motion:reduce){.hl.flash,.item.flash,.pin.flash{animation:none;outline:3px solid var(--accent)}}
 </style>
 </head>
@@ -551,7 +565,7 @@ details.drive ol b{color:var(--ink)}
           <div class="dtabs" id="dtabs" role="tablist" aria-label="PDFs in this matter"></div>
           <button class="btn" id="addBtn" aria-haspopup="menu">+ Add PDF</button>
           <button class="btn" id="cmbBtn" title="Join this matter's PDFs (OA, reply, rejoinder…) into one PDF, in the order you choose">⧉ Combine</button>
-          <input class="sr" type="file" id="pdfIn" multiple accept="application/pdf,.pdf">
+          <input class="sr" type="file" id="pdfIn" multiple accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
           <input class="sr" type="file" id="appendIn" multiple accept="application/pdf,.pdf">
         </div>
         <div class="drow">
@@ -654,7 +668,7 @@ details.drive ol b{color:var(--ink)}
       <h3>Import PDFs</h3>
       <p>Pick PDFs from your PC. Include a worksheet file from Claude if you have one.</p>
       <label class="btn" for="nmFiles">Choose files</label>
-      <input class="sr" type="file" id="nmFiles" multiple accept="application/pdf,.pdf,.json,application/json">
+      <input class="sr" type="file" id="nmFiles" multiple accept="application/pdf,.pdf,.json,application/json,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
       <ul class="flist" id="nmList"></ul>
       <label class="chk"><input type="checkbox" id="nmCombine"> Combine all PDFs into one file</label>
       <input type="text" id="nmName2" placeholder="Matter name" maxlength="100" aria-label="Name for the imported matter">
@@ -771,7 +785,7 @@ details.drive ol b{color:var(--ink)}
       <li>From then on notes, highlights, drawings, sheets and PDFs sync by themselves. The <b>☁</b> button shows when it last synced.</li>
     </ol>
   </details>
-  <div class="row"><h3 style="flex:1">Matters</h3><button class="btn" id="libDay" title="List the matters on board for a date, with their serial numbers; they show as a strip at the top">📅 Day list</button><button class="btn" id="libBoard" title="Read the day's board (cause list) and pin your matters from it automatically">📥 Upload board</button><button class="btn" id="libRcv" title="Add a PDF or photo you received (WhatsApp, e-mail, Files) to a matter">📎 Add a received file</button><input class="sr" type="file" id="rcvIn" multiple accept="application/pdf,.pdf,image/jpeg,image/png,.jpg,.jpeg,.png"><button class="btn primary" id="libNew">New matter</button></div>
+  <div class="row"><h3 style="flex:1">Matters</h3><button class="btn" id="libDay" title="List the matters on board for a date, with their serial numbers; they show as a strip at the top">📅 Day list</button><button class="btn" id="libBoard" title="Read the day's board (cause list) and pin your matters from it automatically">📥 Upload board</button><button class="btn" id="libRcv" title="Add a PDF or photo you received (WhatsApp, e-mail, Files) to a matter">📎 Add a received file</button><input class="sr" type="file" id="rcvIn" multiple accept="application/pdf,.pdf,image/jpeg,image/png,.jpg,.jpeg,.png,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"><button class="btn primary" id="libNew">New matter</button></div>
   <div class="libsearch"><input type="text" id="libQ" placeholder="Search by matter or PDF file name" aria-label="Search matters and PDF file names" autocomplete="off"></div>
   <ul class="plist" id="projList"></ul>
   <div class="row end"><button class="btn" id="openSample">Open the sample</button><button class="btn" data-close>Close</button></div>
@@ -1001,7 +1015,7 @@ const BrowserStore={kind:'browser',
   async create(name){if(!(await idb.get('kv','proj:'+name)))await idb.set('kv','proj:'+name,JSON.stringify(blankJson(name)))},
   async readJson(p){const v=await idb.get('kv','proj:'+p);return v?JSON.parse(v):null},
   async writeJson(p,o){await idb.set('kv','proj:'+p,JSON.stringify(o))},
-  async files(p){const ks=await idb.keys('files');return ks.filter(k=>k.startsWith(p+'/')).map(k=>k.slice(p.length+1)).filter(n=>!n.includes('/')&&/\.pdf$/i.test(n))},
+  async files(p){const ks=await idb.keys('files');return ks.filter(k=>k.startsWith(p+'/')).map(k=>k.slice(p.length+1)).filter(n=>!n.includes('/')&&/\.(pdf|docx)$/i.test(n))},
   async readFile(p,n){const v=await idb.get('files',p+'/'+n);if(!v)throw new Error('missing');return v instanceof Blob?await v.arrayBuffer():v},
   async writeFile(p,n,data){const b=toBuf(data);await idb.set('files',p+'/'+n,b);try{const m=(await idb.get('kv','fmeta:'+p))||{};m[n]={size:b.byteLength};await idb.set('kv','fmeta:'+p,m)}catch(e){}},
   async delFile(p,n){await idb.del('files',p+'/'+n);try{const m=(await idb.get('kv','fmeta:'+p))||{};delete m[n];await idb.set('kv','fmeta:'+p,m)}catch(e){}},
@@ -1017,7 +1031,7 @@ const FolderStore={kind:'folder',
   async readJson(p){try{const d=await this.dir(p);const fh=await d.getFileHandle(WS);return JSON.parse(await (await fh.getFile()).text())}catch(e){if(e instanceof SyntaxError)throw e;return null}},
   async writeJson(p,o){await this.writeFile(p,WS,JSON.stringify(o,null,1))},
   async mtime(p){const d=await this.dir(p);return (await (await d.getFileHandle(WS)).getFile()).lastModified},
-  async files(p){const d=await this.dir(p);const out=[];for await(const [n,h] of d.entries()){if(h.kind==='file'&&/\.pdf$/i.test(n))out.push(n)}return out.sort()},
+  async files(p){const d=await this.dir(p);const out=[];for await(const [n,h] of d.entries()){if(h.kind==='file'&&/\.(pdf|docx)$/i.test(n))out.push(n)}return out.sort()},
   async readFile(p,n){let d=await this.dir(p);const parts=n.split('/');for(const s of parts.slice(0,-1))d=await d.getDirectoryHandle(s);return await (await (await d.getFileHandle(parts[parts.length-1])).getFile()).arrayBuffer()},
   async writeFile(p,n,data){let d=await this.dir(p,true);const parts=n.split('/');for(const s of parts.slice(0,-1))d=await d.getDirectoryHandle(s,{create:true});
     const fh=await d.getFileHandle(parts[parts.length-1],{create:true});const w=await fh.createWritable();await w.write(data);await w.close()},
@@ -1140,6 +1154,7 @@ const rotSig=docId=>{const d=docById(docId);return d&&d.rot?JSON.stringify(d.rot
 const RT={};
 const RTP={};
 async function ensureRT(doc){
+  if(isWordDoc(doc))throw new Error('word');
   if(RT[doc.id]){RT[doc.id].used=Date.now();return RT[doc.id]}
   if(RTP[doc.id])return RTP[doc.id];
   if(!window.pdfjsLib)throw new Error('nolib');
@@ -1302,6 +1317,7 @@ function viewMsg(v,html){if(v.io)v.io.disconnect();v.pages=[];v.pagesEl.innerHTM
 function setHead(v){const d=docById(v.doc);v.el.querySelector('.vt').textContent=d?d.title:'';v.el.querySelector('.vp').textContent=v.pages.length?'p. '+pageLabel(d,v.cur)+(p1Of(d)>1?' (PDF '+v.cur+')':'')+' / '+v.pages.length:'';v.el.querySelector('.vx').hidden=views.length<2;updateFloat(v)}
 async function viewShow(v,docId,o={}){
   const doc=docById(docId);if(!doc)return;
+  if(isWordDoc(doc))return showWordView(v,doc,o);
   if(o.record!==false&&v.doc&&v.pages.length&&(v.doc!==docId))pushHist(v);
   if(v.doc&&v.cache[v.doc]){v.cache[v.doc].scroll=v.scroller.scrollTop;if(v.doc!==docId)v.cache[v.doc].pages.forEach(unrenderPage)}
   const my=++v.tok;v.doc=docId;if(v===V())active=docId;renderTabs();
@@ -1376,7 +1392,7 @@ function renderTabs(){
   const box=$('#dtabs');box.innerHTML='';if(!P)return;const shown=new Set(views.map(v=>v.doc));
   P.docs.forEach(d=>{
     const b=document.createElement('div');b.className='dtab'+(views.length>1&&shown.has(d.id)&&d.id!==active?' inview':'');b.setAttribute('role','tab');b.tabIndex=0;b.dataset.id=d.id;b.setAttribute('aria-selected',d.id===active);b.title=d.file+'  (double-click to rename)';
-    b.innerHTML='<span class="t"></span><span class="x" role="button" aria-label="Close or delete this PDF" title="Close or delete this PDF">×</span>';b.querySelector('.t').textContent=d.title;box.append(b);
+    b.innerHTML='<span class="t"></span><span class="x" role="button" aria-label="Close or delete this PDF" title="Close or delete this PDF">×</span>';b.querySelector('.t').textContent=(isWordDoc(d)?'W · ':'')+d.title;if(isWordDoc(d))b.classList.add('wordtab');box.append(b);
   });
   if(!P.docs.length){const s=document.createElement('span');s.style.color='var(--muted)';s.style.fontSize='12px';s.textContent='No PDFs yet';box.append(s)}
 }
@@ -2159,8 +2175,14 @@ docWrap.addEventListener('dragover',e=>{if(e.dataTransfer&&[...e.dataTransfer.ty
 docWrap.addEventListener('dragleave',e=>{if(!docWrap.contains(e.relatedTarget))$('#dropHint').hidden=true});
 docWrap.addEventListener('drop',e=>{$('#dropHint').hidden=true;const fs=e.dataTransfer?[...e.dataTransfer.files]:[];if(!fs.length)return;e.preventDefault();if(scratch()&&!P.docs.length){receiveFiles(fs,'Dropped in');return}addPdfsAsk(fs)});
 const isPdf=f=>/pdf$/i.test(f.type)||/\.pdf$/i.test(f.name);
-function uniqueFile(name,taken){name=safeName(name);if(!/\.pdf$/i.test(name))name+='.pdf';const base=name.replace(/\.pdf$/i,'');let n=name,k=2;
-  while(taken.some(t=>t.toLowerCase()===n.toLowerCase()))n=`${base} (${k++}).pdf`;return n}
+/* Word documents (.docx) sit beside the PDFs (Nov 2026) */
+const isWordName=n=>/\.docx$/i.test(String(n||''));
+const isWordFile=f=>!!f&&(/officedocument\.wordprocessingml\.document/i.test(f.type||'')||isWordName(f.name));
+const isDocFile=f=>isPdf(f)||isWordFile(f);
+const isWordDoc=d=>!!d&&isWordName(d.file);
+const stripExt=n=>String(n||'').replace(/\.(pdf|docx)$/i,'');
+function uniqueFile(name,taken){name=safeName(name);const ext=isWordName(name)?'.docx':'.pdf';if(!/\.(pdf|docx)$/i.test(name))name+=ext;const base=name.replace(/\.(pdf|docx)$/i,'');let n=name,k=2;
+  const ex=name.match(/\.(pdf|docx)$/i)[0];while(taken.some(t=>t.toLowerCase()===n.toLowerCase()))n=`${base} (${k++})${ex}`;return n}
 async function takenNames(){let ex=[];try{ex=await proj.store.files(proj.name)}catch(e){}return ex.concat(P.docs.map(d=>d.file))}
 async function readAttachedWs(bytes){
   if(!window.pdfjsLib)return null;
@@ -2170,16 +2192,16 @@ async function readAttachedWs(bytes){
 }
 async function addPdfs(files){
   if(!proj)return;
-  const pdfs=files.filter(isPdf);if(!pdfs.length){toast('Only PDF files can be added.');return}
+  const pdfs=files.filter(isDocFile);if(!pdfs.length){toast('Only PDF and Word (.docx) files can be added.');return}
   const taken=await takenNames();let last=null,loaded=0,cases=0;
   for(const f of pdfs){
     const bytes=new Uint8Array(await f.arrayBuffer());
-    const ws=await readAttachedWs(bytes);
+    const ws=isWordFile(f)?null:await readAttachedWs(bytes);
     if(ws&&ws.case){try{const r=await importCaseFile(bytes,ws,f.name);cases++;loaded+=r.items;if(r.docs.length)last=r.docs[0]}catch(e){console.error(e);toast('Could not open the case file '+f.name)}continue}
     const name=uniqueFile(f.name,taken);
     try{await proj.store.writeFile(proj.name,name,bytes)}catch(e){console.error(e);toast('Could not save '+f.name+' into the matter. Reconnect the folder in Library.');continue}
     taken.push(name);P.hiddenFiles=(P.hiddenFiles||[]).filter(h=>h!==name);P.deletedFiles=(P.deletedFiles||[]).filter(h=>h!==name);
-    const doc={id:uid(),file:name,title:name.replace(/\.pdf$/i,'').replace(/\s*\(annotated\)$/i,'')};P.docs.push(doc);rebindAnchors(doc);last=doc;
+    const doc={id:uid(),file:name,title:stripExt(name).replace(/\s*\(annotated\)$/i,'')};P.docs.push(doc);rebindAnchors(doc);last=doc;
     if(ws)loaded+=importEmbeddedSingle(ws,doc);
   }
   touch();renderItems();renderTabs();if(last)await viewShow(V(),last.id);
@@ -2289,7 +2311,7 @@ async function openProject(store,name){
   let files=[];try{files=await store.files(name)}catch(e){}
   const hidden=new Set([...(P.hiddenFiles||[]),...(P.deletedFiles||[])]);
   let foundNew=false;
-  files.filter(f=>!/\(annotated\)\.pdf$/i.test(f)&&!hidden.has(f)&&!P.docs.some(d=>d.file===f)).forEach(f=>{const d={id:uid(),file:f,title:f.replace(/\.pdf$/i,'')};P.docs.push(d);rebindAnchors(d);foundNew=true});
+  files.filter(f=>!/\(annotated\)\.pdf$/i.test(f)&&!hidden.has(f)&&!P.docs.some(d=>d.file===f)).forEach(f=>{const d={id:uid(),file:f,title:stripExt(f)};P.docs.push(d);rebindAnchors(d);foundNew=true});
   proj={store,name,mtime:0,blocked:false};crumb('opened matter ('+store.kind+') · '+P.docs.length+' PDFs · '+P.items.length+' items');
   if(store.kind==='folder'){try{proj.mtime=await FolderStore.mtime(name)}catch(e){}}
   if(store.kind!=='memory'){try{localStorage.setItem('xdesk:last',JSON.stringify({kind:store.kind,name}))}catch(e){}noteRecent(name,store.kind)}
@@ -2883,6 +2905,7 @@ async function undoPgDel(){
 /* ================= add several PDFs at once, each with its own name ================= */
 let maFiles=[];
 function addPdfsAsk(files){
+  const words=files.filter(isWordFile);if(words.length){files=files.filter(f=>!isWordFile(f));addPdfs(words).then(()=>{if(files.length)addPdfsAsk(files)});return}
   const pdfs=files.filter(isPdf);if(pdfs.length<2){addPdfs(files);return}
   maFiles=pdfs.map(f=>({f,name:f.name.replace(/\.pdf$/i,'')}));
   const ol=$('#maList');ol.innerHTML='';
@@ -3007,9 +3030,9 @@ async function newMatter(raw,files,combine){
   $('#newPanel').hidden=true;$('#libPanel').hidden=true;
   await openProject(libStore,name);
   if(!files||!files.length){toast('Created "'+name+'". Add PDFs with + Add PDF, or click the worksheet to start typing.');return}
-  let pdfs=files.filter(isPdf);const jsons=files.filter(f=>/\.json$/i.test(f.name));
+  let pdfs=files.filter(isPdf);const jsons=files.filter(f=>/\.json$/i.test(f.name)),words=files.filter(isWordFile);
   if(combine&&pdfs.length>1){try{pdfs=[await combineFiles(pdfs,name)]}catch(e){console.error(e);toast('Could not combine the PDFs; adding them separately.')}}
-  if(pdfs.length)await addPdfs(pdfs);
+  if(pdfs.length||words.length)await addPdfs(pdfs.concat(words));
   let added=0;
   for(const j of jsons){try{const src=JSON.parse(await j.text());if(Array.isArray(src.items))added+=importInto(src,false).items;else toast(j.name+' is not a worksheet file.')}catch(e){toast('Could not read '+j.name)}}
   if(jsons.length){renderItems();touch();for(const v of views){const rt=v.doc&&RT[v.doc];if(rt)await resolveAnchors(rt)}drawMarks()}
@@ -3346,7 +3369,7 @@ async function pullFile(name,rf){
 }
 async function pushFile(name,f){
   const buf=await BrowserStore.readFile(name,f),size=buf.byteLength;crumb('sending a PDF · '+Math.round(size/1024)+' KB');
-  if(srvV>=2){let r=null;const s=await driveCall({op:'upStart',matter:name,name:f,size,mime:'application/pdf'});
+  if(srvV>=2){let r=null;const s=await driveCall({op:'upStart',matter:name,name:f,size,mime:isWordName(f)?'application/vnd.openxmlformats-officedocument.wordprocessingml.document':'application/pdf'});
     for(let off=0;off<size;off+=CH){updSyncBtn('☁ Sending '+f.slice(0,20)+'… '+Math.round(off/size*100)+'%');
       r=await driveCall({op:'upChunk',matter:name,name:f,session:s.session,start:off,total:size,b64:b64FromBuf(new Uint8Array(buf,off,Math.min(CH,size-off)))},2)}
     return r}
@@ -3411,7 +3434,7 @@ async function syncMatter(name,R,quiet,goneRemote){
   const f=await syncFiles(name,R,st,M||L);
   if(f.got.length){res.pulled=true;if(isOpenLocal(name)){
     if(!(P.docs||[]).length||f.got.some(g=>!P.docs.some(d=>d.file===g))){const j=await BrowserStore.readJson(name);if(j){const add=f.got.filter(g=>!(j.docs||[]).some(d=>d.file===g)&&!(j.hiddenFiles||[]).includes(g));
-      if(add.length&&!busyHere()){add.forEach(g=>P.docs.push({id:uid(),file:g,title:g.replace(/\.pdf$/i,'')}));touch({hist:false});renderTabs()}}}
+      if(add.length&&!busyHere()){add.forEach(g=>P.docs.push({id:uid(),file:g,title:stripExt(g)}));touch({hist:false});renderTabs()}}}
     f.got.forEach(g=>{const d=P.docs.find(x=>x.file===g);if(d){dropRT(d.id);views.forEach(v=>{if(v.doc===d.id||!v.doc){v.doc=null;viewShow(v,d.id,{record:false})}})}})}}
   if(f.sent)res.pushed=true;
   st.ok=Date.now();delete st.err;await setSt(name,st);delete syncErrs[name];
@@ -3759,13 +3782,13 @@ async function receiveFiles(list,from){
   if(!proj){setTimeout(()=>receiveFiles(list,from),400);return}
   rcvBusy=true;
   const done=()=>{rcvBusy=false;const nx=rcvQueue.shift();if(nx)setTimeout(()=>receiveFiles(nx[0],nx[1]),300)};
-  let pdfs=list.filter(isPdf);const imgs=list.filter(f=>!isPdf(f)&&isImg(f));const other=list.filter(f=>!isPdf(f)&&!isImg(f));
+  let pdfs=list.filter(isDocFile);const imgs=list.filter(f=>!isDocFile(f)&&isImg(f));const other=list.filter(f=>!isDocFile(f)&&!isImg(f));
   if(imgs.length){try{const base=(imgs[0].name||'Photo').replace(/\.[a-z0-9]+$/i,'');pdfs.push(await imagesToPdf(imgs,(imgs.length>1?base+' and '+(imgs.length-1)+' more':base)+'.pdf'))}
     catch(e){console.warn(e);toast('Could not turn the photo into a PDF.')}}
   if(!pdfs.length){toast(other.length?'Only PDFs and photos (JPG/PNG) can be added. '+other.map(f=>f.name).join(', ')+' was skipped.':'Nothing to add.');done();return}
   if(other.length)toast('Skipped (not a PDF or photo): '+other.map(f=>f.name).join(', '));
   let names=[];try{names=await libStore.list()}catch(e){}
-  const rows=pdfs.map(f=>({f,name:f.name.replace(/\.pdf$/i,'')}));
+  const rows=pdfs.map(f=>({f,name:stripExt(f.name)}));
   const words=s=>String(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>2&&!['pdf','the','and','others','whatsapp','image','document','scan'].includes(w));
   const fw=words(pdfs.map(f=>f.name).join(' ')),nums=(pdfs.map(f=>f.name).join(' ').match(/\d{2,5}/g)||[]);
   const score=n=>{const l=n.toLowerCase();let s=0;fw.forEach(w=>{if(l.includes(w))s++});nums.forEach(x=>{if(new RegExp('\\b'+x+'\\b').test(l))s+=3});return s};
@@ -3782,7 +3805,7 @@ async function receiveFiles(list,from){
     L.innerHTML=rs.length?rs.map(r=>'<div class="rcvr"><span>'+esc(r.n)+(r.s>=3?' <b class="good">likely</b>':'')+'</span><button class="btn" data-n="'+esc(r.n)+'">Add here</button></div>').join(''):'<div class="muted" style="padding:10px">'+(names.length?'No matter matches. Use “New matter”.':'No matters yet. Use “New matter”.')+'</div>';
     L.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>finish(b.dataset.n))};
   Q.oninput=paint;Q.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter'){const b=L.querySelector('[data-n]');if(b)b.click()}};paint();setTimeout(()=>Q.focus(),50);
-  const files=()=>rows.map(r=>new File([r.f],(safeName(r.name||r.f.name).replace(/\.pdf$/i,''))+'.pdf',{type:'application/pdf'}));
+  const files=()=>rows.map(r=>{const w=isWordFile(r.f);return new File([r.f],stripExt(safeName(r.name||r.f.name))+(w?'.docx':'.pdf'),{type:w?'application/vnd.openxmlformats-officedocument.wordprocessingml.document':'application/pdf'})});
   const close=()=>{box.remove();done()};
   async function finish(name){
     if(untitled()&&P&&(P.docs.length||P.items.length)){toast('The open work is not saved yet. Save it first, then add the file.',{label:'Save',run:openSaveAs});return}
@@ -3904,7 +3927,7 @@ setInterval(()=>{if(BK.h&&BK.ok&&document.visibilityState==='visible')bkAll(fals
 function folderSource(){return {
   async matters(){const out=[];try{for await(const [n,h] of (await bkSub('Matters',false)).entries())if(h.kind==='directory')out.push(n)}catch(e){}return out.sort()},
   async json(p){const d=await bkMatterDir(p,false);try{return JSON.parse(await (await (await d.getFileHandle(WS)).getFile()).text())}catch(e){return null}},
-  async files(p){const d=await bkMatterDir(p,false),o=[];for await(const [n,h] of d.entries())if(h.kind==='file'&&/\.pdf$/i.test(n))o.push(n);return o},
+  async files(p){const d=await bkMatterDir(p,false),o=[];for await(const [n,h] of d.entries())if(h.kind==='file'&&/\.(pdf|docx)$/i.test(n))o.push(n);return o},
   async file(p,f){return await (await (await bkMatterDir(p,false)).getFileHandle(f)).getFile()},
   async index(){try{return JSON.parse(await (await (await BK.h.getFileHandle(BKMARK)).getFile()).text())}catch(e){return null}}}}
 async function restoreFrom(src,ask){
@@ -4025,7 +4048,7 @@ $('#bkZipFile').addEventListener('change',async e=>{const f=e.target.files[0];e.
     if(!ms.length){toast('That file is not an Excerpt Desk backup.');return}
     const src={matters:async()=>ms,
       json:async p=>{const b=Z['Matters/'+p+'/'+WS];return b?JSON.parse(await b.text()):null},
-      files:async p=>keys.filter(k=>k.startsWith('Matters/'+p+'/')&&/\.pdf$/i.test(k)&&k.split('/').length===3).map(k=>k.split('/')[2]),
+      files:async p=>keys.filter(k=>k.startsWith('Matters/'+p+'/')&&/\.(pdf|docx)$/i.test(k)&&k.split('/').length===3).map(k=>k.split('/')[2]),
       file:async(p,n)=>Z['Matters/'+p+'/'+n],
       index:async()=>{try{return JSON.parse(await Z[BKMARK].text())}catch(x){return null}}};
     $('#setPanel').hidden=true;await restoreFrom(src,true)}
@@ -4045,6 +4068,195 @@ $('#bkZipFile').addEventListener('change',async e=>{const f=e.target.files[0];e.
 })();
 
 $('#dyClearAll').onclick=()=>clearPins('all');$('#dyClearPast').onclick=()=>clearPins('past');
+
+
+/* ================= Word documents (.docx) — Nov 2026 =================
+   A .docx in a matter opens on the left like a PDF, read-only, laid out as in Word.
+   "Open in editor" shows it on the right, in place of the worksheet, ready to type in
+   (the cursor is put inside). Save writes it back as a .docx; the first save keeps the
+   original beside it as "<name>.docx.bak". The worksheet comes back when the editor closes. */
+const W_LIB={zip:'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+  view:'https://cdn.jsdelivr.net/npm/docx-preview@0.3.3/dist/docx-preview.min.js',
+  write:'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js'};
+function wLoad(u){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=()=>rej(new Error('The Word reader could not load. Check the internet connection once; then try again.'));document.head.append(s)})}
+let wViewP=null,wWriteP=null;
+function wordViewer(){return wViewP||(wViewP=(async()=>{if(!window.JSZip)await wLoad(W_LIB.zip);const keep=window.docx;await wLoad(W_LIB.view);window.DocxPreview=window.docx;window.docx=keep;return window.DocxPreview})().catch(e=>{wViewP=null;throw e}))}
+function wordWriter(){return wWriteP||(wWriteP=(async()=>{const keep=window.docx;await wLoad(W_LIB.write);window.DocxLib=window.docx;window.docx=keep;return window.DocxLib})().catch(e=>{wWriteP=null;throw e}))}
+
+/* draw a .docx into host; edit=true gives one continuous editable flow */
+async function wordRender(doc,host,edit){
+  const lib=await wordViewer();const buf=await proj.store.readFile(proj.name,doc.file);
+  host.innerHTML='';const st=document.createElement('div'),body=document.createElement('div');body.className='wbody';host.append(st,body);
+  await lib.renderAsync(new Blob([buf]),body,st,{className:'docx',inWrapper:true,breakPages:!edit,ignoreLastRenderedPageBreak:true,
+    renderHeaders:!edit,renderFooters:!edit,renderFootnotes:true,renderEndnotes:true,useBase64URL:true,experimental:true});
+  wordFit(host);return body;
+}
+/* shrink the page to the width of the pane (never enlarge) */
+function wordFit(host){const w=host.querySelector('.docx-wrapper');if(!w)return;w.style.zoom='';const sec=w.querySelector('section.docx');if(!sec)return;
+  const box=host.closest('.vscroll,.wed-scroll')||host,need=sec.offsetWidth+24,have=(box.clientWidth||need)-4;w.style.zoom=have<need?String(Math.max(.35,have/need)):''}
+window.addEventListener('resize',()=>{document.querySelectorAll('.whost').forEach(wordFit)});
+
+/* ---- left side: read-only ---- */
+async function showWordView(v,doc,o){
+  if(o&&o.record!==false&&v.doc&&v.pages.length&&v.doc!==doc.id)pushHist(v);
+  if(v.doc&&v.cache[v.doc]){v.cache[v.doc].scroll=v.scroller.scrollTop;v.cache[v.doc].pages.forEach(unrenderPage)}
+  const my=++v.tok;v.doc=doc.id;if(v===V())active=doc.id;renderTabs();
+  if(v.io)v.io.disconnect();v.pages=[];
+  v.pagesEl.innerHTML='<div class="wordview"><div class="wbar"><span><b>Word document</b> · read-only</span><span class="grow"></span><button class="btn primary wedit" title="Open it on the right in an editor, ready to type">✎ Open in editor</button></div><div class="whost"><div class="docmsg">Opening <b>'+esc(doc.title)+'</b>…</div></div></div>';
+  v.pagesEl.querySelector('.wedit').onclick=()=>openWordEditor(doc.id);
+  setHead(v);if(v===V())updateNav();
+  const host=v.pagesEl.querySelector('.whost');
+  try{await wordRender(doc,host,false)}catch(e){if(my!==v.tok)return;console.warn(e);host.innerHTML='<div class="docmsg">'+esc(e.message&&/load/.test(e.message)?e.message:'"'+doc.file+'" could not be opened as a Word document (.docx). Old .doc files are not supported: save it as .docx in Word first.')+'</div>';return}
+  if(my!==v.tok)return;
+  host.querySelectorAll('[contenteditable]').forEach(x=>x.removeAttribute('contenteditable'));
+  v.scroller.scrollTop=0;crumb('showing a Word document');noteResume();
+}
+
+/* ---- right side: the editor ---- */
+const WE={id:null,el:null,dirty:false,busy:false};
+function wordEdBox(){return WE.el&&WE.el.querySelector('.docx-wrapper')}
+async function openWordEditor(id){
+  const doc=docById(id);if(!doc)return;
+  if(WE.id&&WE.id!==id&&WE.dirty&&!confirm('Close "'+((docById(WE.id)||{}).title||'the open document')+'" without saving your changes?'))return;
+  closeWordEditor(true);
+  const host=document.querySelector('.deskwrap .dkbody');if(!host)return;
+  const el=document.createElement('div');el.className='wed';el.setAttribute('role','region');el.setAttribute('aria-label','Word editor');
+  el.innerHTML='<div class="wed-bar"><b class="wed-t"></b><span class="wed-st"></span><span class="grow"></span>'+
+    '<button class="btn" data-c="bold" title="Bold (Ctrl+B)"><b>B</b></button><button class="btn" data-c="italic" title="Italic (Ctrl+I)"><i>I</i></button><button class="btn" data-c="underline" title="Underline (Ctrl+U)"><u>U</u></button>'+
+    '<button class="btn" data-c="justifyLeft" title="Align left">⯇</button><button class="btn" data-c="justifyCenter" title="Centre">≡</button><button class="btn" data-c="justifyRight" title="Align right">⯈</button><button class="btn" data-c="justifyFull" title="Justify">☰</button>'+
+    '<button class="btn" data-c="undo" title="Undo (Ctrl+Z)">↶</button><button class="btn" data-c="redo" title="Redo (Ctrl+Y)">↷</button>'+
+    '<button class="btn primary wed-save" title="Save (Ctrl+S)">Save</button><button class="btn wed-close" title="Close the editor and show the worksheet again">Close</button></div>'+
+    '<div class="wed-scroll"><div class="whost"><div class="docmsg">Opening <b></b>…</div></div></div>';
+  el.querySelector('.wed-t').textContent=doc.title;el.querySelector('.docmsg b').textContent=doc.title;
+  host.append(el);WE.el=el;WE.id=id;WE.dirty=false;wordStatus('');
+  showPane('desk');
+  el.querySelectorAll('[data-c]').forEach(b=>b.onmousedown=e=>{e.preventDefault();document.execCommand(b.dataset.c,false,null);wordChanged()});
+  el.querySelector('.wed-save').onclick=()=>saveWordEditor();
+  el.querySelector('.wed-close').onclick=()=>{if(WE.dirty&&!confirm('Close without saving your changes?'))return;closeWordEditor(true)};
+  el.addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&(e.key==='s'||e.key==='S')){e.preventDefault();e.stopPropagation();saveWordEditor();return}
+    if(e.key==='Escape'){e.stopPropagation();return}
+    e.stopPropagation();                 /* Ctrl+Z, letters, page keys: for the document, not the worksheet */
+  });
+  el.addEventListener('input',wordChanged);
+  try{await wordRender(doc,el.querySelector('.whost'),true)}catch(e){console.warn(e);el.querySelector('.whost').innerHTML='<div class="docmsg">'+esc(e.message&&/load/.test(e.message)?e.message:'This file could not be opened in the editor.')+'</div>';return}
+  if(WE.el!==el)return;
+  const box=wordEdBox();if(!box)return;
+  box.contentEditable='true';box.spellcheck=true;
+  /* the cursor goes inside, at the start of the text */
+  const first=[...box.querySelectorAll('p,h1,h2,h3,h4,h5,h6,li,td')].find(x=>x.textContent.trim())||box;
+  box.focus({preventScroll:true});
+  try{const r=document.createRange(),tn=document.createTreeWalker(first,NodeFilter.SHOW_TEXT).nextNode();if(tn)r.setStart(tn,0);else r.setStart(first,0);r.collapse(true);const sel=getSelection();sel.removeAllRanges();sel.addRange(r)}catch(e){}
+  crumb('editing a Word document');
+}
+function wordChanged(){if(!WE.el||WE.busy)return;if(!WE.dirty){WE.dirty=true;wordStatus('Unsaved changes')}}
+function wordStatus(t){const s=WE.el&&WE.el.querySelector('.wed-st');if(s)s.textContent=t?' · '+t:''}
+function closeWordEditor(){if(WE.el)WE.el.remove();WE.el=null;WE.id=null;WE.dirty=false}
+window.addEventListener('beforeunload',e=>{if(WE.dirty){e.preventDefault();e.returnValue=''}});
+
+/* ---- the edited page → a .docx ---- */
+const PX_TW=15;                                /* 1 CSS px = 15 twips */
+function wNum(v){const n=parseFloat(v);return isFinite(n)?n:0}
+function wHex(c){const m=String(c||'').match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/);if(!m||(m[4]!=null&&+m[4]===0))return null;
+  const h=[m[1],m[2],m[3]].map(x=>(+x).toString(16).padStart(2,'0')).join('').toUpperCase();return h==='000000'?null:h}
+function wFont(f){return String(f||'').split(',')[0].replace(/["']/g,'').trim()||undefined}
+async function wordToDocx(box){
+  const D=await wordWriter();
+  const AL={left:D.AlignmentType.LEFT,start:D.AlignmentType.LEFT,center:D.AlignmentType.CENTER,right:D.AlignmentType.RIGHT,end:D.AlignmentType.RIGHT,justify:D.AlignmentType.JUSTIFIED};
+  /* numbering shown by the page (1., (a), i. …) is written as typed text */
+  const cnt={};
+  const roman=(n,up)=>{const t=[[1000,'m'],[900,'cm'],[500,'d'],[400,'cd'],[100,'c'],[90,'xc'],[50,'l'],[40,'xl'],[10,'x'],[9,'ix'],[5,'v'],[4,'iv'],[1,'i']];let s='';for(const [v,r] of t)while(n>=v){s+=r;n-=v}return up?s.toUpperCase():s};
+  const alpha=(n,up)=>{let s='';while(n>0){n--;s=String.fromCharCode(97+n%26)+s;n=Math.floor(n/26)}return up?s.toUpperCase():s};
+  const fmt=(n,st)=>st==='lower-roman'?roman(n):st==='upper-roman'?roman(n,1):st==='lower-alpha'||st==='lower-latin'?alpha(n):st==='upper-alpha'||st==='upper-latin'?alpha(n,1):String(n);
+  function marker(p){
+    const m=[...p.classList].map(c=>c.match(/^docx-num-(\d+)-(\d+)$/)).find(Boolean);if(!m)return '';
+    const id=m[1],lv=+m[2];const c=cnt[id]=cnt[id]||[];c[lv]=(c[lv]||0)+1;for(let k=lv+1;k<10;k++)c[k]=0;
+    const content=getComputedStyle(p,'::before').content||'';if(!content||content==='none'||content==='normal')return '';
+    let out='';content.replace(/counter\(\s*docx-num-(\d+)-(\d+)\s*(?:,\s*([\w-]+))?\s*\)|"((?:[^"\\]|\\.)*)"/g,(_,i2,l2,st,str)=>{
+      if(str!=null){out+=str.replace(/\\([0-9a-f]{1,6})\s?/gi,(m,h)=>String.fromCodePoint(parseInt(h,16))).replace(/\\(.)/g,'$1');return ''}
+      const cc=cnt[i2]||[];out+=fmt(cc[+l2]||1,st||'decimal');return ''});
+    return out;
+  }
+  function runsOf(node,acc){
+    for(const ch of node.childNodes){
+      if(ch.nodeType===3){if(!ch.nodeValue)continue;const cs=getComputedStyle(ch.parentElement);
+        const o={text:ch.nodeValue.replace(/ /g,' '),bold:wNum(cs.fontWeight)>=600||undefined,italics:cs.fontStyle==='italic'||undefined,
+          underline:/underline/.test(cs.textDecorationLine||cs.textDecoration)?{}:undefined,strike:/line-through/.test(cs.textDecorationLine||'')||undefined,
+          size:Math.round(wNum(cs.fontSize)*1.5)||undefined,sizeComplexScript:Math.round(wNum(cs.fontSize)*1.5)||undefined,
+          color:wHex(cs.color)||undefined,superScript:cs.verticalAlign==='super'||undefined,subScript:cs.verticalAlign==='sub'||undefined};
+        const f=wFont(cs.fontFamily);if(f)o.font={ascii:f,hAnsi:f,cs:f,eastAsia:f};
+        acc.push(new D.TextRun(o));continue}
+      if(ch.nodeType!==1)continue;
+      const t=ch.tagName;
+      if(t==='BR'){acc.push(new D.TextRun({break:1}));continue}
+      if(ch.classList.contains('docx-tab')){acc.push(new D.TextRun({children:[new D.Tab()]}));continue}
+      if(t==='IMG'||t==='SVG'||t==='STYLE'||t==='SCRIPT')continue;
+      runsOf(ch,acc);
+    }
+    return acc;
+  }
+  function para(p){
+    const cs=getComputedStyle(p),runs=[];const mk=marker(p);
+    if(mk){const bs=getComputedStyle(p,'::before'),fe=p.querySelector('span')||p,f=wFont(getComputedStyle(fe).fontFamily);runs.push(new D.TextRun({text:mk.replace(/\s+$/,''),font:f?{ascii:f,hAnsi:f,cs:f}:undefined,size:Math.round(wNum(bs.fontSize)*1.5)||undefined,bold:wNum(bs.fontWeight)>=600||undefined}),new D.TextRun({children:[new D.Tab()]}))}
+    runsOf(p,runs);
+    const ind={},left=wNum(cs.marginLeft)+wNum(cs.paddingLeft),ti=wNum(cs.textIndent);
+    if(left)ind.left=Math.round(left*PX_TW);if(ti>0)ind.firstLine=Math.round(ti*PX_TW);if(ti<0)ind.hanging=Math.round(-ti*PX_TW);
+    const right=wNum(cs.marginRight)+wNum(cs.paddingRight);if(right)ind.right=Math.round(right*PX_TW);
+    const sp={before:Math.round(wNum(cs.marginTop)*PX_TW),after:Math.round(wNum(cs.marginBottom)*PX_TW)};
+    const lh=wNum(cs.lineHeight),fs=wNum(cs.fontSize);if(lh&&fs)sp.line=Math.round(lh/fs/1.15*240);
+    const o={children:runs.length?runs:[new D.TextRun('')],alignment:AL[cs.textAlign]||undefined,indent:Object.keys(ind).length?ind:undefined,spacing:sp};
+    const hm=p.tagName.match(/^H([1-6])$/);if(hm)o.heading=D.HeadingLevel['HEADING_'+hm[1]];
+    return new D.Paragraph(o);
+  }
+  function table(t){
+    const rows=[...t.rows].map(tr=>new D.TableRow({children:[...tr.cells].map(td=>{
+      const kids=blocks(td);const cs=getComputedStyle(td);
+      return new D.TableCell({children:kids.length?kids:[new D.Paragraph('')],columnSpan:td.colSpan>1?td.colSpan:undefined,rowSpan:td.rowSpan>1?td.rowSpan:undefined,
+        width:{size:Math.round(td.offsetWidth*PX_TW),type:D.WidthType.DXA},verticalAlign:cs.verticalAlign==='middle'?D.VerticalAlign.CENTER:cs.verticalAlign==='bottom'?D.VerticalAlign.BOTTOM:undefined})})}));
+    const bw=wNum(getComputedStyle(t.rows[0]&&t.rows[0].cells[0]||t).borderTopWidth);
+    const B=bw?{style:D.BorderStyle.SINGLE,size:4,color:'000000'}:{style:D.BorderStyle.NONE,size:0,color:'FFFFFF'};
+    return new D.Table({rows,width:{size:Math.round(t.offsetWidth*PX_TW),type:D.WidthType.DXA},borders:{top:B,bottom:B,left:B,right:B,insideHorizontal:B,insideVertical:B}});
+  }
+  function blocks(el){
+    const out=[];
+    for(const ch of el.children){
+      const t=ch.tagName;
+      if(/^(P|H[1-6]|LI)$/.test(t))out.push(para(ch));
+      else if(t==='TABLE')out.push(table(ch));
+      else if(t==='STYLE'||t==='SCRIPT'||t==='HEADER'||t==='FOOTER')continue;
+      else if(t==='OL'||t==='UL'||t==='DIV'||t==='ARTICLE'||t==='SECTION'||t==='TBODY')out.push(...blocks(ch));
+      else if(ch.textContent.trim())out.push(para(ch));
+    }
+    return out;
+  }
+  const secs=[...box.querySelectorAll(':scope > section.docx')];
+  const sections=(secs.length?secs:[box]).map(sec=>{
+    const cs=getComputedStyle(sec),art=sec.querySelector(':scope > article')||sec;
+    const W=Math.round((sec.offsetWidth||794)*PX_TW),H=Math.round(Math.max(wNum(cs.minHeight),1123)*PX_TW);
+    return {properties:{page:{size:{width:W,height:H},margin:{top:Math.round(wNum(cs.paddingTop)*PX_TW)||1440,bottom:Math.round(wNum(cs.paddingBottom)*PX_TW)||1440,
+      left:Math.round(wNum(cs.paddingLeft)*PX_TW)||1440,right:Math.round(wNum(cs.paddingRight)*PX_TW)||1440}}},children:blocks(art)};
+  });
+  const docx=new D.Document({sections});
+  return await D.Packer.toBlob(docx);
+}
+async function saveWordEditor(){
+  const doc=docById(WE.id),box=wordEdBox();if(!doc||!box||WE.busy)return;
+  WE.busy=true;wordStatus('Saving…');
+  try{
+    const blob=await wordToDocx(box),bytes=new Uint8Array(await blob.arrayBuffer());
+    /* the first save keeps the file as it came, beside it */
+    const bak=doc.file+'.bak';let have=false;try{await proj.store.readFile(proj.name,bak);have=true}catch(e){}
+    if(!have){try{await proj.store.writeFile(proj.name,bak,await proj.store.readFile(proj.name,doc.file))}catch(e){console.warn('bak',e)}}
+    await proj.store.writeFile(proj.name,doc.file,bytes);
+    doc.edited=new Date().toISOString();touch();syncFile();
+    WE.dirty=false;wordStatus('Saved '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
+    toast('Saved "'+doc.title+'".'+(have?'':' The original is kept as '+bak+'.'));
+    for(const v of views)if(v.doc===doc.id)showWordView(v,doc,{record:false});
+  }catch(e){console.error(e);wordStatus('Not saved');toast('Could not save the document: '+(e.message||e))}
+  finally{WE.busy=false}
+}
+/* a Word document taken off the matter also leaves the editor */
+const _rmDoc=removeDoc;removeDoc=function(id,deleting){if(WE.id===id)closeWordEditor();return _rmDoc(id,deleting)};
 
 /* ================= hand-over from Charpe Suite (Oct 2026) =================
    Charpe Suite (same web address, sanketcharpe.github.io) places order PDFs in a
