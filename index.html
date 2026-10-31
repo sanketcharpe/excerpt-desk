@@ -443,6 +443,78 @@ details.drive ol b{color:var(--ink)}
 .rcvf{margin:0;padding-left:20px}.rcvf input,.rcvq{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line,#c9ced6);border-radius:6px;font:inherit;margin:2px 0;background:var(--bg2,#fff);color:inherit}
 .rcvl{max-height:260px;overflow:auto;margin-top:8px;border:1px solid var(--line,#eef0f2);border-radius:6px}
 .rcvr{display:flex;gap:8px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line,#f1f2f4)}.rcvr span{flex:1;min-width:0;overflow-wrap:anywhere}.rcvr .good{color:#127a4b;font-size:11px}
+/* ===== Dictation desk ===== */
+.dxbtn{position:relative;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px 0 9px;border:1px solid var(--line,#d5d9df);border-radius:16px;background:var(--surface,#fff);color:inherit;font:600 13px/1 system-ui,Segoe UI,Arial,sans-serif;cursor:pointer}
+.dxbtn .dxl{width:11px;height:11px;border-radius:50%;background:#b8bec6;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15);flex:none}
+.dxbtn.rec .dxl{background:#1fae4b;box-shadow:0 0 0 3px rgba(31,174,75,.25);animation:dxpulse 1.1s ease-in-out infinite}
+.dxbtn.paused .dxl{background:#1fae4b;animation:none;box-shadow:none}
+.dxbtn.busy .dxl{background:#f08a00;box-shadow:0 0 0 3px rgba(240,138,0,.25);animation:dxpulse 1.1s ease-in-out infinite}
+.dxbtn.attn .dxl{background:#d93025}
+.dxbtn .dxt{font-variant-numeric:tabular-nums;font-weight:600}
+@keyframes dxpulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.dxbtn .dxl{animation:none!important}}
+
+.dxp{position:fixed;right:14px;top:58px;z-index:880;width:min(380px,calc(100vw - 20px));max-height:calc(100vh - 72px);display:flex;flex-direction:column;background:var(--surface,#fff);color:var(--ink,#1a2233);border:1px solid var(--line,#d5d9df);border-radius:12px;box-shadow:0 16px 44px -10px rgba(0,0,0,.38);font:400 13.5px/1.4 system-ui,Segoe UI,Arial,sans-serif}
+.dxp[hidden],.dxed[hidden],.dxjob[hidden]{display:none}
+.dxp .dxh{display:flex;align-items:center;gap:6px;padding:8px 8px 8px 12px;border-bottom:1px solid var(--line,#e3e6ea);cursor:move;touch-action:none;user-select:none}
+.dxp .dxh b{flex:1;font-size:14px}
+.dxp .dxb{padding:10px 12px;overflow:auto}
+.dxp .ic{width:28px;height:28px;border:0;background:transparent;border-radius:6px;cursor:pointer;font-size:15px;color:inherit}
+.dxp .ic:hover{background:var(--hover,#eef1f4)}
+.dxp label.f{display:block;font-size:11.5px;font-weight:700;color:var(--muted,#667);margin:8px 0 3px;text-transform:uppercase;letter-spacing:.03em}
+.dxp input[type=text],.dxp select,.dxp textarea,.dxjob input[type=text],.dxjob select,.dxjob textarea{width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid var(--line,#c9ced6);border-radius:7px;font:inherit;background:var(--bg2,#fff);color:inherit}
+.dxp textarea{min-height:34px;resize:vertical}
+.dxp .row,.dxjob .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.dxp .btn,.dxjob .btn,.dxed .btn{height:32px}
+.dxrec{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px;border-radius:9px;background:var(--bg2,#f5f7f9);border:1px solid var(--line,#e3e6ea)}
+.dxrec .tm{font:700 20px/1 system-ui,Segoe UI,Arial,sans-serif;font-variant-numeric:tabular-nums;min-width:64px}
+.dxrec .lv{flex:1;height:8px;border-radius:4px;background:var(--line,#e3e6ea);overflow:hidden}
+.dxrec .lv i{display:block;height:100%;width:0;background:#1fae4b;transition:width .12s}
+.dxbig{height:40px!important;font-size:14.5px!important;padding:0 14px!important}
+.dxrecbtn{background:#d93025!important;border-color:#b3261e!important;color:#fff!important}
+.dxrep{margin-top:8px;font-size:12.5px;color:var(--muted,#667)}
+.dxrep .btn{height:28px;padding:0 9px}
+.dxst{margin-top:8px;font-size:12.5px;color:var(--muted,#667);min-height:17px}
+.dxlist{margin-top:10px;border-top:1px solid var(--line,#e3e6ea)}
+.dxit{padding:8px 2px;border-bottom:1px solid var(--line,#eef0f2)}
+.dxit .nm{font-weight:600;overflow-wrap:anywhere}
+.dxit .mt{font-size:12px;color:var(--muted,#667)}
+.dxit .mt .bad{color:#b3261e}.dxit .mt .ok{color:#127a4b}.dxit .mt .run{color:#b26200}
+.dxit .acts{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.dxit .acts button{height:26px;padding:0 8px;font-size:12px}
+.dxchk{display:flex;gap:7px;align-items:flex-start;margin-top:8px;font-size:12.5px;color:var(--muted,#667);cursor:pointer}
+.dxchk input{margin-top:2px}
+.dxnote{font-size:12px;color:var(--muted,#667);margin-top:6px}
+.dxwarn{margin-top:8px;padding:7px 9px;border-radius:7px;background:#fff4d6;color:#7a4b00;border:1px solid #e8c96a;font-size:12.5px}
+
+.dxjob{position:fixed;inset:0;z-index:960;background:rgba(20,24,30,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.dxjob .pc{background:var(--surface,#fff);color:var(--ink,#1a2233);border-radius:12px;width:min(560px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:16px 18px;box-shadow:0 18px 50px rgba(0,0,0,.35);font:400 14px/1.45 system-ui,Segoe UI,Arial,sans-serif}
+.dxjob h2{margin:0 0 8px;font-size:18px}
+.dxjob label.f{display:block;font-size:12px;font-weight:700;color:var(--muted,#667);margin:10px 0 4px}
+.dxjob .opt{display:flex;gap:8px;align-items:flex-start;margin:4px 0}
+.dxjob .end{justify-content:flex-end;margin-top:14px}
+.dxpre{border:1px solid var(--line,#e3e6ea);border-radius:8px;padding:8px;margin:6px 0}
+.dxpre input{margin-bottom:5px}
+
+.dxed{position:fixed;inset:0;z-index:940;display:flex;flex-direction:column;background:#e9ecef;color:#1a2233;font:400 13.5px/1.3 system-ui,Segoe UI,Arial,sans-serif}
+.dxtb{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 10px;background:#fff;border-bottom:1px solid #d5d9df;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.dxtb .sep{width:1px;height:24px;background:#d5d9df;margin:0 3px}
+.dxtb select{height:32px;border:1px solid #c9ced6;border-radius:6px;padding:0 6px;font:inherit;background:#fff;color:inherit}
+.dxtb .tg{min-width:32px;padding:0 8px;font-weight:700}
+.dxtb .tg[aria-pressed=true]{background:#dbe8ff;border-color:#86a8e8}
+.dxtb input.nm{height:32px;border:1px solid #c9ced6;border-radius:6px;padding:0 8px;font:600 14px/1 system-ui,Segoe UI,Arial,sans-serif;min-width:160px;flex:1;max-width:340px}
+.dxtb .st{font-size:12px;color:#667;margin-left:auto}
+.dxscroll{flex:1;overflow:auto;padding:24px 12px 60px}
+.dxpage{box-sizing:border-box;width:210mm;max-width:100%;min-height:297mm;margin:0 auto;background:#fff;color:#000;box-shadow:0 2px 14px rgba(0,0,0,.18);padding:2in 1in 1in 2in;outline:none;
+  background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(297mm - 1px),#c9d3e0 calc(297mm - 1px),#c9d3e0 297mm);
+  font-family:var(--dxf,Georgia),serif;font-size:var(--dxs,13pt);line-height:var(--dxlh,1.5);text-align:justify;overflow-wrap:break-word}
+.dxpage p,.dxpage div{margin:0 0 10pt}
+.dxpage table{border-collapse:collapse;width:100%;margin:0 0 10pt}
+.dxpage td,.dxpage th{border:1px solid #000;padding:3pt 5pt;vertical-align:top}
+.dxpage td p,.dxpage th p{margin:0}
+@media (max-width:900px){.dxpage{padding:1in .6in .6in 1in}}
+@media print{body>*:not(.dxed){display:none!important}.dxed{position:static;background:#fff}.dxtb{display:none}.dxscroll{padding:0;overflow:visible}.dxpage{box-shadow:none;background-image:none;width:auto;min-height:0}}
+
 #bkPill{position:fixed;left:12px;bottom:12px;z-index:800;background:#fff4d6;color:#7a4b00;border:1px solid #e8c96a;border-radius:16px;padding:6px 12px;font:600 12.5px/1.2 system-ui,Segoe UI,Arial,sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15)}
 @media (prefers-reduced-motion:reduce){.hl.flash,.item.flash,.pin.flash{animation:none;outline:3px solid var(--accent)}}
 </style>
@@ -457,6 +529,7 @@ details.drive ol b{color:var(--ink)}
       <button id="tabDesk" aria-pressed="false">Worksheet</button>
     </div>
     <div class="grp">
+      <button class="dxbtn" id="dxBtn" title="Dictation (Gemini)" aria-label="Dictation"><span class="dxl" aria-hidden="true"></span><span>🎙</span><span class="dxt" id="dxBtnT">Dictate</span></button>
       <button class="btn" id="penBtn" aria-pressed="false" title="Drag from the PDF to the worksheet (or between notes) to link. Shortcut: L"><span class="penmark" aria-hidden="true"></span>Link pen</button>
       <button class="btn" id="drawBtn" aria-pressed="false" title="Write, draw or highlight by hand with Apple Pencil (or the mouse) on the PDF or the worksheet. Shortcut: D">✎ Draw</button>
       <span class="grp"><button class="btn" id="undoBtn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button><button class="btn" id="redoBtn" title="Redo (Ctrl+Y)" disabled>↷ Redo</button></span>
@@ -734,12 +807,117 @@ details.drive ol b{color:var(--ink)}
   <div class="field"><label for="sUrl">Sync address (Apps Script web app URL)</label><input type="url" id="sUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
   <div class="field"><label for="sKey">Sync key</label><input type="text" id="sKey" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
   <div class="row"><button class="btn" id="sTest">Test connection</button><button class="btn primary" id="sSync">Sync now</button><span id="sInfo" style="color:var(--muted);font-size:13px"></span></div>
+  <h3>Dictation (Gemini)</h3>
+  <p>The Gemini key, instructions, clip folder and Word defaults are in the Dictation box. <button class="btn" id="dxSetFromMain">Open dictation settings</button></p>
   <h3>Backup on this device</h3>
   <p id="bkInfo"></p>
   <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="bkPick">Choose backup folder…</button><button class="btn primary" id="bkAllow" hidden>Allow access to the backup folder</button><button class="btn" id="bkNow" hidden>Back up now</button><button class="btn" id="bkRest" hidden title="Bring back matters that are in the backup folder but not in this browser">Restore from backup folder</button></div>
   <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="bkZip" title="One .zip file with every matter, its notes and PDFs">Save a full backup file</button><button class="btn" id="bkZipIn">Restore from a backup file…</button><input class="sr" type="file" id="bkZipFile" accept=".zip,application/zip"></div>
   <div class="row end"><button class="btn primary" data-close>Done</button></div>
 </div></div>
+
+<!-- Dictation desk -->
+<div class="dxp" id="dxPanel" hidden role="dialog" aria-labelledby="dxTitle">
+  <div class="dxh" id="dxHead"><b id="dxTitle">Dictation</b><button class="ic" id="dxSetBtn" title="Dictation settings: Gemini key, instructions, clip folder" aria-label="Dictation settings">⚙</button><button class="ic" id="dxMin" title="Hide this box (recording carries on; the light at the top shows it)" aria-label="Hide">–</button></div>
+  <div class="dxb">
+    <div id="dxWarn"></div>
+    <label class="f" for="dxName">File name</label>
+    <input type="text" id="dxName" placeholder="e.g. Reply OA 297-2026 para 5" autocomplete="off">
+    <label class="f" for="dxPreset">What Gemini should do</label>
+    <select id="dxPreset"></select>
+    <textarea id="dxExtra" rows="1" placeholder="Extra instruction for this clip (optional)"></textarea>
+    <label class="dxchk"><input type="checkbox" id="dxSheet"> <span>Also put the text on the worksheet, linked to the page I am on</span></label>
+    <div class="dxrec">
+      <span class="tm" id="dxTime">0:00</span><span class="lv"><i id="dxLevel"></i></span>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn dxbig dxrecbtn" id="dxRec">● Record</button>
+      <button class="btn dxbig" id="dxPause" hidden>❚❚ Pause</button>
+      <button class="btn dxbig primary" id="dxStop" hidden>■ Stop &amp; transcribe</button>
+      <button class="btn" id="dxDiscard" hidden title="Throw this recording away">Discard</button>
+    </div>
+    <div class="dxrep row">Hear the last <button class="btn" data-rep="10">10 s</button><button class="btn" data-rep="20">20 s</button><button class="btn" data-rep="30">30 s</button><button class="btn" data-rep="60">1 min</button><button class="btn" id="dxRepStop" hidden>■ Stop</button></div>
+    <div class="dxst" id="dxStatus"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="dxUpAudio" title="A WhatsApp voice note, a phone recording, a hearing recording">📎 Transcribe an audio file</button>
+      <button class="btn" id="dxDocBtn" title="Upload a PDF or photos and get a typed copy or a translation">📄 Typed copy / translation</button>
+    </div>
+    <input class="sr" type="file" id="dxAudioIn" accept="audio/*,.opus,.ogg,.m4a,.mp3,.wav,.aac,.amr,.webm,.flac,.mp4">
+    <div class="dxlist" id="dxList"></div>
+    <p class="dxnote" id="dxKeepNote"></p>
+  </div>
+</div>
+
+<div class="dxjob" id="dxDocJob" hidden><div class="pc" role="dialog" aria-labelledby="dxdjT">
+  <h2 id="dxdjT">Typed copy or translation</h2>
+  <p class="dxnote" style="font-size:13px">Gemini reads the pages and gives you an editable Word document.</p>
+  <label class="f">Pages to read</label>
+  <label class="opt"><input type="radio" name="dxSrc" value="cur" checked> <span>The PDF open in Excerpt Desk: <b id="dxCurPdf">none</b><br>pages <input type="text" id="dxFrom" style="width:64px;display:inline-block"> to <input type="text" id="dxTo" style="width:64px;display:inline-block"></span></label>
+  <label class="opt"><input type="radio" name="dxSrc" value="files"> <span>Files from this device (PDF or photos) <button class="btn" id="dxPick" style="height:28px">Choose…</button> <span id="dxPicked" class="dxnote"></span></span></label>
+  <input class="sr" type="file" id="dxDocIn" multiple accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">
+  <label class="f" for="dxTask">What to make</label>
+  <select id="dxTask">
+    <option value="type">Typed copy, same language</option>
+    <option value="en">Translation into English</option>
+    <option value="mr">Translation into Marathi</option>
+    <option value="hi">Translation into Hindi</option>
+    <option value="custom">My own instruction (below)</option>
+  </select>
+  <label class="f" for="dxDocExtra">Instruction to Gemini (optional, or required for “my own instruction”)</label>
+  <textarea id="dxDocExtra" rows="3" placeholder="e.g. Keep the cause title centred. Translate the Marathi order; leave English portions as they are."></textarea>
+  <label class="f" for="dxDocName">File name</label>
+  <input type="text" id="dxDocName" placeholder="e.g. Typed copy of Panchnama dated 12.03.2024">
+  <div class="row end"><button class="btn" id="dxDocNo">Cancel</button><button class="btn primary" id="dxDocGo">Start</button></div>
+</div></div>
+
+<div class="dxjob" id="dxSet" hidden><div class="pc" role="dialog" aria-labelledby="dxsT">
+  <h2 id="dxsT">Dictation settings</h2>
+  <label class="f" for="dxKey">Gemini API key (kept only on this device)</label>
+  <input type="text" id="dxKey" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="From aistudio.google.com › Get API key" style="-webkit-text-security:disc">
+  <div class="row" style="margin-top:6px"><button class="btn" id="dxTest">Test the key</button><span id="dxTestInfo" class="dxnote" style="margin:0"></span></div>
+  <p class="dxnote">Use a key from a Google project with billing turned on, so your audio and documents are not used to train Google's models.</p>
+  <label class="f" for="dxModel">Gemini model for dictation</label>
+  <input type="text" id="dxModel" placeholder="gemini-3.8-flash" autocomplete="off" spellcheck="false">
+  <label class="f" for="dxDocModel">Gemini model for typed copies and translations (blank = same)</label>
+  <input type="text" id="dxDocModel" placeholder="same as dictation" autocomplete="off" spellcheck="false">
+  <label class="f">Folder on this PC for clips and Word files</label>
+  <div class="row"><button class="btn" id="dxDirPick">Choose folder…</button><button class="btn primary" id="dxDirAllow" hidden>Allow access</button><span id="dxDirInfo" class="dxnote" style="margin:0"></span></div>
+  <label class="f" for="dxKeep">Keep audio clips for (days)</label>
+  <input type="text" id="dxKeep" inputmode="numeric" style="width:90px">
+  <p class="dxnote">Clips older than this are deleted automatically, day by day, from the app and from the folder's Audio sub-folders. Your Word files are never deleted.</p>
+  <label class="f">Word document defaults</label>
+  <div class="row"><select id="dxFont" style="width:auto"></select><select id="dxSize" style="width:auto"></select><select id="dxLine" style="width:auto"><option value="1">Single</option><option value="1.15">1.15</option><option value="1.5">1.5 lines</option><option value="2">Double</option></select></div>
+  <label class="opt"><input type="checkbox" id="dxAuto"> Open the Word document as soon as it is ready (not while recording)</label>
+  <label class="f" for="dxVocab">Names and terms Gemini should know (one per line)</label>
+  <textarea id="dxVocab" rows="4" placeholder="Charpe&#10;MSRTC Wardha&#10;Ordnance Factory Ambajhari&#10;MRTU and PULP Act"></textarea>
+  <label class="f">Instructions to Gemini (choose one in the Dictation box)</label>
+  <div id="dxPresets"></div>
+  <button class="btn" id="dxPreAdd">+ Add an instruction</button>
+  <div class="row end"><button class="btn primary" id="dxSetDone">Done</button></div>
+</div></div>
+
+<div class="dxed" id="dxEd" hidden>
+  <div class="dxtb" role="toolbar" aria-label="Document">
+    <input class="nm" id="dxeName" aria-label="File name" title="File name of the Word document">
+    <button class="btn primary" id="dxeSave" title="Save (Ctrl+S): keeps it here and writes the Word file to your dictation folder">💾 Save</button>
+    <button class="btn" id="dxeDocx" title="Download the Word (.docx) file">⬇ Word</button>
+    <span class="sep"></span>
+    <button class="btn sq" id="dxeUndo" title="Undo (Ctrl+Z)">↶</button><button class="btn sq" id="dxeRedo" title="Redo (Ctrl+Y)">↷</button>
+    <span class="sep"></span>
+    <select id="dxeFont" title="Font"></select>
+    <select id="dxeSize" title="Font size (pt)"></select>
+    <button class="btn tg" id="dxeB" title="Bold (Ctrl+B)">B</button><button class="btn tg" id="dxeI" title="Italic (Ctrl+I)" style="font-style:italic">I</button><button class="btn tg" id="dxeU" title="Underline (Ctrl+U)" style="text-decoration:underline">U</button>
+    <span class="sep"></span>
+    <button class="btn tg" data-al="left" title="Align left">Left</button><button class="btn tg" data-al="center" title="Centre">Centre</button><button class="btn tg" data-al="right" title="Align right">Right</button><button class="btn tg" data-al="justify" title="Justify">Justify</button>
+    <select id="dxeLine" title="Line spacing"><option value="1">Single</option><option value="1.15">1.15</option><option value="1.5">1.5 lines</option><option value="2">Double</option></select>
+    <span class="sep"></span>
+    <button class="btn" id="dxeSheet" title="Put this text on the worksheet of the open matter">➕ Worksheet</button>
+    <button class="btn" id="dxePrint" title="Print">🖨</button>
+    <span class="st" id="dxeSt"></span>
+    <button class="btn" id="dxeClose">Close</button>
+  </div>
+  <div class="dxscroll" id="dxeScroll"><div class="dxpage" id="dxePage" contenteditable="true" spellcheck="true"></div></div>
+</div>
 
 <div class="panel" id="delPanel" hidden><div class="pc" role="alertdialog" aria-labelledby="dlTitle" aria-describedby="dlText" style="width:min(540px,100%)">
   <p id="dlStep" style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:600"></p>
@@ -3658,7 +3836,7 @@ async function bkPerm(ask){if(!BK.h)return false;let s='prompt';
   BK.ok=s==='granted';bkPill();return BK.ok}
 async function bkSub(name,create){return BK.h.getDirectoryHandle(name,{create:!!create})}
 async function bkMatterDir(p,create){return (await bkSub('Matters',create)).getDirectoryHandle(p,{create:!!create})}
-async function bkWrite(dir,n,data){const fh=await dir.getFileHandle(n,{create:true});const w=await fh.createWritable();await w.write(data);await w.close()}
+async function bkWrite(dir,n,data){const parts=String(n).split('/');n=parts.pop();for(const x of parts)if(x)dir=await dir.getDirectoryHandle(x,{create:true});const fh=await dir.getFileHandle(n,{create:true});const w=await fh.createWritable();await w.write(data);await w.close()}
 async function bkSize(dir,n){try{return (await (await dir.getFileHandle(n)).getFile()).size}catch(e){return -1}}
 async function bkCopyDir(src,dst){for await(const [n,h] of src.entries()){if(h.kind==='file'){await bkWrite(dst,n,await h.getFile())}else await bkCopyDir(h,await dst.getDirectoryHandle(n,{create:true}))}}
 async function bkIndex(){
@@ -3965,6 +4143,649 @@ $('#dyClearAll').onclick=()=>clearPins('all');$('#dyClearPast').onclick=()=>clea
   }
   if(urlId){busy=true;setTimeout(()=>run(idbSrc(urlId)),600)}
   setTimeout(poll,1500);setInterval(poll,5000);window.addEventListener('focus',()=>{nextTry=0;poll()});
+})();
+/* ================= Dictation desk: record, keep safe, transcribe with Gemini, edit as Word ================= */
+(function(){
+const GB='https://generativelanguage.googleapis.com';
+const DXK='xdesk:dict';
+const PRESETS0=[
+  {id:'clean',name:'Dictation: clean typed text',text:'Type what I dictate as clean, ready-to-use text. Keep my wording and order; only correct obvious slips of speech.'},
+  {id:'verbatim',name:'Word for word (verbatim)',text:'Type exactly what is said, word for word, including repetitions. Only add punctuation and paragraphs.'},
+  {id:'pleading',name:'Court pleading paragraphs',text:'This is dictation for a court pleading (reply, written statement, petition or application). Use formal court English, keep paragraph numbers and headings such as "As to Para 5:-" exactly as I dictate them.'},
+  {id:'letter',name:'Letter',text:'This is a letter. Lay it out as dictated: reference, date, addressee, subject, salutation, body paragraphs and closing.'},
+  {id:'notes',name:'Notes / points of argument',text:'These are notes. Arrange them as numbered short points, one point per paragraph, in the order dictated.'}
+];
+const FONTS=['Georgia','Times New Roman','Bookman Old Style','Cambria','Arial','Calibri','Verdana','Mangal','Nirmala UI'];
+const SIZES=[9,10,10.5,11,12,13,14,15,16,18,20,24,28];
+let cfg={key:'',model:'gemini-3.8-flash',docModel:'',keep:10,font:'Georgia',size:13,line:1.5,autoOpen:true,vocab:'',preset:'clean',presets:PRESETS0.map(p=>Object.assign({},p))};
+try{const o=JSON.parse(localStorage.getItem(DXK)||'{}');Object.assign(cfg,o)}catch(e){}
+if(!Array.isArray(cfg.presets)||!cfg.presets.length)cfg.presets=PRESETS0.map(p=>Object.assign({},p));
+const saveCfg=()=>{try{localStorage.setItem(DXK,JSON.stringify(cfg))}catch(e){}};
+const hasKey=()=>!!String(cfg.key||'').trim();
+const z2=n=>String(n).padStart(2,'0');
+const dayOf=t=>{const d=new Date(t);return d.getFullYear()+'-'+z2(d.getMonth()+1)+'-'+z2(d.getDate())};
+const mmss=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return (h?h+':'+z2(m):m)+':'+z2(s%60)};
+const defName=()=>{const d=new Date();return 'Dictation '+z2(d.getDate())+'-'+z2(d.getMonth()+1)+'-'+d.getFullYear()+' '+z2(d.getHours())+z2(d.getMinutes())};
+const fileSafe=s=>String(s||'').replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').trim().slice(0,110)||'Dictation';
+const EXT={'audio/webm':'webm','audio/mp4':'m4a','audio/x-m4a':'m4a','audio/mpeg':'mp3','audio/mp3':'mp3','audio/wav':'wav','audio/x-wav':'wav','audio/ogg':'ogg','audio/aac':'aac','audio/flac':'flac','audio/aiff':'aiff','video/mp4':'mp4','audio/amr':'amr','audio/3gpp':'3gp'};
+const MIME={webm:'audio/webm',m4a:'audio/mp4',mp4:'audio/mp4',mp3:'audio/mpeg',wav:'audio/wav',ogg:'audio/ogg',opus:'audio/ogg',oga:'audio/ogg',aac:'audio/aac',flac:'audio/flac',aiff:'audio/aiff',aif:'audio/aiff',amr:'audio/amr','3gp':'audio/3gpp'};
+const baseMime=m=>String(m||'').split(';')[0].trim().toLowerCase();
+const extOfName=n=>(String(n).match(/\.([a-z0-9]{2,5})$/i)||[])[1];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const escH=s=>String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
+/* ---------- the list of dictations (kept in the browser's database, mirrored to the PC folder) ---------- */
+let list=[];
+const mKey=id=>'dxm:'+id, fKey=(id,f)=>'~dx/'+id+'/'+f;
+async function loadList(){
+  list=[];try{for(const k of await idb.keys('kv'))if(typeof k==='string'&&k.startsWith('dxm:')){const m=await idb.get('kv',k);if(m&&m.id)list.push(m)}}catch(e){}
+  list.sort((a,b)=>b.created-a.created);
+}
+const byM=id=>list.find(m=>m.id===id);
+let metaT={};
+async function saveMeta(m,now){if(!list.includes(m))list.unshift(m);m.upd=Date.now();
+  const w=async()=>{try{await idb.set('kv',mKey(m.id),JSON.parse(JSON.stringify(m)))}catch(e){}};
+  if(now){clearTimeout(metaT[m.id]);await w()}else{clearTimeout(metaT[m.id]);metaT[m.id]=setTimeout(w,700)}
+  renderList();light();}
+async function delAll(m){
+  for(const s of (m.segs||[]).concat(m.srcs||[]))try{await idb.del('files',fKey(m.id,s.f))}catch(e){}
+  try{await idb.del('kv',mKey(m.id));await idb.del('kv','dxdoc:'+m.id)}catch(e){}
+  list=list.filter(x=>x!==m);renderList();light();
+}
+
+/* ---------- folder on the PC ---------- */
+let dirH=null,dirOK=false;
+async function dirLoad(){try{dirH=(await idb.get('kv','dx:dir'))||null}catch(e){dirH=null}
+  if(dirH){try{dirOK=(await dirH.queryPermission({mode:'readwrite'}))==='granted'}catch(e){dirOK=false}}updDir()}
+async function dirAsk(){if(!dirH)return false;if(dirOK)return true;try{dirOK=(await dirH.requestPermission({mode:'readwrite'}))==='granted'}catch(e){dirOK=false}updDir();if(dirOK){purge();flushFolder()}return dirOK}
+async function dirPick(){
+  if(!('showDirectoryPicker' in window)){toast('This browser cannot keep files in a PC folder (iPad/phone). Clips stay inside the app, and Word files download.');return}
+  try{const h=await window.showDirectoryPicker({id:'xdesk-dictation',mode:'readwrite'});dirH=h;dirOK=true;await idb.set('kv','dx:dir',h);updDir();toast('Clips and Word files will be kept in “'+h.name+'”.');flushFolder()}catch(e){}
+}
+async function dirSub(path,create){let d=dirH;for(const p of path)d=await d.getDirectoryHandle(p,{create:!!create});return d}
+async function dWrite(path,data){
+  if(!dirH||!dirOK)return false;
+  try{const parts=path.split('/'),fn=parts.pop();const d=await dirSub(parts,true);const fh=await d.getFileHandle(fn,{create:true});const w=await fh.createWritable();await w.write(data);await w.close();return true}
+  catch(e){console.warn('dictation folder',e);if(e&&(e.name==='NotAllowedError'||e.name==='SecurityError')){dirOK=false;updDir()}return false}
+}
+async function dExists(path){try{const parts=path.split('/'),fn=parts.pop();const d=await dirSub(parts,false);await d.getFileHandle(fn);return true}catch(e){return false}}
+function updDir(){
+  const i=$('#dxDirInfo'),a=$('#dxDirAllow');if(!i)return;
+  if(!('showDirectoryPicker' in window)){i.textContent='Not available in this browser; clips stay inside the app.';$('#dxDirPick').hidden=true;a.hidden=true}
+  else if(!dirH){i.textContent='No folder chosen yet.';a.hidden=true}
+  else if(!dirOK){i.textContent='“'+dirH.name+'” needs your permission again.';a.hidden=false}
+  else{i.textContent='Saving to “'+dirH.name+'” (Audio and Documents sub-folders).';a.hidden=true}
+  renderWarn();
+}
+const segPath=(m,s)=>'Audio/'+m.day+'/'+fileSafe(m.name)+' ('+m.id.slice(0,4)+') part '+s.n+'.'+s.ext;
+async function flushFolder(){ /* copy any clip parts that are not in the folder yet (after permission is granted, or after a crash) */
+  if(!dirH||!dirOK)return;
+  for(const m of list){if(m.gone)continue;for(const s of (m.segs||[])){if(s.inDir&&s.inDir===s.size)continue;
+    try{const b=await idb.get('files',fKey(m.id,s.f));if(b&&await dWrite(segPath(m,s),b)){s.inDir=s.size||b.size||1;saveMeta(m)}}catch(e){}}}
+}
+
+/* ---------- 10-day clean-up, day by day ---------- */
+async function purge(){
+  const keep=Math.max(1,parseInt(cfg.keep,10)||10);const cut=new Date();cut.setHours(0,0,0,0);cut.setDate(cut.getDate()-keep);const cutDay=dayOf(cut);
+  for(const m of list.slice()){
+    if(m.day>=cutDay||m.gone||(R&&R.m===m))continue;
+    for(const s of (m.segs||[]).concat(m.srcs||[]))try{await idb.del('files',fKey(m.id,s.f))}catch(e){}
+    m.gone=true;m.segs=(m.segs||[]).map(s=>Object.assign({},s,{inDir:0}));
+    if(m.status!=='done'){await delAll(m);continue}await saveMeta(m,true);
+  }
+  if(dirH&&dirOK){try{const a=await dirSub(['Audio'],false);const old=[];for await(const [n,h] of a.entries())if(h.kind==='directory'&&/^\d{4}-\d{2}-\d{2}$/.test(n)&&n<cutDay)old.push(n);
+    for(const n of old)try{await a.removeEntry(n,{recursive:true})}catch(e){}}catch(e){}}
+}
+
+/* ---------- recording ---------- */
+let R=null;            /* the live recording */
+const SEG_MAX=360;     /* seconds per part; each part is sent to Gemini on its own */
+function pickType(){const ts=['audio/webm;codecs=opus','audio/mp4','audio/webm','audio/ogg;codecs=opus'];return ts.find(t=>{try{return MediaRecorder.isTypeSupported(t)}catch(e){return false}})||''}
+function curSecs(){if(!R)return 0;const c=R.cur;const segNow=c?(c.acc+(R.paused?0:Date.now()-c.t0))/1000:0;return R.done+segNow}
+async function startRec(cont){
+  if(R){toast('A recording is already on.');return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){toast('This browser cannot record. Use “Transcribe an audio file” instead.');return}
+  if(dirH&&!dirOK)await dirAsk();
+  let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}})}
+  catch(e){toast('The microphone is not allowed for this page. Allow it in the browser’s site settings and press Record again.');return}
+  let m=cont;
+  if(!m){const now=Date.now();m={id:uid()+uid().slice(0,4),kind:'audio',name:($('#dxName').value||'').trim()||defName(),created:now,day:dayOf(now),segs:[],status:'recording',
+      preset:$('#dxPreset').value,extra:($('#dxExtra').value||'').trim()};
+    if($('#dxSheet').checked&&P&&proj){const a=hereAnchor();m.sheet={matter:proj.name,anchor:a}}
+    $('#dxName').value=m.name}
+  else{m.status='recording';delete m.err;$('#dxName').value=m.name}
+  const AC=window.AudioContext||window.webkitAudioContext;let ctx=null,proc=null,src=null;
+  try{ctx=new AC();src=ctx.createMediaStreamSource(stream);proc=ctx.createScriptProcessor(4096,1,1);src.connect(proc);proc.connect(ctx.destination);ctx.resume&&ctx.resume().catch(()=>{})}catch(e){ctx=null}
+  R={m,stream,ctx,proc,src,rate:ctx?ctx.sampleRate:48000,ring:[],ringLen:0,level:0,paused:false,done:(m.segs||[]).reduce((a,s)=>a+(s.dur||0),0),cur:null,type:pickType(),lock:null,tick:null};
+  if(proc)proc.onaudioprocess=e=>{if(!R||R.paused)return;const d=e.inputBuffer.getChannelData(0);let s=0;for(let i=0;i<d.length;i+=16)s+=d[i]*d[i];R.level=Math.min(1,Math.sqrt(s/(d.length/16))*4);
+    R.ring.push(new Float32Array(d));R.ringLen+=d.length;while(R.ring.length>1&&R.ringLen-R.ring[0].length>R.rate*65){R.ringLen-=R.ring.shift().length}};
+  try{if(navigator.wakeLock)R.lock=await navigator.wakeLock.request('screen')}catch(e){}
+  newPart();await saveMeta(m,true);
+  R.tick=setInterval(tick,400);uiRec();crumb('dictation: recording '+(cont?'continued':'started'));
+  status(cont?'Continuing “'+m.name+'”. Carry on reading; the light at the top stays green while recording.':'Recording. You can keep reading the PDFs; the light at the top stays green.');
+}
+function newPart(){
+  const m=R.m;let mr;try{mr=new MediaRecorder(R.stream,R.type?{mimeType:R.type,audioBitsPerSecond:48000}:{})}catch(e){mr=new MediaRecorder(R.stream)}
+  const mime=baseMime(mr.mimeType||R.type||'audio/webm');const n=(m.segs.reduce((a,s)=>Math.max(a,s.n||0),0))+1;
+  const s={n,f:'part'+n+'.'+(EXT[mime]||'webm'),ext:EXT[mime]||'webm',mime,dur:0,size:0};m.segs.push(s);
+  const c={s,mr,chunks:[],t0:Date.now(),acc:0,lastDisk:0};R.cur=c;
+  mr.ondataavailable=e=>{if(e.data&&e.data.size){c.chunks.push(e.data);keepPart(c,false)}};
+  mr.start(1000);
+}
+const keepT=new WeakMap();
+function keepPart(c,now){ /* the part so far goes to the browser database every ~2 s and to the PC folder every ~15 s */
+  const run=async()=>{keepT.delete(c);if(!R)return;const b=new Blob(c.chunks,{type:c.s.mime});c.s.size=b.size;c.s.dur=(c.acc+((R&&R.cur===c&&!R.paused)?Date.now()-c.t0:0))/1000;
+    try{await idb.set('files',fKey(R?R.m.id:'',c.s.f),b)}catch(e){}
+    if(R)saveMeta(R.m);
+    if(R&&(now||Date.now()-c.lastDisk>15000)){c.lastDisk=Date.now();if(await dWrite(segPath(R.m,c.s),b))c.s.inDir=b.size}};
+  if(now){clearTimeout(keepT.get(c));return run()}
+  if(!keepT.has(c))keepT.set(c,setTimeout(run,2000));
+}
+function endPart(c){return new Promise(res=>{const mr=c.mr;if(mr.state==='inactive'){res();return}
+  mr.onstop=async()=>{c.s.dur=(c.acc+(c.paused?0:Date.now()-c.t0))/1000;clearTimeout(keepT.get(c));keepT.delete(c);const b=new Blob(c.chunks,{type:c.s.mime});c.s.size=b.size;
+    try{await idb.set('files',fKey(R.m.id,c.s.f),b)}catch(e){}if(await dWrite(segPath(R.m,c.s),b))c.s.inDir=b.size;res()};
+  c.paused=R.paused;try{mr.stop()}catch(e){res()}})}
+async function tick(){
+  if(!R)return;$('#dxTime').textContent=mmss(curSecs());$('#dxLevel').style.width=(R.paused?0:Math.round(R.level*100))+'%';light();
+  const c=R.cur;if(!R.paused&&c&&!R.rotating&&(c.acc+Date.now()-c.t0)/1000>=SEG_MAX){R.rotating=true;const old=c;R.done+=(old.acc+Date.now()-old.t0)/1000;newPart();await endPart(old);R.rotating=false;saveMeta(R.m)}
+}
+function pauseRec(){if(!R||R.paused)return;const c=R.cur;try{c.mr.pause()}catch(e){}c.acc+=Date.now()-c.t0;R.paused=true;R.m.status='paused';keepPart(c,true);uiRec();light();status('Paused. Press Resume to carry on in the same file, or hear the last few seconds below.')}
+function resumeRec(){if(!R||!R.paused)return;stopPlay();const c=R.cur;try{c.mr.resume()}catch(e){}c.t0=Date.now();R.paused=false;R.m.status='recording';saveMeta(R.m);uiRec();light();status('Recording again.')}
+async function finishRec(go){
+  if(!R)return;const r=R,c=r.cur;stopPlay();
+  if(!r.paused){c.acc+=Date.now()-c.t0;r.paused=true}
+  await endPart(c);clearInterval(r.tick);
+  r.stream.getTracks().forEach(t=>t.stop());try{r.proc&&r.proc.disconnect();r.src&&r.src.disconnect();r.ctx&&r.ctx.close()}catch(e){}try{r.lock&&r.lock.release()}catch(e){}
+  const m=r.m;R=null;m.segs=m.segs.filter(s=>s.size>800||s.dur>0.5);
+  if(go==='discard'){await delAll(m);uiRec();status('Recording thrown away.');return}
+  m.status='stopped';await saveMeta(m,true);uiRec();
+  if(!m.segs.length){await delAll(m);status('Nothing was recorded.');return}
+  $('#dxName').value='';$('#dxExtra').value='';$('#dxTime').textContent='0:00';
+  enqueue(m.id);
+}
+window.addEventListener('beforeunload',e=>{if(R){try{keepPart(R.cur,true)}catch(_){}e.preventDefault();e.returnValue=''}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&R&&R.cur)keepPart(R.cur,true)});
+
+/* ---------- hear the last few seconds ---------- */
+let play=null;
+function stopPlay(){if(play){try{play.src.stop()}catch(e){}try{play.ctx.close()}catch(e){}play=null}$('#dxRepStop').hidden=true}
+async function replay(sec){
+  stopPlay();
+  const m=R?R.m:(sel()||null);if(!m){toast('Record something first.');return}
+  if(R&&!R.paused)pauseRec();
+  const AC=window.AudioContext||window.webkitAudioContext;const ctx=new AC();let buf=null;
+  try{
+    if(R&&R.ringLen>=Math.min(sec,curSecs()-0.2)*R.rate&&R.ringLen>0){
+      const n=Math.min(R.ringLen,Math.round(sec*R.rate));buf=ctx.createBuffer(1,n,R.rate);const out=buf.getChannelData(0);let w=n;
+      for(let i=R.ring.length-1;i>=0&&w>0;i--){const ch=R.ring[i];const take=Math.min(w,ch.length);out.set(ch.subarray(ch.length-take),w-take);w-=take}
+    }else{
+      status('Getting the last '+sec+' seconds…');const parts=[];let have=0;
+      for(let i=m.segs.length-1;i>=0&&have<sec;i--){const b=await idb.get('files',fKey(m.id,m.segs[i].f));if(!b)continue;
+        const ab=await decodeBlob(ctx,b);if(ab){parts.unshift(ab);have+=ab.duration}}
+      if(!parts.length)throw new Error('no audio');
+      const rate=parts[0].sampleRate,n=Math.min(Math.round(sec*rate),parts.reduce((a,p)=>a+p.length,0));buf=ctx.createBuffer(1,n,rate);const out=buf.getChannelData(0);let w=n;
+      for(let i=parts.length-1;i>=0&&w>0;i--){const ch=parts[i].getChannelData(0);const take=Math.min(w,ch.length);out.set(ch.subarray(ch.length-take),w-take);w-=take}
+    }
+  }catch(e){try{ctx.close()}catch(_){}toast('Could not play the clip back.');return}
+  const src=ctx.createBufferSource();src.buffer=buf;src.connect(ctx.destination);play={ctx,src};$('#dxRepStop').hidden=false;
+  src.onended=()=>{if(play&&play.src===src){stopPlay();status(R?'Paused. Press Resume to carry on.':'')}};
+  try{await ctx.resume()}catch(e){}src.start();status('Playing the last '+(sec>=60?'1 minute':sec+' seconds')+'…');
+}
+async function decodeBlob(ctx,b){try{const ab=b instanceof Blob?await b.arrayBuffer():b;return await new Promise((res,rej)=>{const p=ctx.decodeAudioData(ab.slice(0),res,rej);if(p&&p.then)p.then(res,rej)})}catch(e){return null}}
+
+/* ---------- audio → 16 kHz mono pieces (WAV) for Gemini ---------- */
+async function pcm16k(blob){
+  const AC=window.AudioContext||window.webkitAudioContext;let ctx;try{ctx=new AC({sampleRate:16000})}catch(e){ctx=new AC()}
+  try{const ab=await decodeBlob(ctx,blob);if(!ab)return null;const sr=ab.sampleRate,len=ab.length,ch=ab.numberOfChannels,ratio=sr/16000,n=Math.max(1,Math.floor(len/ratio));
+    const data=[];for(let c=0;c<ch;c++)data.push(ab.getChannelData(c));const out=new Int16Array(n);
+    for(let i=0;i<n;i++){const a=Math.floor(i*ratio),b=Math.max(a+1,Math.min(len,Math.floor((i+1)*ratio)));let s=0,k=0;for(let j=a;j<b;j++)for(let c=0;c<ch;c++){s+=data[c][j];k++}
+      s=k?s/k:0;s=Math.max(-1,Math.min(1,s));out[i]=s<0?s*0x8000:s*0x7fff}
+    return out}finally{try{ctx.close()}catch(e){}}
+}
+function wavOf(pcm){const n=pcm.length,dv=new DataView(new ArrayBuffer(44+n*2));const ws=(o,s)=>{for(let i=0;i<s.length;i++)dv.setUint8(o+i,s.charCodeAt(i))};
+  ws(0,'RIFF');dv.setUint32(4,36+n*2,true);ws(8,'WAVE');ws(12,'fmt ');dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);dv.setUint32(24,16000,true);dv.setUint32(28,32000,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);ws(36,'data');dv.setUint32(40,n*2,true);
+  new Int16Array(dv.buffer,44,n).set(pcm);return new Blob([dv.buffer],{type:'audio/wav'})}
+function pieces(pcm,maxS){ /* split long audio at a quiet moment near every maxS seconds */
+  const R16=16000,L=maxS*R16,out=[];let a=0;
+  while(pcm.length-a>L){let best=a+L,bestE=Infinity;const from=a+L-15*R16,fr=1600;
+    for(let p=Math.max(a+R16*30,from);p+fr<=a+L;p+=fr){let e=0;for(let j=p;j<p+fr;j+=4)e+=Math.abs(pcm[j]);if(e<bestE){bestE=e;best=p+fr/2}}
+    out.push(pcm.subarray(a,best));a=best}
+  out.push(pcm.subarray(a));return out.filter(x=>x.length>R16*0.3)}
+
+/* ---------- Gemini ---------- */
+const mdl=x=>String(x||cfg.model||'gemini-3.8-flash').trim().replace(/^models\//,'');
+const kq=()=>'key='+encodeURIComponent(String(cfg.key||'').trim());
+async function gFetch(url,opt){let r;try{r=await fetch(url,opt)}catch(e){const er=new Error('No connection to Gemini');er.net=true;throw er}
+  if(!r.ok){let msg='';try{const j=await r.json();msg=(j.error&&j.error.message)||''}catch(e){}const er=new Error('Gemini '+r.status+(msg?': '+msg:''));er.status=r.status;if(r.status===429||r.status>=500)er.retry=true;throw er}return r}
+async function gGen(model,parts,tries){
+  for(let t=0;;t++){try{
+    const r=await gFetch(GB+'/v1beta/models/'+encodeURIComponent(mdl(model))+':generateContent?'+kq(),{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:{temperature:0.2,maxOutputTokens:65536}})});
+    const j=await r.json();const c=j.candidates&&j.candidates[0];
+    const txt=c&&c.content&&(c.content.parts||[]).map(p=>p.thought?'':(p.text||'')).join('').trim();
+    if(!txt){const er=new Error('Gemini returned no text'+(c&&c.finishReason?' ('+c.finishReason+')':(j.promptFeedback&&j.promptFeedback.blockReason?' ('+j.promptFeedback.blockReason+')':''))+'.');throw er}
+    return txt.replace(/^```[a-z]*\s*\n?/i,'').replace(/\n?```\s*$/,'').trim();
+  }catch(e){if(e.retry&&t<(tries||3)){await sleep(4000*(t+1));continue}throw e}}
+}
+const b64=blob=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=()=>rej(r.error);r.readAsDataURL(blob)});
+function vocab(m){const w=[];if(P&&proj&&m&&m.sheet&&m.sheet.matter===proj.name){w.push(P.name);(P.docs||[]).forEach(d=>d&&d.title&&w.push(d.title))}
+  String(cfg.vocab||'').split(/[\n;]+/).map(s=>s.trim()).filter(Boolean).forEach(s=>w.push(s));return [...new Set(w)].slice(0,150).join('; ')}
+const presetText=id=>{const p=cfg.presets.find(x=>x.id===id)||cfg.presets[0];return p?p.text:''};
+function audioPrompt(m,k,n,prev){
+  return 'You are transcribing dictation recorded by an Indian advocate practising in Nagpur, Maharashtra (Bombay High Court Nagpur Bench, District Courts, Industrial and Labour Courts, CAT, MAT). Speech may mix English, Hindi and Marathi.\n'+
+  'Always:\n- Write in English, except a passage clearly dictated to be kept in Marathi or Hindi, which you write in Devanagari.\n'+
+  '- Correct legal terms, names of Acts, section/rule/order/article numbers, case numbers (e.g. O.A. 297/2026, ULP 14/2026, W.P. 3692/2026) and citations.\n'+
+  '- Spell personal and place names in the Indian context (Marathi, Hindi, Christian, Parsi or Muslim names). If a name or word is uncertain, write your best guess followed by [?]. Never invent a name.\n'+
+  '- Obey spoken commands such as "full stop", "comma", "colon", "new paragraph", "new line", "open bracket", "close bracket", "quote", "unquote", and never write the command words themselves.\n'+
+  '- Remove fillers and false starts; where the speaker corrects himself, keep only the corrected version.\n'+
+  '- Output only the text: no heading, preface, notes or markdown. Separate paragraphs with one blank line. Put **double asterisks** around words only if the speaker says to make them bold, and __double underscores__ if he says underline.\n'+
+  'My instruction for this work: '+presetText(m.preset)+(m.extra?'\nAlso: '+m.extra:'')+'\n'+
+  (vocab(m)?'Names and terms that may occur: '+vocab(m)+'\n':'')+
+  (n>1?'This audio is part '+k+' of '+n+' of one continuous dictation.'+(prev?' The previous part ended with: «'+prev.slice(-400)+'». Continue straight on from there without repeating it.':'')+'\n':'');
+}
+async function transcribeAudio(m){
+  if(!hasKey())throw Object.assign(new Error('Add your Gemini API key in Dictation settings (⚙).'),{nokey:true});
+  const todo=m.segs.filter(s=>s.txt==null);if(!todo.length)return '';
+  /* gather every piece to send (each part split again if long, e.g. an uploaded hearing) */
+  const jobs=[];
+  for(const s of todo){const b=await idb.get('files',fKey(m.id,s.f));if(!b)throw new Error('The audio of part '+s.n+' is no longer on this device.');
+    const blob=b instanceof Blob?b:new Blob([b],{type:s.mime});
+    status('Preparing part '+s.n+'…');let pcm=null;try{pcm=await pcm16k(blob)}catch(e){pcm=null}
+    if(pcm){const ps=pieces(pcm,330);ps.forEach((p,i)=>jobs.push({s,blob:wavOf(p),mime:'audio/wav',last:i===ps.length-1}));if(!s.dur)s.dur=pcm.length/16000}
+    else{if(blob.size>14e6)throw new Error('Part '+s.n+' could not be read on this device and is too large to send as it is.');jobs.push({s,blob,mime:baseMime(s.mime)||'audio/webm',last:true})}}
+  const done=m.segs.filter(s=>s.txt!=null);let prev=done.length?done[done.length-1].txt:'';const N=jobs.length;let acc={};
+  for(let i=0;i<N;i++){const j=jobs[i];m.progress='part '+(i+1)+' of '+N;status('Gemini is typing “'+m.name+'”, '+m.progress+'…');saveMeta(m);
+    const t=await gGen(cfg.model,[{inline_data:{mime_type:j.mime,data:await b64(j.blob)}},{text:audioPrompt(m,i+1,N,prev)}]);
+    acc[j.s.n]=(acc[j.s.n]?acc[j.s.n]+' ':'')+t;prev=t;
+    if(j.last){j.s.txt=acc[j.s.n];await saveMeta(m,true)}}
+  return todo.map(s=>s.txt||'').join(' ').trim();
+}
+/* plain text from Gemini → paragraphs */
+function textToHtml(t){
+  const inl=s=>escH(s).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/__([^_]+)__/g,'<u>$1</u>');
+  return String(t||'').replace(/\r/g,'').split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean).map(p=>'<p>'+p.split('\n').map(inl).join('<br>')+'</p>').join('');
+}
+/* HTML from Gemini or a paste → only the safe, Word-friendly tags */
+function clean(html){
+  const doc=new DOMParser().parseFromString('<div>'+html+'</div>','text/html');const root=doc.body.firstChild;
+  const OK={P:1,BR:1,B:1,I:1,U:1,TABLE:1,TBODY:1,THEAD:1,TR:1,TD:1,TH:1,SPAN:1,UL:1,OL:1,LI:1};
+  const MAP={STRONG:'B',EM:'I',H1:'P',H2:'P',H3:'P',H4:'P',H5:'P',H6:'P',DIV:'P',BLOCKQUOTE:'P',SECTION:'P',ARTICLE:'P',CENTER:'P'};
+  function walk(n){for(const c of [...n.childNodes]){
+    if(c.nodeType===3)continue;if(c.nodeType!==1){c.remove();continue}
+    let tag=c.tagName;if(/^(SCRIPT|STYLE|META|LINK|IFRAME|OBJECT|IMG|SVG|BUTTON|INPUT|TEXTAREA|SELECT|HEAD|TITLE)$/.test(tag)){c.remove();continue}
+    const head=/^H[1-6]$/.test(tag),centre=tag==='CENTER';
+    let el=c;if(MAP[tag]||!OK[tag]){const nt=MAP[tag]||'SPAN';el=doc.createElement(nt);while(c.firstChild)el.append(c.firstChild);c.replaceWith(el);tag=nt}
+    const al=(c.getAttribute&&(c.getAttribute('align')||((c.style&&c.style.textAlign)||'')))||'';const fw=c.style&&c.style.fontWeight,fs=c.style&&c.style.fontStyle,td=c.style&&c.style.textDecoration,fsz=c.style&&c.style.fontSize,ff=c.style&&c.style.fontFamily,lh=c.style&&c.style.lineHeight;
+    for(const a of [...el.attributes])if(!/^(colspan|rowspan)$/i.test(a.name))el.removeAttribute(a.name);
+    if(/^(left|center|right|justify)$/i.test(al)&&/^(P|TD|TH)$/.test(tag))el.style.textAlign=al.toLowerCase();if(centre)el.style.textAlign='center';
+    if(head){const b=doc.createElement('b');while(el.firstChild)b.append(el.firstChild);el.append(b)}
+    if(fw&&(fw==='bold'||+fw>=600))el.style.fontWeight='bold';if(fs==='italic')el.style.fontStyle='italic';if(td&&/underline/.test(td))el.style.textDecoration='underline';
+    if(fsz&&/pt$/.test(fsz))el.style.fontSize=fsz;if(ff)el.style.fontFamily=ff;if(lh&&/^[\d.]+$/.test(lh))el.style.lineHeight=lh;
+    walk(el)}}
+  walk(root);
+  /* loose text at the top level goes into paragraphs */
+  const out=doc.createElement('div');let p=null;
+  for(const c of [...root.childNodes]){const blk=c.nodeType===1&&/^(P|TABLE|UL|OL)$/.test(c.tagName);
+    if(blk){p=null;out.append(c)}else{if(c.nodeType===3&&!c.nodeValue.trim()&&!p)continue;if(!p){p=doc.createElement('p');out.append(p)}p.append(c)}}
+  return out.innerHTML;
+}
+
+/* ---------- typed copies and translations ---------- */
+const LANG={en:'English',mr:'Marathi (Devanagari script)',hi:'Hindi (Devanagari script)'};
+function docPrompt(m,from,to,total){
+  const task=m.task==='type'?'Make an exact typed copy of these pages in their original language and script. Do not translate, correct or summarise.':
+    m.task==='custom'?(m.extra||'Make a typed copy of these pages.'):
+    'Translate these pages faithfully into '+LANG[m.task]+'. Keep the legal meaning exact, keep names of persons and places as names (transliterate, do not translate them), keep all numbers, dates, case numbers, section numbers and amounts exactly.';
+  return 'You are preparing a document for an Indian advocate in Nagpur, Maharashtra. '+task+'\n'+
+  (m.task!=='custom'&&m.extra?'Also: '+m.extra+'\n':'')+
+  'These are pages '+from+(to>from?' to '+to:'')+' of '+total+'.\n'+
+  'Keep the layout: headings, cause titles, paragraph numbers, lists and tables. Mark words you cannot read as [illegible] and stamps, seals or signatures as [stamp], [seal], [signature]. Do not add page headers you invent, comments or explanations.\n'+
+  'Return only an HTML fragment using these tags: <p>, <br>, <b>, <i>, <u>, <table>, <tr>, <td>. Use <p align="center"> for centred lines and <p align="right"> for right-aligned lines. No markdown, no code fences, no <html> or <body>.';
+}
+async function typeDoc(m){
+  if(!hasKey())throw Object.assign(new Error('Add your Gemini API key in Dictation settings (⚙).'),{nokey:true});
+  m.parts=m.parts||[];const out=[];
+  /* build the chunks: up to 5 pages of PDF, or up to 4 photos, per request */
+  const chunks=[];
+  for(const s of m.srcs){const b=await idb.get('files',fKey(m.id,s.f));if(!b)throw new Error('“'+s.name+'” is no longer on this device.');
+    const blob=b instanceof Blob?b:new Blob([b],{type:s.mime});
+    if(/pdf/.test(s.mime)){if(!window.PDFLib)throw new Error('The PDF tools did not load; check the internet and reload.');
+      const src=await PDFLib.PDFDocument.load(await blob.arrayBuffer(),{ignoreEncryption:true});const N=src.getPageCount();
+      const a=Math.max(1,Math.min(N,s.from||1)),z=Math.max(a,Math.min(N,s.to||N));
+      for(let p=a;p<=z;p+=5)chunks.push({pdf:src,from:p,to:Math.min(z,p+4),total:N,name:s.name})}
+    else chunks.push({img:[{blob,mime:s.mime}],name:s.name,from:1,to:1,total:1})}
+  /* merge photos 4 at a time */
+  const merged=[];for(const c of chunks){const l=merged[merged.length-1];if(c.img&&l&&l.img&&l.img.length<4){l.img.push(c.img[0]);l.to++;l.total++}else merged.push(c)}
+  let total=merged.length;
+  for(let i=0;i<merged.length;i++){const c=merged[i];if(m.parts[i]!=null){out.push(m.parts[i]);continue}
+    m.progress='section '+(i+1)+' of '+total;status('Gemini is reading “'+m.name+'”, '+m.progress+'…');saveMeta(m);
+    let parts=[];
+    if(c.pdf){let from=c.from,to=c.to;const one=async(f,t)=>{const d=await PDFLib.PDFDocument.create();const pages=await d.copyPages(c.pdf,Array.from({length:t-f+1},(_,k)=>f-1+k));pages.forEach(p=>d.addPage(p));return new Blob([await d.save()],{type:'application/pdf'})};
+      let blob=await one(from,to);
+      if(blob.size>14e6&&to>from){/* too big in one go: send page by page */let html='';for(let p=from;p<=to;p++){const b1=await one(p,p);if(b1.size>18e6)throw new Error('Page '+p+' of “'+c.name+'” is too large to send.');
+          html+=await gGen(cfg.docModel||cfg.model,[{inline_data:{mime_type:'application/pdf',data:await b64(b1)}},{text:docPrompt(m,p,p,c.total)}])+'\n'}
+        m.parts[i]=html;out.push(html);await saveMeta(m,true);continue}
+      parts=[{inline_data:{mime_type:'application/pdf',data:await b64(blob)}},{text:docPrompt(m,from,to,c.total)}]}
+    else{for(const im of c.img){if(im.blob.size>14e6)throw new Error('A photo in “'+c.name+'” is larger than 14 MB.');parts.push({inline_data:{mime_type:im.mime||'image/jpeg',data:await b64(im.blob)}})}
+      parts.push({text:docPrompt(m,1,c.img.length,c.img.length).replace(/These are pages [^\n]*\n/,'These are '+c.img.length+' photographed page'+(c.img.length>1?'s, in order':'')+'.\n')})}
+    const html=await gGen(cfg.docModel||cfg.model,parts);m.parts[i]=html;out.push(html);await saveMeta(m,true)}
+  return out.join('\n');
+}
+
+/* ---------- the work queue: one job at a time; the light is orange while it runs ---------- */
+const Q=[];let busy=null;
+function enqueue(id){if(!Q.includes(id)&&!(busy&&busy.id===id))Q.push(id);const m=byM(id);if(m&&m.status!=='processing'){m.status='queued';saveMeta(m)}pump()}
+async function pump(){
+  if(busy)return;const id=Q.shift();if(!id)return;const m=byM(id);if(!m){pump();return}
+  if(!navigator.onLine){m.status='waiting';saveMeta(m);status('No internet: “'+m.name+'” will be sent when you are back online.');pump();return}
+  busy=m;m.status='processing';delete m.err;await saveMeta(m,true);light();
+  try{
+    let html;
+    if(m.kind==='doc')html=clean(await typeDoc(m));
+    else{const t=await transcribeAudio(m);html=textToHtml(t)}
+    const old=await idb.get('kv','dxdoc:'+m.id);
+    const st=old||{html:'',font:cfg.font,size:cfg.size,line:cfg.line};
+    st.html=(st.html||'')+(html||'');await idb.set('kv','dxdoc:'+m.id,st);
+    m.status='done';delete m.progress;m.docAt=Date.now();await saveMeta(m,true);
+    await writeDocx(m,st,true);
+    if(m.sheet&&m.kind!=='doc'&&html)toSheet(m,html);
+    status('“'+m.name+'” is ready.');
+    const unsure=((html||'').match(/\[\?\]/g)||[]).length;
+    if(cfg.autoOpen&&!R&&$('#dxEd').hidden)openEd(m.id);
+    else toast('“'+m.name+'” is ready'+(unsure?' ('+unsure+' word'+(unsure>1?'s':'')+' marked [?] to check)':'')+'.',{label:'Open',run:()=>openEd(m.id)});
+  }catch(e){
+    m.err=String(e.message||e).slice(0,300);m.status=e.net?'waiting':'failed';delete m.progress;await saveMeta(m,true);
+    status(e.net?'No connection: “'+m.name+'” will be sent again automatically.':'Could not finish “'+m.name+'”: '+m.err);
+    if(e.nokey)toast('Add your Gemini API key first.',{label:'Settings',run:openSet});
+    else if(!e.net)toast('Gemini could not finish “'+m.name+'”. The audio is safe; press Try again in the Dictation box.');
+  }finally{busy=null;light();pump()}
+}
+window.addEventListener('online',()=>setTimeout(()=>{list.filter(m=>m.status==='waiting').forEach(m=>enqueue(m.id))},1500));
+setInterval(()=>{if(navigator.onLine&&!busy)list.filter(m=>m.status==='waiting').forEach(m=>enqueue(m.id))},60000);
+
+/* ---------- the light at the top ---------- */
+function light(){
+  const b=$('#dxBtn');if(!b)return;b.classList.remove('rec','paused','busy','attn');const t=$('#dxBtnT');
+  if(R){b.classList.add(R.paused?'paused':'rec');t.textContent=mmss(curSecs());b.title=R.paused?'Dictation paused':'Recording. Click to see the dictation box.'}
+  else if(busy||list.some(m=>m.status==='processing'||m.status==='queued')){b.classList.add('busy');t.textContent='Typing…';b.title='Gemini is typing your dictation'}
+  else if(list.some(m=>m.status==='interrupted'||m.status==='failed')){b.classList.add('attn');t.textContent='Dictate';b.title='A dictation needs your attention'}
+  else{t.textContent='Dictate';b.title='Dictation (Gemini)'}
+}
+
+/* ---------- the dictation box ---------- */
+const panel=$('#dxPanel');let selId=null;const sel=()=>byM(selId)||list.find(m=>m.kind==='audio'&&!m.gone);
+function status(t){$('#dxStatus').textContent=t||''}
+function fillPresets(){const s=$('#dxPreset');const v=s.value||cfg.preset;s.innerHTML='';cfg.presets.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;s.append(o)});s.value=cfg.presets.some(p=>p.id===v)?v:cfg.presets[0].id}
+function uiRec(){
+  const on=!!R;$('#dxRec').hidden=on;$('#dxPause').hidden=!on;$('#dxStop').hidden=!on;$('#dxDiscard').hidden=!on;
+  $('#dxPause').textContent=R&&R.paused?'▶ Resume':'❚❚ Pause';$('#dxName').disabled=on;$('#dxPreset').disabled=on;
+  if(!on){$('#dxLevel').style.width='0%'}light();renderList()}
+function renderWarn(){const w=$('#dxWarn');if(!w)return;const msgs=[];
+  if(!hasKey())msgs.push('Add your Gemini API key in settings (⚙) so recordings can be typed. You can record already.');
+  if(dirH&&!dirOK)msgs.push('Allow access to your dictation folder so clips are also kept on the PC. <button class="btn" id="dxWarnAllow" style="height:26px">Allow</button>');
+  w.innerHTML=msgs.map(x=>'<div class="dxwarn">'+x+'</div>').join('');const a=$('#dxWarnAllow');if(a)a.onclick=dirAsk}
+const STX={recording:['run','Recording'],paused:['run','Paused'],interrupted:['bad','Interrupted, audio kept'],stopped:['','Stopped'],queued:['run','Waiting its turn'],processing:['run','Gemini is typing'],waiting:['bad','Waiting for the internet'],failed:['bad','Not typed'],done:['ok','Typed']};
+function renderList(){
+  const box=$('#dxList');if(!box)return;box.innerHTML='';
+  if(!list.length){box.innerHTML='<p class="dxnote">Your dictations of the last '+(cfg.keep||10)+' days appear here.</p>';return}
+  for(const m of list.slice(0,60)){const live=R&&R.m===m;const st=STX[m.status]||['',m.status];
+    const dur=live?curSecs():(m.segs||[]).reduce((a,s)=>a+(s.dur||0),0);
+    const d=document.createElement('div');d.className='dxit';
+    d.innerHTML='<div class="nm"></div><div class="mt"></div><div class="acts"></div>';d.querySelector('.nm').textContent=(m.kind==='doc'?'📄 ':'🎙 ')+m.name;
+    d.querySelector('.mt').innerHTML=escH(new Date(m.created).toLocaleString([], {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}))+(m.kind==='audio'?' · '+mmss(dur):'')+' · <span class="'+st[0]+'">'+escH(st[1]+(m.progress&&m.status==='processing'?', '+m.progress:''))+'</span>'+(m.gone?' · '+(m.kind==='audio'?'audio':'source file')+' deleted after '+(cfg.keep||10)+' days':'')+(m.err&&(m.status==='failed'||m.status==='waiting')?'<br><span class="bad">'+escH(m.err)+'</span>':'');
+    const acts=d.querySelector('.acts');const add=(t,f,cls)=>{const b=document.createElement('button');b.className='btn'+(cls?' '+cls:'');b.textContent=t;b.onclick=f;acts.append(b)};
+    if(!live){
+      if(m.kind==='audio'&&!m.gone&&m.status==='interrupted'){add('● Continue recording',()=>startRec(m),'primary');add('Type what is there',()=>enqueue(m.id))}
+      if(m.status==='done')add('Open',()=>openEd(m.id),'primary');
+      if(m.status==='failed'||m.status==='waiting'||m.status==='stopped')add('Try again',()=>enqueue(m.id),'primary');
+      if(m.kind==='audio'&&!m.gone&&(m.status==='done'||m.status==='stopped'||m.status==='failed'))add('● Dictate more',()=>startRec(m));
+      if(m.kind==='audio'&&!m.gone)add('▶ Play',()=>playAll(m));
+      if(m.status==='done')add('⬇ Word',async()=>{const st=await idb.get('kv','dxdoc:'+m.id);if(st)downloadDocx(m,st)});
+      if(m.kind==='audio'&&!m.gone&&m.status==='done')add('Type again',()=>{if(!confirm('Send the whole recording to Gemini again? The present Word document will be replaced.'))return;m.segs.forEach(s=>delete s.txt);idb.del('kv','dxdoc:'+m.id).then(()=>enqueue(m.id))});
+      if(m.status!=='processing'&&m.status!=='queued')add('Delete',()=>{if(!confirm('Delete “'+m.name+'” from this list'+(m.gone?'':' along with its audio')+'?'))return;if(!confirm('Really delete it? This cannot be undone. (A Word file already saved in your folder stays there.)'))return;delAll(m)},'warn');
+    }
+    d.onclick=e=>{if(e.target.tagName!=='BUTTON')selId=m.id};box.append(d)}
+}
+async function playAll(m){selId=m.id;stopPlay();const AC=window.AudioContext||window.webkitAudioContext;const ctx=new AC();const bufs=[];
+  for(const s of m.segs){const b=await idb.get('files',fKey(m.id,s.f));if(!b)continue;const ab=await decodeBlob(ctx,b);if(ab)bufs.push(ab)}
+  if(!bufs.length){toast('The audio is not on this device.');ctx.close();return}
+  let t=ctx.currentTime+0.05;const srcs=bufs.map(ab=>{const s=ctx.createBufferSource();s.buffer=ab;s.connect(ctx.destination);s.start(t);t+=ab.duration;return s});
+  play={ctx,src:{stop(){srcs.forEach(s=>{try{s.stop()}catch(e){}})}}};$('#dxRepStop').hidden=false;status('Playing “'+m.name+'”…');
+  srcs[srcs.length-1].onended=()=>{if(play&&play.ctx===ctx){stopPlay();status('')}}}
+function openPanel2(){panel.hidden=false;fillPresets();renderList();renderWarn();$('#dxKeepNote').textContent='Audio clips are kept for '+(cfg.keep||10)+' days'+(dirH?' in “'+dirH.name+'” and here':' here')+', then deleted automatically. Word files stay.'}
+$('#dxBtn').onclick=()=>{if(panel.hidden)openPanel2();else panel.hidden=true};
+$('#dxMin').onclick=()=>{panel.hidden=true};
+$('#dxRec').onclick=()=>startRec(null);
+$('#dxPause').onclick=()=>{if(R&&R.paused)resumeRec();else pauseRec()};
+$('#dxStop').onclick=()=>finishRec('go');
+$('#dxDiscard').onclick=()=>{if(confirm('Throw this recording away? It will not be kept.'))finishRec('discard')};
+panel.querySelectorAll('[data-rep]').forEach(b=>b.onclick=()=>replay(+b.dataset.rep));
+$('#dxRepStop').onclick=()=>{stopPlay();status(R?'Paused. Press Resume to carry on.':'')};
+$('#dxPreset').onchange=()=>{cfg.preset=$('#dxPreset').value;saveCfg()};
+panel.addEventListener('keydown',e=>e.stopPropagation());
+panel.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation()});
+panel.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)addAudioFile(f)});
+/* drag the box by its title bar */
+(()=>{const h=$('#dxHead');let d=null;h.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;const r=panel.getBoundingClientRect();d={x:e.clientX-r.left,y:e.clientY-r.top};h.setPointerCapture(e.pointerId)});
+  h.addEventListener('pointermove',e=>{if(!d)return;const w=panel.offsetWidth;panel.style.left=Math.max(4,Math.min(innerWidth-w-4,e.clientX-d.x))+'px';panel.style.top=Math.max(4,Math.min(innerHeight-60,e.clientY-d.y))+'px';panel.style.right='auto'});
+  h.addEventListener('pointerup',()=>{d=null})})();
+/* Ctrl+Shift+Space: record / pause / resume from anywhere */
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.code==='Space'){e.preventDefault();if(!R)startRec(null);else if(R.paused)resumeRec();else pauseRec()}},true);
+
+/* an audio file from the device */
+$('#dxUpAudio').onclick=()=>{$('#dxAudioIn').value='';$('#dxAudioIn').click()};
+$('#dxAudioIn').onchange=()=>{const f=$('#dxAudioIn').files[0];if(f)addAudioFile(f)};
+async function addAudioFile(f){
+  if(/pdf|image/.test(f.type)){openDocJob([f]);return}
+  const mime=baseMime(f.type)||MIME[(extOfName(f.name)||'').toLowerCase()]||'audio/mpeg';const ext=(extOfName(f.name)||EXT[mime]||'audio').toLowerCase();const now=Date.now();
+  const m={id:uid()+uid().slice(0,4),kind:'audio',name:($('#dxName').value||'').trim()||f.name.replace(/\.[^.]+$/,''),created:now,day:dayOf(now),status:'stopped',preset:$('#dxPreset').value,extra:($('#dxExtra').value||'').trim(),
+    segs:[{n:1,f:'part1.'+ext,ext,mime,dur:0,size:f.size}]};
+  try{await idb.set('files',fKey(m.id,'part1.'+ext),f)}catch(e){toast('Could not keep the file: '+(e.message||e));return}
+  await saveMeta(m,true);if(await dWrite(segPath(m,m.segs[0]),f))m.segs[0].inDir=f.size;$('#dxName').value='';enqueue(m.id);status('“'+m.name+'” added; Gemini will type it.');
+}
+
+/* ---------- typed copy / translation dialog ---------- */
+let picked=[];
+function openDocJob(files){picked=files||[];const jb=$('#dxDocJob');const v=V(),d=v&&docById(v.doc);
+  $('#dxCurPdf').textContent=d?d.title:'none open';$('#dxFrom').value=d?(v.cur||1):'';$('#dxTo').value=d?(v.cur||1):'';
+  jb.querySelector('[value=cur]').disabled=!d;jb.querySelector(picked.length||!d?'[value=files]':'[value=cur]').checked=true;
+  $('#dxPicked').textContent=picked.length?picked.map(f=>f.name).join(', '):'';$('#dxDocName').value='';jb.hidden=false}
+$('#dxDocBtn').onclick=()=>openDocJob([]);
+$('#dxPick').onclick=()=>{$('#dxDocIn').value='';$('#dxDocIn').click()};
+$('#dxDocIn').onchange=()=>{picked=[...$('#dxDocIn').files];$('#dxPicked').textContent=picked.map(f=>f.name).join(', ');$('#dxDocJob').querySelector('[value=files]').checked=true};
+$('#dxDocNo').onclick=()=>{$('#dxDocJob').hidden=true};
+$('#dxDocJob').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')$('#dxDocJob').hidden=true});
+$('#dxDocGo').onclick=async()=>{
+  const useCur=$('#dxDocJob').querySelector('[value=cur]').checked;const task=$('#dxTask').value,extra=$('#dxDocExtra').value.trim();
+  if(task==='custom'&&!extra){toast('Write your instruction for Gemini.');return}
+  const now=Date.now();const m={id:uid()+uid().slice(0,4),kind:'doc',task,extra,created:now,day:dayOf(now),status:'queued',srcs:[],name:''};
+  if(useCur){const v=V(),d=v&&docById(v.doc);if(!d){toast('No PDF is open.');return}
+    let a=parseInt($('#dxFrom').value,10),b=parseInt($('#dxTo').value,10);if(!(a>0))a=1;if(!(b>=a))b=a;
+    let buf;try{buf=await proj.store.readFile(proj.name,d.file)}catch(e){toast('Could not read that PDF.');return}
+    m.srcs.push({f:'src1.pdf',mime:'application/pdf',name:d.title,from:a,to:b});await idb.set('files',fKey(m.id,'src1.pdf'),new Blob([buf],{type:'application/pdf'}));
+    m.name=$('#dxDocName').value.trim()||((task==='type'?'Typed copy':'Translation')+' of '+d.title+' pp '+a+(b>a?'-'+b:''))}
+  else{if(!picked.length){toast('Choose the files first.');return}
+    for(let i=0;i<picked.length;i++){const f=picked[i];const ext=(extOfName(f.name)||'bin').toLowerCase();const mime=f.type||(ext==='pdf'?'application/pdf':'image/jpeg');
+      m.srcs.push({f:'src'+(i+1)+'.'+ext,mime,name:f.name});await idb.set('files',fKey(m.id,'src'+(i+1)+'.'+ext),f)}
+    m.name=$('#dxDocName').value.trim()||((task==='type'?'Typed copy':'Translation')+' of '+picked[0].name.replace(/\.[^.]+$/,''))}
+  $('#dxDocJob').hidden=true;await saveMeta(m,true);if(panel.hidden)openPanel2();enqueue(m.id);
+};
+
+/* ---------- settings ---------- */
+function openSet(){const s=$('#dxSet');$('#dxKey').value=cfg.key||'';$('#dxModel').value=cfg.model||'';$('#dxDocModel').value=cfg.docModel||'';$('#dxKeep').value=cfg.keep||10;
+  $('#dxFont').innerHTML=FONTS.map(f=>'<option>'+f+'</option>').join('');$('#dxFont').value=cfg.font;$('#dxSize').innerHTML=SIZES.map(z=>'<option value="'+z+'">'+z+' pt</option>').join('');$('#dxSize').value=String(cfg.size);
+  $('#dxLine').value=String(cfg.line);$('#dxAuto').checked=!!cfg.autoOpen;$('#dxVocab').value=cfg.vocab||'';$('#dxTestInfo').textContent=hasKey()?'A key is saved on this device.':'';renderPresets();updDir();s.hidden=false}
+function renderPresets(){const box=$('#dxPresets');box.innerHTML='';
+  cfg.presets.forEach((p,i)=>{const d=document.createElement('div');d.className='dxpre';d.innerHTML='<input type="text" aria-label="Name of the instruction"><textarea rows="2" aria-label="Instruction"></textarea><div class="row"><button class="btn warn" style="height:26px">Remove</button></div>';
+    const [n,t]=[d.querySelector('input'),d.querySelector('textarea')];n.value=p.name;t.value=p.text;n.oninput=()=>{p.name=n.value};t.oninput=()=>{p.text=t.value};
+    d.querySelector('button').onclick=()=>{if(cfg.presets.length<2){toast('Keep at least one instruction.');return}if(confirm('Remove “'+p.name+'”?')){cfg.presets.splice(i,1);renderPresets()}};box.append(d)})}
+$('#dxPreAdd').onclick=()=>{cfg.presets.push({id:uid(),name:'My instruction',text:'Describe here what Gemini should do with the dictation.'});renderPresets()};
+function readSet(){cfg.key=$('#dxKey').value.trim();cfg.model=$('#dxModel').value.trim()||'gemini-3.8-flash';cfg.docModel=$('#dxDocModel').value.trim();cfg.keep=Math.max(1,Math.min(365,parseInt($('#dxKeep').value,10)||10));
+  cfg.font=$('#dxFont').value;cfg.size=+$('#dxSize').value;cfg.line=+$('#dxLine').value;cfg.autoOpen=$('#dxAuto').checked;cfg.vocab=$('#dxVocab').value;cfg.presets=cfg.presets.filter(p=>p.name.trim()&&p.text.trim());if(!cfg.presets.length)cfg.presets=PRESETS0.map(p=>Object.assign({},p));saveCfg()}
+$('#dxSetDone').onclick=()=>{readSet();$('#dxSet').hidden=true;fillPresets();renderWarn();purge();if(hasKey())list.filter(m=>m.status==='waiting'||(m.status==='failed'&&/key/i.test(m.err||''))).forEach(m=>enqueue(m.id))};
+$('#dxSet').addEventListener('keydown',e=>e.stopPropagation());
+$('#dxSetBtn').onclick=openSet;$('#dxSetFromMain').onclick=()=>{document.querySelectorAll('.panel').forEach(p=>p.hidden=true);openSet()};$('#dxDirPick').onclick=dirPick;$('#dxDirAllow').onclick=dirAsk;
+$('#dxTest').onclick=async()=>{readSet();if(!hasKey()){$('#dxTestInfo').textContent='Paste the key first.';return}$('#dxTestInfo').textContent='Checking…';
+  try{const j=await (await gFetch(GB+'/v1beta/models/'+encodeURIComponent(mdl(cfg.model))+'?'+kq())).json();$('#dxTestInfo').textContent='Working. Model: '+(j.displayName||mdl(cfg.model))+'.'}
+  catch(e){$('#dxTestInfo').textContent=e.status===404?'The key works, but the model “'+mdl(cfg.model)+'” was not found. Type another model name.':e.net?'Could not reach Gemini (no internet?).':String(e.message).slice(0,200)}};
+
+/* ---------- worksheet ---------- */
+function hereAnchor(){const v=V();if(v&&v.doc&&docById(v.doc))return {doc:v.doc,page:v.cur||1,x:.04,y:.05,color:cur};return null}
+function toSheet(m,html){
+  const txt=(()=>{const d=document.createElement('div');d.innerHTML=html.replace(/<\/p>/g,'</p>\n\n').replace(/<br>/g,'\n');return d.textContent.replace(/\n{3,}/g,'\n\n').trim()})();if(!txt)return;
+  if(!P||!proj||(m.sheet&&m.sheet.matter&&m.sheet.matter!==proj.name)){toast('Open “'+(m.sheet&&m.sheet.matter)+'” to put this on its worksheet (use ➕ Worksheet in the document).');return}
+  const p=nextPos();const it={id:uid(),type:'text',x:p.x,y:p.y,text:txt,size:settings.fontSize,sheet:curSheet};const a=m.sheet&&m.sheet.anchor;if(a&&docById(a.doc))it.anchor=a;
+  commitHist(true);P.items.push(it);renderItems();drawMarks();touch();commitHist(true);flashItem(it.id,true)}
+
+/* ================= the Word-style editor ================= */
+const ed=$('#dxEd'),pg=$('#dxePage');let edM=null,edDirty=false,hist=[],fut=[],histT=null;
+$('#dxeFont').innerHTML=FONTS.map(f=>'<option>'+f+'</option>').join('');$('#dxeSize').innerHTML=SIZES.map(z=>'<option value="'+z+'">'+z+'</option>').join('');
+async function openEd(id){const m=byM(id);if(!m)return;const st=(await idb.get('kv','dxdoc:'+id))||{html:'',font:cfg.font,size:cfg.size,line:cfg.line};
+  if(edM&&edDirty)await saveEd(true);edM=m;$('#dxeName').value=m.name;pg.style.setProperty('--dxf',"'"+(st.font||cfg.font)+"'");pg.style.setProperty('--dxs',(st.size||cfg.size)+'pt');pg.style.setProperty('--dxlh',st.line||cfg.line);
+  pg.dataset.font=st.font||cfg.font;pg.dataset.size=st.size||cfg.size;pg.dataset.line=st.line||cfg.line;
+  pg.innerHTML=st.html||'<p><br></p>';hist=[];fut=[];snapNow();edDirty=false;edSt('');ed.hidden=false;try{document.execCommand('defaultParagraphSeparator',false,'p')}catch(e){}
+  setTimeout(()=>{pg.focus();const r=document.createRange();r.selectNodeContents(pg);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r);syncTb()},50)}
+function edSt(t){$('#dxeSt').textContent=t}
+/* undo / redo with the caret kept in place */
+function caret(){const s=getSelection();if(!s.rangeCount||!pg.contains(s.anchorNode))return null;const r=s.getRangeAt(0);const pre=document.createRange();pre.selectNodeContents(pg);pre.setEnd(r.startContainer,r.startOffset);const a=pre.toString().length;return [a,a+r.toString().length]}
+function setCaret(c){if(!c)return;const w=document.createTreeWalker(pg,NodeFilter.SHOW_TEXT);let n,pos=0,r=document.createRange(),st=false;
+  while((n=w.nextNode())){const l=n.nodeValue.length;if(!st&&pos+l>=c[0]){r.setStart(n,c[0]-pos);st=true}if(st&&pos+l>=c[1]){r.setEnd(n,c[1]-pos);break}pos+=l}
+  if(st){const s=getSelection();s.removeAllRanges();s.addRange(r)}}
+function snapNow(){const h=pg.innerHTML;if(hist.length&&hist[hist.length-1].h===h)return;hist.push({h,c:caret()});if(hist.length>300)hist.shift();fut=[];updUR()}
+function updUR(){$('#dxeUndo').disabled=hist.length<2;$('#dxeRedo').disabled=!fut.length}
+function undo(){if(hist.length<2)return;fut.push(hist.pop());const s=hist[hist.length-1];pg.innerHTML=s.h;setCaret(s.c);dirty();updUR()}
+function redo(){const s=fut.pop();if(!s)return;hist.push(s);pg.innerHTML=s.h;setCaret(s.c);dirty();updUR()}
+function dirty(){edDirty=true;edSt('Not saved');clearTimeout(edAutoT);edAutoT=setTimeout(()=>saveEd(true),4000)}let edAutoT=null;
+pg.addEventListener('input',()=>{dirty();clearTimeout(histT);histT=setTimeout(snapNow,350)});
+pg.addEventListener('keyup',syncTb);pg.addEventListener('mouseup',syncTb);
+pg.addEventListener('paste',e=>{const cd=e.clipboardData;if(!cd)return;e.preventDefault();const h=cd.getData('text/html');
+  if(h)document.execCommand('insertHTML',false,clean(h));else document.execCommand('insertHTML',false,textToHtml(cd.getData('text/plain')).replace(/^<p>|<\/p>$/g,'')||'');snapNow()});
+ed.addEventListener('keydown',e=>{e.stopPropagation();const k=e.key.toLowerCase(),c=e.ctrlKey||e.metaKey;
+  if(c&&k==='s'){e.preventDefault();saveEd(false);return}
+  if(c&&!e.shiftKey&&k==='z'){e.preventDefault();clearTimeout(histT);snapNow();undo();return}
+  if(c&&(k==='y'||(k==='z'&&e.shiftKey))){e.preventDefault();redo();return}
+  if(c&&(k==='b'||k==='i'||k==='u')){e.preventDefault();cmd({b:'bold',i:'italic',u:'underline'}[k]);return}
+  if(e.key==='Escape'&&!e.target.closest('select'))closeEd()});
+ed.addEventListener('dragover',e=>{e.stopPropagation()});ed.addEventListener('drop',e=>{e.stopPropagation()});
+function keepSel(fn){/* toolbar buttons must not steal the selection */return e=>{e.preventDefault();fn()}}
+function cmd(c,v){pg.focus();snapNow();try{document.execCommand('styleWithCSS',false,false)}catch(e){}document.execCommand(c,false,v);snapNow();dirty();syncTb()}
+function blocksInSel(){const s=getSelection();const all=[...pg.querySelectorAll('p,li,td>p,th>p')].filter(b=>!b.querySelector('p'));
+  if(!s.rangeCount||!pg.contains(s.anchorNode))return all;const r=s.getRangeAt(0);let bs=all.filter(b=>r.intersectsNode(b));
+  if(!bs.length){let n=s.anchorNode;while(n&&n!==pg&&!(n.nodeType===1&&/^(P|LI|DIV)$/.test(n.tagName)))n=n.parentNode;bs=n&&n!==pg?[n]:[]}return bs}
+function inline(prop,val){pg.focus();snapNow();const s=getSelection();
+  if(!s.rangeCount||s.isCollapsed){blocksInSel().forEach(b=>{b.style[prop]=val;b.querySelectorAll('span,font').forEach(x=>{x.style[prop]=''})})}
+  else{try{document.execCommand('styleWithCSS',false,false)}catch(e){}document.execCommand('fontSize',false,'7');
+    pg.querySelectorAll('font[size="7"]').forEach(f=>{const sp=document.createElement('span');sp.style[prop]=val;if(f.getAttribute('face'))sp.style.fontFamily=f.getAttribute('face');while(f.firstChild)sp.append(f.firstChild);f.replaceWith(sp);
+      sp.querySelectorAll('span').forEach(x=>x.style[prop]='')})}
+  snapNow();dirty()}
+$('#dxeB').onmousedown=keepSel(()=>cmd('bold'));$('#dxeI').onmousedown=keepSel(()=>cmd('italic'));$('#dxeU').onmousedown=keepSel(()=>cmd('underline'));
+ed.querySelectorAll('[data-al]').forEach(b=>b.onmousedown=keepSel(()=>{const a=b.dataset.al;pg.focus();snapNow();blocksInSel().forEach(x=>x.style.textAlign=a);snapNow();dirty();syncTb()}));
+let savedRange=null;const remember=()=>{const s=getSelection();if(s.rangeCount&&pg.contains(s.anchorNode))savedRange=s.getRangeAt(0).cloneRange()};
+const restore=()=>{if(savedRange){pg.focus();const s=getSelection();s.removeAllRanges();s.addRange(savedRange)}};
+['dxeFont','dxeSize','dxeLine'].forEach(id=>{$('#'+id).addEventListener('pointerdown',remember);$('#'+id).addEventListener('focus',remember)});
+$('#dxeFont').onchange=()=>{restore();inline('fontFamily',"'"+$('#dxeFont').value+"'")};
+$('#dxeSize').onchange=()=>{restore();inline('fontSize',$('#dxeSize').value+'pt')};
+$('#dxeLine').onchange=()=>{restore();snapNow();const v=$('#dxeLine').value;const s=getSelection();const whole=!s.rangeCount||s.isCollapsed;
+  if(whole&&confirm('Apply this line spacing to the whole document? (Cancel = only the paragraph where the cursor is)')){pg.dataset.line=v;pg.style.setProperty('--dxlh',v);pg.querySelectorAll('[style]').forEach(x=>x.style.lineHeight='')}
+  else blocksInSel().forEach(b=>b.style.lineHeight=v);snapNow();dirty()};
+$('#dxeUndo').onmousedown=keepSel(()=>{clearTimeout(histT);snapNow();undo()});$('#dxeRedo').onmousedown=keepSel(redo);
+function syncTb(){const s=getSelection();if(!s.rangeCount||!pg.contains(s.anchorNode))return;let el=s.anchorNode.nodeType===1?s.anchorNode:s.anchorNode.parentElement;const cs=getComputedStyle(el);
+  $('#dxeB').setAttribute('aria-pressed',+cs.fontWeight>=600||cs.fontWeight==='bold');$('#dxeI').setAttribute('aria-pressed',cs.fontStyle==='italic');
+  let u=false;for(let x=el;x&&x!==pg;x=x.parentElement){if(x.tagName==='U'||/underline/.test(x.style.textDecoration||''))u=true}$('#dxeU').setAttribute('aria-pressed',u);
+  const ff=cs.fontFamily.split(',')[0].replace(/['"]/g,'').trim();if(FONTS.includes(ff))$('#dxeFont').value=ff;
+  const pt=Math.round(parseFloat(cs.fontSize)*0.75*2)/2;$('#dxeSize').value=SIZES.includes(pt)?String(pt):'';
+  const blk=el.closest('p,li,td,th,div')||pg;const al=getComputedStyle(blk).textAlign.replace('start','left');ed.querySelectorAll('[data-al]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.al===al));
+  const lh=(blk.style&&blk.style.lineHeight)||pg.dataset.line;$('#dxeLine').value=String(+lh||1.5)}
+async function saveEd(quiet){if(!edM)return;const m=edM;clearTimeout(edAutoT);
+  const nm=($('#dxeName').value||'').trim()||m.name;if(nm!==m.name){m.name=nm;delete m.docFile;await saveMeta(m,true)}
+  const st={html:pg.innerHTML,font:pg.dataset.font,size:+pg.dataset.size,line:+pg.dataset.line};await idb.set('kv','dxdoc:'+m.id,st);edDirty=false;
+  const where=await writeDocx(m,st,quiet);edSt(where?'Saved · '+where:'Saved here');
+  if(!quiet&&!where)downloadDocx(m,st)}
+$('#dxeSave').onclick=()=>saveEd(false);
+$('#dxeDocx').onclick=async()=>{if(!edM)return;await saveEd(true);downloadDocx(edM,{html:pg.innerHTML,font:pg.dataset.font,size:+pg.dataset.size,line:+pg.dataset.line})};
+$('#dxeSheet').onclick=()=>{if(!edM)return;if(!P||!proj){toast('Open a matter first.');return}const m=Object.assign({},edM);if(m.sheet&&m.sheet.matter!==proj.name)m.sheet=null;toSheet(m,pg.innerHTML);toast('Added to the worksheet of “'+proj.name+'”.')};
+$('#dxePrint').onclick=()=>window.print();
+async function closeEd(){if(edDirty)await saveEd(true);ed.hidden=true;edM=null}
+$('#dxeClose').onclick=closeEd;
+
+/* ================= Word (.docx) writer: A4, 2" top & left, 1" right & bottom ================= */
+const xe=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'');
+function docxBody(st){
+  /* measure in a hidden copy of the page so computed styles are right */
+  const host=document.createElement('div');host.className='dxpage';host.style.cssText='position:fixed;left:-9999px;top:0;visibility:hidden';
+  host.style.setProperty('--dxf',"'"+st.font+"'");host.style.setProperty('--dxs',st.size+'pt');host.style.setProperty('--dxlh',st.line);host.innerHTML=st.html;document.body.append(host);
+  try{
+    const baseLine=+st.line||1.5;
+    function lineOf(el){for(let x=el;x&&x!==host;x=x.parentElement){const v=x.style&&x.style.lineHeight;if(v&&/^[\d.]+$/.test(v))return +v}return baseLine}
+    function rpr(el){const cs=getComputedStyle(el);const out=[];const ff=cs.fontFamily.split(',')[0].replace(/['"]/g,'').trim();
+      if(ff&&ff!==st.font)out.push('<w:rFonts w:ascii="'+xe(ff)+'" w:hAnsi="'+xe(ff)+'" w:cs="'+xe(ff)+'"/>');
+      if(+cs.fontWeight>=600||cs.fontWeight==='bold')out.push('<w:b/><w:bCs/>');if(cs.fontStyle==='italic')out.push('<w:i/><w:iCs/>');
+      let u=false;for(let x=el;x&&x!==host;x=x.parentElement){if(x.tagName==='U'||/underline/.test((x.style&&x.style.textDecoration)||''))u=true}if(u)out.push('<w:u w:val="single"/>');
+      const pt=Math.round(parseFloat(cs.fontSize)*0.75*2);if(pt&&pt!==Math.round(st.size*2))out.push('<w:sz w:val="'+pt+'"/><w:szCs w:val="'+pt+'"/>');
+      return out.length?'<w:rPr>'+out.join('')+'</w:rPr>':''}
+    function para(el,runs,extra){const cs=getComputedStyle(el);const al={justify:'both',center:'center',right:'right',end:'right'}[cs.textAlign]||'left';
+      const ln=Math.round(240*lineOf(el));const ind=extra&&extra.ind?'<w:ind w:left="'+extra.ind+'" w:hanging="360"/>':'';
+      return '<w:p><w:pPr><w:spacing w:after="'+(extra&&extra.cell?0:200)+'" w:line="'+ln+'" w:lineRule="auto"/>'+ind+'<w:jc w:val="'+al+'"/></w:pPr>'+runs+'</w:p>'}
+    function blocks(root,ctx){let out='';let runs='',blkEl=null,hasRun=false;
+      const flush=()=>{if(blkEl||hasRun)out+=para(blkEl||root,runs,ctx);runs='';hasRun=false;blkEl=null};
+      function inl(node){for(const n of node.childNodes){
+        if(n.nodeType===3){const t=n.nodeValue.replace(/[\s ]+/g,' ');if(!t)continue;if(!blkEl&&!hasRun&&!t.trim())continue;runs+='<w:r>'+rpr(n.parentElement)+'<w:t xml:space="preserve">'+xe(t)+'</w:t></w:r>';hasRun=true}
+        else if(n.nodeType===1){const tg=n.tagName,disp=getComputedStyle(n).display;
+          if(tg==='BR'){const par=n.parentElement;if(!n.nextSibling&&par!==host&&/^(P|LI|DIV|TD|TH)$/.test(par.tagName))continue;runs+='<w:r><w:br/></w:r>';hasRun=true}
+          else if(tg==='TABLE'){flush();out+=table(n)}
+          else if(tg==='UL'||tg==='OL'){flush();let k=0;for(const li of n.children){k++;const pre=tg==='OL'?k+'.\t':'•\t';const sub=blocksOf(li,{ind:720,pre});out+=sub}}
+          else if(disp==='block'||disp==='list-item'||disp==='table'){flush();const inner=blocksOf(n,ctx);out+=inner}
+          else inl(n)}}}
+      function blocksOf(el,c){const hasBlk=[...el.children].some(x=>/^(P|DIV|TABLE|UL|OL|LI)$/.test(x.tagName));
+        if(!hasBlk){const save=[runs,hasRun,blkEl];runs=c&&c.pre?'<w:r><w:t xml:space="preserve">'+xe(c.pre.replace('\t',' '))+'</w:t></w:r>':'';hasRun=false;blkEl=el;inl(el);const r=para(el,runs,c);[runs,hasRun,blkEl]=save;return r}
+        return blocks(el,c)}
+      inl(root);flush();return out}
+    function table(t){const rows=[...t.querySelectorAll(':scope>tr,:scope>tbody>tr,:scope>thead>tr')];
+      const cols=Math.max(1,...rows.map(tr=>[...tr.children].reduce((a,td)=>a+(+td.getAttribute('colspan')||1),0)));const cw=Math.floor(7586/cols);
+      let x='<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblBorders>'+['top','left','bottom','right','insideH','insideV'].map(s=>'<w:'+s+' w:val="single" w:sz="4" w:space="0" w:color="000000"/>').join('')+'</w:tblBorders><w:tblLayout w:type="autofit"/></w:tblPr><w:tblGrid>'+('<w:gridCol w:w="'+cw+'"/>').repeat(cols)+'</w:tblGrid>';
+      for(const tr of rows){x+='<w:tr>';for(const td of tr.children){const span=+td.getAttribute('colspan')||1;let inner=blocks(td,{cell:true});if(!/<w:p>/.test(inner))inner='<w:p/>';
+          x+='<w:tc><w:tcPr>'+(span>1?'<w:gridSpan w:val="'+span+'"/>':'')+'</w:tcPr>'+inner+'</w:tc>'}x+='</w:tr>'}
+      return x+'</w:tbl><w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p>'}
+    return blocks(host,null)||'<w:p/>';
+  }finally{host.remove()}
+}
+const enc=s=>new TextEncoder().encode(s);
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+function zip(entries){const parts=[],cen=[];let off=0;
+  for(const e of entries){const nm=enc(e.name),u=e.data,c=crc(u);const h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint32(14,c,true);h.setUint32(18,u.length,true);h.setUint32(22,u.length,true);h.setUint16(26,nm.length,true);parts.push(h.buffer,nm,u);
+    const d=new DataView(new ArrayBuffer(46));d.setUint32(0,0x02014b50,true);d.setUint16(4,20,true);d.setUint16(6,20,true);d.setUint16(8,0x0800,true);d.setUint32(16,c,true);d.setUint32(20,u.length,true);d.setUint32(24,u.length,true);d.setUint16(28,nm.length,true);d.setUint32(42,off,true);cen.push(d.buffer,nm);off+=30+nm.length+u.length}
+  const cs=cen.reduce((a,b)=>a+b.byteLength,0);const e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,entries.length,true);e.setUint16(10,entries.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...cen,e.buffer],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'})}
+function docxBlob(st){
+  const st2={html:st.html||'',font:st.font||cfg.font,size:+st.size||cfg.size,line:+st.line||cfg.line};
+  const W='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  const body=docxBody(st2);const f=xe(st2.font),sz=Math.round(st2.size*2);
+  const doc='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document '+W+'><w:body>'+body+
+    '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="2880" w:right="1440" w:bottom="1440" w:left="2880" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>';
+  const styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles '+W+'><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="'+f+'" w:hAnsi="'+f+'" w:cs="'+f+'" w:eastAsia="'+f+'"/><w:sz w:val="'+sz+'"/><w:szCs w:val="'+sz+'"/><w:lang w:val="en-IN"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="200" w:line="'+Math.round(240*st2.line)+'" w:lineRule="auto"/><w:jc w:val="both"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>';
+  const ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>';
+  const rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
+  const drels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
+  return zip([{name:'[Content_Types].xml',data:enc(ct)},{name:'_rels/.rels',data:enc(rels)},{name:'word/document.xml',data:enc(doc)},{name:'word/_rels/document.xml.rels',data:enc(drels)},{name:'word/styles.xml',data:enc(styles)}]);
+}
+async function writeDocx(m,st,quiet){ /* into the PC folder, under the name given; returns a short "where" */
+  if(!dirH||!dirOK)return '';let fn=m.docFile;
+  if(!fn){const base=fileSafe(m.name);fn=base+'.docx';let k=2;while(await dExists('Documents/'+fn)&&k<100)fn=base+' ('+(k++)+').docx';m.docFile=fn;await saveMeta(m,true)}
+  return (await dWrite('Documents/'+fn,docxBlob(st)))?'Documents\\'+fn:''}
+function downloadDocx(m,st){const b=docxBlob(st);const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fileSafe(m.name)+'.docx';document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
+
+/* ---------- start-up: anything that was recording when the app closed is kept and offered back ---------- */
+(async()=>{
+  await loadList();await dirLoad();
+  let hit=null;for(const m of list){if(m.status==='recording'||m.status==='paused'){m.status='interrupted';await saveMeta(m,true);hit=m}
+    if(m.status==='processing'||m.status==='queued'){m.status='stopped';await saveMeta(m,true);enqueue(m.id)}}
+  await purge();renderList();light();fillPresets();
+  if(hit)setTimeout(()=>{openPanel2();status('“'+hit.name+'” was interrupted. Its audio is safe: continue recording, or have it typed.');
+    toast('Dictation “'+hit.name+'” was interrupted; nothing is lost.',{label:'Continue',run:()=>startRec(hit)})},1800);
+  flushFolder();setInterval(purge,6*3600e3);
+if(/[?&]dxtest\b/.test(location.search))window.__dx={docxBlob,clean,textToHtml,list:()=>list,purge,cfg:()=>cfg,openEd};
+})();
 })();
 })();
 </script>
