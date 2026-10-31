@@ -523,8 +523,23 @@ details.drive ol b{color:var(--ink)}
 .whost{padding:8px 0;overflow-x:auto}
 .whost .docx-wrapper{background:transparent!important;padding:10px!important}
 .whost .docx-wrapper>section.docx{box-shadow:0 1px 6px rgba(0,0,0,.18);margin-bottom:14px!important}
-.wed{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;background:var(--desk,#eef1f5)}
-.wed-bar .btn{min-width:34px;height:30px;padding:0 8px}
+.wed{position:absolute;z-index:30;display:flex;flex-direction:column;background:var(--desk,#eef1f5);box-shadow:0 0 0 1px var(--line)}
+.dkbody{--wedw:55%;--wedh:55%}
+.dkbody.wed-stack>.wed{left:0;right:0;bottom:0;height:var(--wedh);border-top:2px solid var(--line)}
+.dkbody.wed-side>.wed{top:0;bottom:0;right:0;width:var(--wedw);border-left:2px solid var(--line)}
+.dkbody.wed-stack>#deskPane{bottom:var(--wedh)}
+.dkbody.wed-side>#deskPane{right:var(--wedw)}
+.dkbody.wed-stack>.pghost{bottom:calc(var(--wedh) + 12px)}
+.dkbody.wed-side>.pghost{right:calc(var(--wedw) + 16px)}
+.dkbody.wed-side>.banner,.dkbody.wed-side>.desk-tools{right:calc(var(--wedw) + 16px)}
+.dkbody.wed-stack>.desk-tools{bottom:calc(var(--wedh) + 12px)}
+.wed-grip{position:absolute;z-index:10;background:transparent;touch-action:none}
+.wed-grip::after{content:"";position:absolute;background:var(--line);border-radius:3px}
+.dkbody.wed-stack .wed-grip{left:0;right:0;top:-6px;height:12px;cursor:row-resize}
+.dkbody.wed-stack .wed-grip::after{left:50%;top:4px;width:48px;height:4px;margin-left:-24px}
+.dkbody.wed-side .wed-grip{top:0;bottom:0;left:-6px;width:12px;cursor:col-resize}
+.dkbody.wed-side .wed-grip::after{top:50%;left:4px;height:48px;width:4px;margin-top:-24px}
+.wed-bar{gap:4px!important}.wed-bar .btn{min-width:30px;height:30px;padding:0 7px}.wed-t{max-width:28%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wed-st{color:var(--muted);font-size:12px}
 .wed-scroll{flex:1;min-height:0;overflow:auto}
 .wed .docx-wrapper[contenteditable="true"]{outline:none;caret-color:#1a56db}
@@ -4125,13 +4140,16 @@ async function openWordEditor(id){
     '<button class="btn" data-c="bold" title="Bold (Ctrl+B)"><b>B</b></button><button class="btn" data-c="italic" title="Italic (Ctrl+I)"><i>I</i></button><button class="btn" data-c="underline" title="Underline (Ctrl+U)"><u>U</u></button>'+
     '<button class="btn" data-c="justifyLeft" title="Align left">⯇</button><button class="btn" data-c="justifyCenter" title="Centre">≡</button><button class="btn" data-c="justifyRight" title="Align right">⯈</button><button class="btn" data-c="justifyFull" title="Justify">☰</button>'+
     '<button class="btn" data-c="undo" title="Undo (Ctrl+Z)">↶</button><button class="btn" data-c="redo" title="Redo (Ctrl+Y)">↷</button>'+
-    '<button class="btn primary wed-save" title="Save (Ctrl+S)">Save</button><button class="btn wed-close" title="Close the editor and show the worksheet again">Close</button></div>'+
+    '<button class="btn wed-lay" title="Editor below the worksheet, or beside it">⇅</button><button class="btn primary wed-save" title="Save (Ctrl+S)">Save</button><button class="btn wed-close" title="Close the editor (the worksheet stays)">Close</button></div><div class="wed-grip" title="Drag to share the space between the worksheet and the editor"></div>'+
     '<div class="wed-scroll"><div class="whost"><div class="docmsg">Opening <b></b>…</div></div></div>';
   el.querySelector('.wed-t').textContent=doc.title;el.querySelector('.docmsg b').textContent=doc.title;
   host.append(el);WE.el=el;WE.id=id;WE.dirty=false;wordStatus('');
-  showPane('desk');
+  wedLayout(host);
+  if(app.dataset.pane==='doc'&&getComputedStyle(document.querySelector('.deskwrap')).display==='none')showPane('desk');
   el.querySelectorAll('[data-c]').forEach(b=>b.onmousedown=e=>{e.preventDefault();document.execCommand(b.dataset.c,false,null);wordChanged()});
   el.querySelector('.wed-save').onclick=()=>saveWordEditor();
+  el.querySelector('.wed-lay').onclick=()=>{WL.mode=WL.mode==='side'?'stack':'side';wedSaveLay();wedLayout(host)};
+  wedGrip(el.querySelector('.wed-grip'),host);
   el.querySelector('.wed-close').onclick=()=>{if(WE.dirty&&!confirm('Close without saving your changes?'))return;closeWordEditor(true)};
   el.addEventListener('keydown',e=>{
     if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&(e.key==='s'||e.key==='S')){e.preventDefault();e.stopPropagation();saveWordEditor();return}
@@ -4151,7 +4169,25 @@ async function openWordEditor(id){
 }
 function wordChanged(){if(!WE.el||WE.busy)return;if(!WE.dirty){WE.dirty=true;wordStatus('Unsaved changes')}}
 function wordStatus(t){const s=WE.el&&WE.el.querySelector('.wed-st');if(s)s.textContent=t?' · '+t:''}
-function closeWordEditor(){if(WE.el)WE.el.remove();WE.el=null;WE.id=null;WE.dirty=false}
+function closeWordEditor(){if(WE.el)WE.el.remove();WE.el=null;WE.id=null;WE.dirty=false;
+  const b=document.querySelector('.deskwrap .dkbody');if(b){b.classList.remove('wed-side','wed-stack');requestAnimationFrame(()=>{try{drawLinks()}catch(e){}})}}
+/* where the editor sits on the right: below the worksheet (default) or beside it; the size is remembered */
+const WL={mode:'stack',w:55,h:55};
+try{Object.assign(WL,JSON.parse(localStorage.getItem('xdesk:wedlay')||'{}'))}catch(e){}
+function wedSaveLay(){try{localStorage.setItem('xdesk:wedlay',JSON.stringify(WL))}catch(e){}}
+function wedLayout(host){
+  host.classList.toggle('wed-side',WL.mode==='side');host.classList.toggle('wed-stack',WL.mode!=='side');
+  host.style.setProperty('--wedw',WL.w+'%');host.style.setProperty('--wedh',WL.h+'%');
+  const b=WE.el&&WE.el.querySelector('.wed-lay');if(b){b.textContent=WL.mode==='side'?'⇅':'⇆';b.title=WL.mode==='side'?'Put the editor below the worksheet':'Put the editor beside the worksheet'}
+  requestAnimationFrame(()=>{try{drawLinks()}catch(e){}if(WE.el)wordFit(WE.el.querySelector('.whost'))});
+}
+function wedGrip(g,host){
+  g.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();g.setPointerCapture(e.pointerId);const r=host.getBoundingClientRect();
+    const mv=ev=>{if(WL.mode==='side')WL.w=Math.max(25,Math.min(80,Math.round((r.right-ev.clientX)/r.width*100)));else WL.h=Math.max(20,Math.min(85,Math.round((r.bottom-ev.clientY)/r.height*100)));
+      host.style.setProperty('--wedw',WL.w+'%');host.style.setProperty('--wedh',WL.h+'%')};
+    const up=()=>{g.removeEventListener('pointermove',mv);g.removeEventListener('pointerup',up);wedSaveLay();wedLayout(host)};
+    g.addEventListener('pointermove',mv);g.addEventListener('pointerup',up)});
+}
 window.addEventListener('beforeunload',e=>{if(WE.dirty){e.preventDefault();e.returnValue=''}});
 
 /* ---- the edited page → a .docx ---- */
