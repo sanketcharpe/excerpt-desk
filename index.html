@@ -525,6 +525,11 @@ details.drive ol b{color:var(--ink)}
 .whost .docx-wrapper>section.docx{box-shadow:0 1px 6px rgba(0,0,0,.18);margin-bottom:14px!important}
 .wed{position:absolute;z-index:30;display:flex;flex-direction:column;background:var(--desk,#eef1f5);box-shadow:0 0 0 1px var(--line)}
 .dkbody{--wedw:55%;--wedh:55%}
+main.split.w3{grid-template-columns:minmax(0,var(--pdfw,33%)) 12px minmax(0,1fr) 12px minmax(0,var(--edw,36%))}
+.wedcol{position:relative;min-height:0;min-width:0;background:var(--desk)}
+.wedcol>.wed{inset:0}
+.wedcol .wed-grip,.wedcol .wed-lay{display:none}
+.splitter2{position:relative;z-index:7;cursor:col-resize;touch-action:none;user-select:none;-webkit-user-select:none;background:color-mix(in srgb,var(--line) 55%,var(--surface));border-left:1px solid var(--line);border-right:1px solid var(--line)}
 .dkbody.wed-stack>.wed{left:0;right:0;bottom:0;height:var(--wedh);border-top:2px solid var(--line)}
 .dkbody.wed-side>.wed{top:0;bottom:0;right:0;width:var(--wedw);border-left:2px solid var(--line)}
 .dkbody.wed-stack>#deskPane{bottom:var(--wedh)}
@@ -4110,6 +4115,9 @@ async function wordRender(doc,host,edit){
 function wordFit(host){const w=host.querySelector('.docx-wrapper');if(!w)return;w.style.zoom='';const sec=w.querySelector('section.docx');if(!sec)return;
   const box=host.closest('.vscroll,.wed-scroll')||host,need=sec.offsetWidth+24,have=(box.clientWidth||need)-4;w.style.zoom=have<need?String(Math.max(.35,have/need)):''}
 window.addEventListener('resize',()=>{document.querySelectorAll('.whost').forEach(wordFit)});
+/* refit Word pages whenever the columns change size (dragging a handle, opening or closing the editor) */
+try{let wfT=0;new ResizeObserver(()=>{clearTimeout(wfT);wfT=setTimeout(()=>document.querySelectorAll('.whost').forEach(wordFit),80)}).observe($('main.split'));
+  document.querySelectorAll('main.split > section').forEach(x=>{try{new ResizeObserver(()=>{clearTimeout(wfT);wfT=setTimeout(()=>document.querySelectorAll('.whost').forEach(wordFit),80)}).observe(x)}catch(e){}})}catch(e){}
 
 /* ---- left side: read-only ---- */
 async function showWordView(v,doc,o){
@@ -4143,9 +4151,10 @@ async function openWordEditor(id){
     '<button class="btn wed-lay" title="Editor below the worksheet, or beside it">⇅</button><button class="btn primary wed-save" title="Save (Ctrl+S)">Save</button><button class="btn wed-close" title="Close the editor (the worksheet stays)">Close</button></div><div class="wed-grip" title="Drag to share the space between the worksheet and the editor"></div>'+
     '<div class="wed-scroll"><div class="whost"><div class="docmsg">Opening <b></b>…</div></div></div>';
   el.querySelector('.wed-t').textContent=doc.title;el.querySelector('.docmsg b').textContent=doc.title;
-  host.append(el);WE.el=el;WE.id=id;WE.dirty=false;wordStatus('');
-  wedLayout(host);
-  if(app.dataset.pane==='doc'&&getComputedStyle(document.querySelector('.deskwrap')).display==='none')showPane('desk');
+  WE.el=el;WE.id=id;WE.dirty=false;
+  if(wedWide()){wedCols(el)}
+  else{host.append(el);wedLayout(host);if(app.dataset.pane==='doc'&&getComputedStyle(document.querySelector('.deskwrap')).display==='none')showPane('desk')}
+  wordStatus('');
   el.querySelectorAll('[data-c]').forEach(b=>b.onmousedown=e=>{e.preventDefault();document.execCommand(b.dataset.c,false,null);wordChanged()});
   el.querySelector('.wed-save').onclick=()=>saveWordEditor();
   el.querySelector('.wed-lay').onclick=()=>{WL.mode=WL.mode==='side'?'stack':'side';wedSaveLay();wedLayout(host)};
@@ -4170,7 +4179,32 @@ async function openWordEditor(id){
 function wordChanged(){if(!WE.el||WE.busy)return;if(!WE.dirty){WE.dirty=true;wordStatus('Unsaved changes')}}
 function wordStatus(t){const s=WE.el&&WE.el.querySelector('.wed-st');if(s)s.textContent=t?' · '+t:''}
 function closeWordEditor(){if(WE.el)WE.el.remove();WE.el=null;WE.id=null;WE.dirty=false;
-  const b=document.querySelector('.deskwrap .dkbody');if(b){b.classList.remove('wed-side','wed-stack');requestAnimationFrame(()=>{try{drawLinks()}catch(e){}})}}
+  const b=document.querySelector('.deskwrap .dkbody');if(b)b.classList.remove('wed-side','wed-stack');
+  const m=$('main.split');if(m.classList.contains('w3')){m.classList.remove('w3');const c=$('#wedCol'),g=$('#splitter2');if(c)c.remove();if(g)g.remove();
+    W3.pdf=+settings.split||W3.pdf;try{localStorage.setItem('xdesk:w3',JSON.stringify({pdf:W3.pdf,ed:W3.ed}))}catch(x){}
+    if(W3.keep!=null){settings.split=W3.keep;W3.keep=null}applySplit();try{applySettings()}catch(e){}}
+  requestAnimationFrame(()=>{views.forEach(relayoutIfNeeded);try{drawLinks()}catch(e){}})}
+/* wide screen: PDF | worksheet | Word editor, side by side; both handles can be dragged */
+const W3={pdf:33,ed:36,keep:null};
+try{Object.assign(W3,JSON.parse(localStorage.getItem('xdesk:w3')||'{}'),{keep:null})}catch(e){}
+function wedWide(){return window.innerWidth>900}
+function wedCols(el){
+  const m=$('main.split');let col=$('#wedCol'),g=$('#splitter2');
+  if(!col){g=document.createElement('div');g.className='splitter2';g.id='splitter2';g.title='Drag left or right to share the screen between the worksheet and the Word editor';
+    col=document.createElement('section');col.className='wedcol';col.id='wedCol';col.setAttribute('aria-label','Word editor');m.append(g,col);wedGrip3(g)}
+  col.append(el);
+  if(W3.keep==null)W3.keep=settings.split;settings.split=W3.pdf;applySplit();
+  m.style.setProperty('--edw',W3.ed+'%');m.classList.add('w3');
+  requestAnimationFrame(()=>{views.forEach(relayoutIfNeeded);try{drawLinks()}catch(e){}document.querySelectorAll('.whost').forEach(wordFit)});
+}
+function wedGrip3(g){
+  g.addEventListener('pointerdown',e=>{e.preventDefault();g.setPointerCapture(e.pointerId);const r=$('main.split').getBoundingClientRect();app.classList.add('resizing');
+    const mv=ev=>{W3.ed=Math.max(20,Math.min(60,Math.round((r.right-ev.clientX)/r.width*100)));$('main.split').style.setProperty('--edw',W3.ed+'%')};
+    const up=()=>{g.removeEventListener('pointermove',mv);g.removeEventListener('pointerup',up);app.classList.remove('resizing');
+      W3.pdf=+settings.split||W3.pdf;try{localStorage.setItem('xdesk:w3',JSON.stringify({pdf:W3.pdf,ed:W3.ed}))}catch(x){}
+      views.forEach(relayoutIfNeeded);try{drawLinks()}catch(x){}if(WE.el)wordFit(WE.el.querySelector('.whost'))};
+    g.addEventListener('pointermove',mv);g.addEventListener('pointerup',up)});
+}
 /* where the editor sits on the right: below the worksheet (default) or beside it; the size is remembered */
 const WL={mode:'stack',w:55,h:55};
 try{Object.assign(WL,JSON.parse(localStorage.getItem('xdesk:wedlay')||'{}'))}catch(e){}
