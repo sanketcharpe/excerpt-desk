@@ -4187,7 +4187,7 @@ function closeWordEditor(){if(WE.el)WE.el.remove();WE.el=null;WE.id=null;WE.dirt
 /* wide screen: PDF | worksheet | Word editor, side by side; both handles can be dragged */
 const W3={pdf:33,ed:36,keep:null};
 try{Object.assign(W3,JSON.parse(localStorage.getItem('xdesk:w3')||'{}'),{keep:null})}catch(e){}
-function wedWide(){return window.innerWidth>900}
+function wedWide(){return !window.matchMedia('(max-width:700px)').matches}   /* three columns whenever PDF and worksheet are side by side */
 function wedCols(el){
   const m=$('main.split');let col=$('#wedCol'),g=$('#splitter2');
   if(!col){g=document.createElement('div');g.className='splitter2';g.id='splitter2';g.title='Drag left or right to share the screen between the worksheet and the Word editor';
