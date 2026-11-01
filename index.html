@@ -3396,6 +3396,8 @@ async function pushFile(name,f){
   if(size>8e6)throw new Error(f+' is large; update the Google script to version 2');
   updSyncBtn('☁ Sending '+f.slice(0,24)+'…');return await driveCall({op:'write',matter:name,name:f,b64:b64FromBuf(buf),mime:'application/pdf'});
 }
+let wordTipShown=false;
+function wordSrvTip(){if(wordTipShown)return;wordTipShown=true;toast('Word files are not syncing yet: the Google sync script needs its version 3 update (one paste, then Deploy → New version). PDFs and notes sync as usual.')}
 async function syncFiles(name,R,st,M){
   const del=new Set(((M&&M.deletedFiles)||[]).map(f=>String(f).toLowerCase()));
   let loc=await localFiles(name),rem=(R&&R.files)||[];st.files=st.files||{};
@@ -3410,6 +3412,7 @@ async function syncFiles(name,R,st,M){
     if(need){await pullFile(name,rf);st.files[k]={lsize:rf.size,rmod:rf.modified};await setSt(name,st);got.push(rf.name)}
     else if(!s&&l&&l.size===rf.size)st.files[k]={lsize:l.size,rmod:rf.modified}}
   for(const l of loc){const k=l.name.toLowerCase(),s=st.files[k],rf=RM[k];
+    if(srvV<3&&isWordName(l.name)){wordSrvTip();continue}  /* the old Google script cannot list Word files: sending them would repeat on every sync */
     const need=!rf||(s&&l.size!==s.lsize&&(!rf||rf.modified===s.rmod))||(!s&&rf&&l.size!==rf.size);
     if(need){const r=await pushFile(name,l.name);st.files[k]={lsize:l.size,rmod:r&&r.modified};if(r&&r.mark)st.mark=r.mark;await setSt(name,st);sent++}}
   return {got,sent};
@@ -4129,7 +4132,7 @@ async function showWordView(v,doc,o){
   v.pagesEl.querySelector('.wedit').onclick=()=>openWordEditor(doc.id);
   setHead(v);if(v===V())updateNav();
   const host=v.pagesEl.querySelector('.whost');
-  try{await wordRender(doc,host,false)}catch(e){if(my!==v.tok)return;console.warn(e);host.innerHTML='<div class="docmsg">'+esc(e.message&&/load/.test(e.message)?e.message:'"'+doc.file+'" could not be opened as a Word document (.docx). Old .doc files are not supported: save it as .docx in Word first.')+'</div>';return}
+  try{await wordRender(doc,host,false)}catch(e){if(my!==v.tok)return;console.warn(e);const miss=e&&(e.message==='missing'||e.name==='NotFoundError');host.innerHTML='<div class="docmsg">'+esc(miss?'"'+doc.file+'" has not reached this device yet. It comes through Google Drive sync: press ☁ Sync and wait a moment.'+(srvV&&srvV<3?' (The Google sync script first needs its version 3 update so that Word files are sent across.)':''):e.message&&/load/.test(e.message)?e.message:'"'+doc.file+'" could not be opened as a Word document (.docx). Old .doc files are not supported: save it as .docx in Word first.')+'</div>';return}
   if(my!==v.tok)return;
   host.querySelectorAll('[contenteditable]').forEach(x=>x.removeAttribute('contenteditable'));
   v.scroller.scrollTop=0;crumb('showing a Word document');noteResume();
