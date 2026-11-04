@@ -482,6 +482,13 @@ details.drive ol b{color:var(--ink)}
 .dxrep{margin-top:8px;font-size:12.5px;color:var(--muted,#667)}
 .dxrep .btn{height:28px;padding:0 9px}
 .dxst{margin-top:8px;font-size:12.5px;color:var(--muted,#667);min-height:17px}
+.dxlive{margin-top:8px;border:1px solid #9fd3b0;border-radius:9px;background:#f3fbf5;overflow:hidden}
+.dxlive .lh{display:flex;gap:6px;align-items:center;padding:5px 9px;font-size:11.5px;font-weight:700;color:#127a4b;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid #cfe9d7}
+.dxlive .lh span{font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted,#667)}
+.dxlive .lt{height:150px;min-height:60px;max-height:60vh;resize:vertical;overflow:auto;padding:8px 10px;font:400 13.5px/1.45 Georgia,'Times New Roman',serif;color:#1a2233;white-space:pre-wrap;overflow-wrap:anywhere}
+.dxlive .lt:empty::before{content:"The words appear here every few seconds while you speak…";color:#8a93a0;font-style:italic}
+.dxbar{height:6px;border-radius:3px;background:var(--line,#e3e6ea);overflow:hidden;margin-top:5px}
+.dxbar i{display:block;height:100%;width:0;background:#f08a00;transition:width .4s}
 .dxlist{margin-top:10px;border-top:1px solid var(--line,#e3e6ea)}
 .dxit{padding:8px 2px;border-bottom:1px solid var(--line,#eef0f2)}
 .dxit .nm{font-weight:600;overflow-wrap:anywhere}
@@ -878,7 +885,8 @@ main.split.w3{grid-template-columns:minmax(0,var(--pdfw,33%)) 12px minmax(0,1fr)
       <button class="btn dxbig primary" id="dxStop" hidden>■ Stop &amp; transcribe</button>
       <button class="btn" id="dxDiscard" hidden title="Throw this recording away">Discard</button>
     </div>
-    <div class="dxrep row">Hear the last <button class="btn" data-rep="10">10 s</button><button class="btn" data-rep="20">20 s</button><button class="btn" data-rep="30">30 s</button><button class="btn" data-rep="60">1 min</button><button class="btn" id="dxRepStop" hidden>■ Stop</button></div>
+    <div class="dxrep row">Hear the last <button class="btn" data-rep="10">10 s</button><button class="btn" data-rep="20">20 s</button><button class="btn" data-rep="30">30 s</button><button class="btn" data-rep="60">1 min</button><button class="btn" id="dxRepPause" hidden>❚❚ Pause</button><button class="btn" id="dxRepStop" hidden>■ Stop</button></div>
+    <div class="dxlive" id="dxLive" hidden><div class="lh">Live typing <span id="dxLiveSt"></span></div><div class="lt" id="dxLiveTxt" aria-live="polite"></div></div>
     <div class="dxst" id="dxStatus"></div>
     <div class="row" style="margin-top:10px">
       <button class="btn" id="dxUpAudio" title="A WhatsApp voice note, a phone recording, a hearing recording">📎 Transcribe an audio file</button>
@@ -929,6 +937,9 @@ main.split.w3{grid-template-columns:minmax(0,var(--pdfw,33%)) 12px minmax(0,1fr)
   <p class="dxnote">Clips older than this are deleted automatically, day by day, from the app and from the folder's Audio sub-folders. Your Word files are never deleted.</p>
   <label class="f">Word document defaults</label>
   <div class="row"><select id="dxFont" style="width:auto"></select><select id="dxSize" style="width:auto"></select><select id="dxLine" style="width:auto"><option value="1">Single</option><option value="1.15">1.15</option><option value="1.5">1.5 lines</option><option value="2">Double</option></select></div>
+  <label class="f" for="dxLiveSec">Live typing while dictating</label>
+  <select id="dxLiveSec" style="width:auto"><option value="0">Off: type only after I stop</option><option value="5">On: send every 5 seconds</option><option value="10">On: send every 10 seconds (recommended)</option><option value="15">On: send every 15 seconds</option></select>
+  <p class="dxnote">With live typing on, the words appear in the Dictation box a few seconds after you say them. Each piece is cut at a pause, so words are not split. The recording is still kept in full, so you can press ⟳ Retype at any time to have the whole clip typed again in one go.</p>
   <label class="opt"><input type="checkbox" id="dxAuto"> Open the Word document as soon as it is ready (not while recording)</label>
   <label class="f" for="dxVocab">Names and terms Gemini should know (one per line)</label>
   <textarea id="dxVocab" rows="4" placeholder="Charpe&#10;MSRTC Wardha&#10;Ordnance Factory Ambajhari&#10;MRTU and PULP Act"></textarea>
@@ -4456,7 +4467,7 @@ const PRESETS0=[
 ];
 const FONTS=['Georgia','Times New Roman','Bookman Old Style','Cambria','Arial','Calibri','Verdana','Mangal','Nirmala UI'];
 const SIZES=[9,10,10.5,11,12,13,14,15,16,18,20,24,28];
-let cfg={key:'',model:'gemini-3.8-flash',docModel:'',keep:10,font:'Georgia',size:13,line:1.5,autoOpen:true,vocab:'',preset:'clean',presets:PRESETS0.map(p=>Object.assign({},p))};
+let cfg={key:'',model:'gemini-3.8-flash',docModel:'',keep:10,font:'Georgia',size:13,line:1.5,autoOpen:true,live:10,vocab:'',preset:'clean',presets:PRESETS0.map(p=>Object.assign({},p))};
 try{const o=JSON.parse(localStorage.getItem(DXK)||'{}');Object.assign(cfg,o)}catch(e){}
 if(!Array.isArray(cfg.presets)||!cfg.presets.length)cfg.presets=PRESETS0.map(p=>Object.assign({},p));
 const saveCfg=()=>{try{localStorage.setItem(DXK,JSON.stringify(cfg))}catch(e){}};
@@ -4538,6 +4549,7 @@ async function purge(){
 
 /* ---------- recording ---------- */
 let R=null;            /* the live recording */
+const LIVE=new Map();  /* dictation id → its live typer, while pieces are still being typed */
 const SEG_MAX=360;     /* seconds per part; each part is sent to Gemini on its own */
 function pickType(){const ts=['audio/webm;codecs=opus','audio/mp4','audio/webm','audio/ogg;codecs=opus'];return ts.find(t=>{try{return MediaRecorder.isTypeSupported(t)}catch(e){return false}})||''}
 function curSecs(){if(!R)return 0;const c=R.cur;const segNow=c?(c.acc+(R.paused?0:Date.now()-c.t0))/1000:0;return R.done+segNow}
@@ -4557,9 +4569,10 @@ async function startRec(cont){
   try{ctx=new AC();src=ctx.createMediaStreamSource(stream);proc=ctx.createScriptProcessor(4096,1,1);src.connect(proc);proc.connect(ctx.destination);ctx.resume&&ctx.resume().catch(()=>{})}catch(e){ctx=null}
   R={m,stream,ctx,proc,src,rate:ctx?ctx.sampleRate:48000,ring:[],ringLen:0,level:0,paused:false,done:(m.segs||[]).reduce((a,s)=>a+(s.dur||0),0),cur:null,type:pickType(),lock:null,tick:null};
   if(proc)proc.onaudioprocess=e=>{if(!R||R.paused)return;const d=e.inputBuffer.getChannelData(0);let s=0;for(let i=0;i<d.length;i+=16)s+=d[i]*d[i];R.level=Math.min(1,Math.sqrt(s/(d.length/16))*4);
-    R.ring.push(new Float32Array(d));R.ringLen+=d.length;while(R.ring.length>1&&R.ringLen-R.ring[0].length>R.rate*65){R.ringLen-=R.ring.shift().length}};
+    const cp=new Float32Array(d);R.ring.push(cp);R.ringLen+=d.length;if(R.lv){R.lv.buf.push(cp);R.lv.len+=cp.length}while(R.ring.length>1&&R.ringLen-R.ring[0].length>R.rate*65){R.ringLen-=R.ring.shift().length}};
   try{if(navigator.wakeLock)R.lock=await navigator.wakeLock.request('screen')}catch(e){}
   newPart();await saveMeta(m,true);
+  await liveStart();
   R.tick=setInterval(tick,400);uiRec();crumb('dictation: recording '+(cont?'continued':'started'));
   status(cont?'Continuing “'+m.name+'”. Carry on reading; the light at the top stays green while recording.':'Recording. You can keep reading the PDFs; the light at the top stays green.');
 }
@@ -4586,28 +4599,37 @@ function endPart(c){return new Promise(res=>{const mr=c.mr;if(mr.state==='inacti
   c.paused=R.paused;try{mr.stop()}catch(e){res()}})}
 async function tick(){
   if(!R)return;$('#dxTime').textContent=mmss(curSecs());$('#dxLevel').style.width=(R.paused?0:Math.round(R.level*100))+'%';light();
+  if(R.lv&&!R.paused)liveCut(false);
   const c=R.cur;if(!R.paused&&c&&!R.rotating&&(c.acc+Date.now()-c.t0)/1000>=SEG_MAX){R.rotating=true;const old=c;R.done+=(old.acc+Date.now()-old.t0)/1000;newPart();await endPart(old);R.rotating=false;saveMeta(R.m)}
 }
-function pauseRec(){if(!R||R.paused)return;const c=R.cur;try{c.mr.pause()}catch(e){}c.acc+=Date.now()-c.t0;R.paused=true;R.m.status='paused';keepPart(c,true);uiRec();light();status('Paused. Press Resume to carry on in the same file, or hear the last few seconds below.')}
+function pauseRec(){if(!R||R.paused)return;const c=R.cur;try{c.mr.pause()}catch(e){}c.acc+=Date.now()-c.t0;R.paused=true;R.m.status='paused';keepPart(c,true);if(R.lv&&R.lv.len>R.rate*0.8)liveCut(true);uiRec();light();status('Paused. Press Resume to carry on in the same file, or hear the last few seconds below.')}
 function resumeRec(){if(!R||!R.paused)return;stopPlay();const c=R.cur;try{c.mr.resume()}catch(e){}c.t0=Date.now();R.paused=false;R.m.status='recording';saveMeta(R.m);uiRec();light();status('Recording again.')}
 async function finishRec(go){
   if(!R)return;const r=R,c=r.cur;stopPlay();
+  if(r.lv&&r.lv.len)liveCut(true);
   if(!r.paused){c.acc+=Date.now()-c.t0;r.paused=true}
   await endPart(c);clearInterval(r.tick);
   r.stream.getTracks().forEach(t=>t.stop());try{r.proc&&r.proc.disconnect();r.src&&r.src.disconnect();r.ctx&&r.ctx.close()}catch(e){}try{r.lock&&r.lock.release()}catch(e){}
   const m=r.m;R=null;m.segs=m.segs.filter(s=>s.size>800||s.dur>0.5);
-  if(go==='discard'){await delAll(m);uiRec();status('Recording thrown away.');return}
+  if(go==='discard'){if(r.lv){r.lv.dead=true;LIVE.delete(m.id)}$('#dxLive').hidden=true;await delAll(m);uiRec();status('Recording thrown away.');return}
   m.status='stopped';await saveMeta(m,true);uiRec();
-  if(!m.segs.length){await delAll(m);status('Nothing was recorded.');return}
+  if(!m.segs.length){if(r.lv){r.lv.dead=true;LIVE.delete(m.id)}$('#dxLive').hidden=true;await delAll(m);status('Nothing was recorded.');return}
   $('#dxName').value='';$('#dxExtra').value='';$('#dxTime').textContent='0:00';
-  enqueue(m.id);
+  if(r.lv)liveFinish(m,r.lv);else enqueue(m.id);
 }
 window.addEventListener('beforeunload',e=>{if(R){try{keepPart(R.cur,true)}catch(_){}e.preventDefault();e.returnValue=''}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&R&&R.cur)keepPart(R.cur,true)});
 
 /* ---------- hear the last few seconds ---------- */
 let play=null;
-function stopPlay(){if(play){try{play.src.stop()}catch(e){}try{play.ctx.close()}catch(e){}play=null}$('#dxRepStop').hidden=true}
+function stopPlay(){const had=play&&play.mid;if(play){clearInterval(play.tm);try{play.src.stop()}catch(e){}try{play.ctx.close()}catch(e){}play=null}$('#dxRepStop').hidden=true;$('#dxRepPause').hidden=true;if(had)renderList()}
+/* pause / resume what is playing: the clock of the player stops, so it carries on from the same word */
+async function togglePlay(){if(!play)return;const b=$('#dxRepPause');
+  if(play.ctx.state==='running'){try{await play.ctx.suspend()}catch(e){}b.textContent='▶ Resume';status('Playback paused at '+mmss(play.ctx.currentTime-play.t0)+(play.dur?' of '+mmss(play.dur):'')+'. Press Resume to carry on.')}
+  else{try{await play.ctx.resume()}catch(e){}b.textContent='❚❚ Pause'}
+  renderList()}
+function playShown(label,dur,t0){const b=$('#dxRepPause');b.hidden=false;b.textContent='❚❚ Pause';$('#dxRepStop').hidden=false;
+  play.t0=t0;play.dur=dur;play.tm=setInterval(()=>{if(!play||play.ctx.state!=='running')return;const at=Math.max(0,play.ctx.currentTime-play.t0);status(label+' '+mmss(at)+(dur?' / '+mmss(dur):''))},500)}
 async function replay(sec){
   stopPlay();
   const m=R?R.m:(sel()||null);if(!m){toast('Record something first.');return}
@@ -4626,11 +4648,110 @@ async function replay(sec){
       for(let i=parts.length-1;i>=0&&w>0;i--){const ch=parts[i].getChannelData(0);const take=Math.min(w,ch.length);out.set(ch.subarray(ch.length-take),w-take);w-=take}
     }
   }catch(e){try{ctx.close()}catch(_){}toast('Could not play the clip back.');return}
-  const src=ctx.createBufferSource();src.buffer=buf;src.connect(ctx.destination);play={ctx,src};$('#dxRepStop').hidden=false;
+  const src=ctx.createBufferSource();src.buffer=buf;src.connect(ctx.destination);play={ctx,src};
   src.onended=()=>{if(play&&play.src===src){stopPlay();status(R?'Paused. Press Resume to carry on.':'')}};
-  try{await ctx.resume()}catch(e){}src.start();status('Playing the last '+(sec>=60?'1 minute':sec+' seconds')+'…');
+  try{await ctx.resume()}catch(e){}const t0=ctx.currentTime+0.02;src.start(t0);playShown('Playing the last '+(sec>=60?'1 minute':sec+' seconds')+':',buf.duration,t0);status('Playing the last '+(sec>=60?'1 minute':sec+' seconds')+'…');
 }
 async function decodeBlob(ctx,b){try{const ab=b instanceof Blob?await b.arrayBuffer():b;return await new Promise((res,rej)=>{const p=ctx.decodeAudioData(ab.slice(0),res,rej);if(p&&p.then)p.then(res,rej)})}catch(e){return null}}
+
+/* ---------- live typing: every few seconds the new audio, cut at a pause, goes to Gemini; the words are added as they come ---------- */
+async function liveStart(){
+  const sec=+cfg.live||0;if(!R||!sec||!hasKey()||!R.ctx){$('#dxLive').hidden=true;return}
+  const m=R.m;const st=await idb.get('kv','dxdoc:'+m.id);
+  const L={m,sec,buf:[],len:0,seq:0,parts:[],wavs:[],shown:'',txt:'',chain:Promise.resolve(),sent:0,typed:0,failed:0,dead:false,
+    font:(st&&st.font)||cfg.font,size:(st&&st.size)||cfg.size,line:(st&&st.line)||cfg.line,startHtml:(st&&st.html)||'',pend:''};
+  R.lv=L;LIVE.set(m.id,L);m.liveOpen=true;saveMeta(m);
+  $('#dxLiveTxt').textContent='';$('#dxLive').hidden=false;liveInfo(L);
+}
+function liveInfo(L){const wait=L.sent-L.typed-L.failed;if(L.m.status==='processing'&&L.sent)setPct(L.m,L.typed/L.sent,'live typing, last pieces');
+  const e=$('#dxLiveSt');if(!e)return;
+  e.textContent='· every '+L.sec+' s · '+L.typed+' piece'+(L.typed===1?'':'s')+' typed'+(wait>0?' · '+wait+' on the way':'')+(L.failed?' · '+L.failed+' to retry':'')}
+/* cut the audio gathered so far at the quietest moment of its last 3 seconds (so no word is split) */
+function liveCut(final){
+  const L=R&&R.lv;if(!L||L.dead||!L.len)return;const rate=R.rate,need=Math.round(L.sec*rate);
+  if(!final&&L.len<need)return;
+  const all=new Float32Array(L.len);let o=0;for(const b of L.buf){all.set(b,o);o+=b.length}
+  let cut=all.length;
+  if(!final){const fr=Math.round(.12*rate),step=fr>>1,from=Math.max(Math.round(rate*1.5),need-3*rate);let best=-1,bestE=Infinity;
+    for(let p=from;p+fr<=all.length;p+=step){let e=0;for(let j=p;j<p+fr;j+=8)e+=Math.abs(all[j]);if(e<bestE){bestE=e;best=p+(fr>>1)}}
+    if(best<0)return;
+    if(bestE/(fr/8)>0.02&&all.length<need+4*rate)return;   /* no pause yet: wait up to 4 s more for one */
+    cut=best}
+  const piece=all.subarray(0,cut),rest=all.slice(cut);L.buf=rest.length?[rest]:[];L.len=rest.length;
+  livePiece(L,piece,rate);
+}
+function down16(f,rate){const ratio=rate/16000,n=Math.max(1,Math.floor(f.length/ratio)),out=new Int16Array(n);
+  for(let i=0;i<n;i++){const a=Math.floor(i*ratio),b=Math.max(a+1,Math.min(f.length,Math.floor((i+1)*ratio)));let s=0;for(let j=a;j<b;j++)s+=f[j];s/=(b-a);s=Math.max(-1,Math.min(1,s));out[i]=s<0?s*0x8000:s*0x7fff}
+  return out}
+function livePiece(L,f,rate){
+  if(f.length<rate*0.4)return;let e=0;for(let i=0;i<f.length;i+=4)e+=f[i]*f[i];const rms=Math.sqrt(e/(f.length/4));
+  if(rms<0.006)return;                                   /* only silence: nothing to send */
+  const seq=L.seq++,wav=wavOf(down16(f,rate)),secs=f.length/rate;L.wavs[seq]=wav;L.sent++;liveInfo(L);
+  L.chain=L.chain.then(async()=>{if(L.dead)return;
+    try{L.parts[seq]=await liveSend(L,wav,secs);delete L.wavs[seq];L.typed++}catch(e){L.parts[seq]=null;L.failed++;L.err=e;console.warn('live piece',e)}
+    liveInfo(L);liveShow(L)});
+}
+function livePrompt(m,prev,secs){
+  return audioPrompt(m,1,1,'')+'This audio is a short piece (about '+Math.round(secs)+' seconds) cut from a dictation that is still going on. It may begin or end in the middle of a sentence: type only what is said in this piece; do not complete, guess or repeat anything. '+
+    (prev?'The text so far ends with: «'+prev.slice(-300)+'». Carry straight on from there without repeating it; begin with a capital letter only if a new sentence begins here. ':'')+
+    'If the speaker says "new paragraph" at the very start of this piece, begin your reply with the sign ¶. If there is no speech in this piece, reply with exactly [silence].\n'}
+async function liveSend(L,wav,secs){
+  const t=await gText(cfg.model,[{inline_data:{mime_type:'audio/wav',data:await b64(wav)}},{text:livePrompt(L.m,L.txt,secs)}],{allowEmpty:true,tries:2,stall:60000});
+  return t.replace(/\[silence\]/gi,'').trim()}
+/* join the typed pieces in order; a piece still on its way stops the joining there */
+function liveJoin(L){let out='';for(let i=0;i<L.seq;i++){const t=L.parts[i];if(t===undefined)break;if(t===null||!t)continue;
+    let x=t;if(x.startsWith('¶')){x=x.slice(1).trim();out=out.replace(/\s+$/,'');if(out)out+='\n\n'}
+    else if(out&&!/\n\n$/.test(out))out+=' ';out+=x}
+  return out}
+let liveSaveT=0;
+function liveShow(L){
+  const txt=liveJoin(L);L.txt=txt;const box=$('#dxLiveTxt');
+  if(R&&R.lv===L&&box){box.textContent=txt;box.scrollTop=box.scrollHeight}
+  if(!txt.startsWith(L.shown))return;               /* a missed piece came in later: the whole text is redone at the end */
+  const delta=txt.slice(L.shown.length);if(!delta)return;L.shown=txt;
+  if(edM===L.m&&!ed.hidden){edAppend(delta);return}   /* the Word page is open on this dictation: add the words there */
+  L.pend+=delta;clearTimeout(liveSaveT);liveSaveT=setTimeout(()=>liveStore(L),1200)}
+/* the new words are added to what is saved (so corrections made in the Word page are kept) */
+async function liveStore(L){clearTimeout(liveSaveT);if(L.dead||!L.pend)return;const d=L.pend;L.pend='';
+  try{const st=(await idb.get('kv','dxdoc:'+L.m.id))||{html:'',font:L.font,size:L.size,line:L.line};st.html=htmlAppend(st.html||'',d);await idb.set('kv','dxdoc:'+L.m.id,st)}catch(e){L.pend=d+L.pend}}
+/* add text to the end of a document: a continuing sentence goes into the last paragraph, new paragraphs after it */
+function htmlAppend(html,delta){if(!delta)return html;
+  const m=delta.match(/^([^\n]*)([\s\S]*)$/),head=m[1],tail=m[2].replace(/^\n+/,'');
+  const inl=x=>escH(x).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/__([^_]+)__/g,'<u>$1</u>');
+  let out=html||'';
+  if(head.trim()){const i=out.lastIndexOf('</p>');if(i>=0&&!/^\n/.test(delta))out=out.slice(0,i)+inl(head)+out.slice(i);else out+='<p>'+inl(head.trim())+'</p>'}
+  if(tail.trim())out+=textToHtml(tail);return out}
+function edAppend(delta){const keep=document.activeElement===pg?caret():null;
+  pg.innerHTML=htmlAppend(pg.innerHTML.replace(/<p><br><\/p>$/,''),delta);if(keep)setCaret(keep);
+  const sc=pg.closest('.dxscroll');if(sc&&!keep)sc.scrollTop=sc.scrollHeight;snapNow();dirty()}
+/* recording stopped: wait for the last pieces, retry any that failed, then the document is ready */
+async function liveFinish(m,L){
+  m.status='processing';m.pct=0;m.progress='live typing, last pieces';await saveMeta(m,true);light();status('Typing the last words of “'+m.name+'”…');
+  const t0=Date.now();let late=false;
+  await Promise.race([L.chain,new Promise(r=>setTimeout(()=>{late=true;r()},120000))]);
+  if(L.dead){LIVE.delete(m.id);return}
+  if(!late)for(let i=0;i<L.seq;i++)if(L.parts[i]===null&&L.wavs[i]){try{L.parts[i]=await liveSend(L,L.wavs[i],0);delete L.wavs[i];L.failed--;L.typed++}catch(e){}}
+  const gaps=late||L.parts.slice(0,L.seq).some(x=>x===null||x===undefined);
+  LIVE.delete(m.id);$('#dxLive').hidden=!R;
+  if(gaps){/* something could not be typed live: type the whole of what was recorded in one go instead */
+    clearTimeout(liveSaveT);L.dead=true;if(edM===m&&!ed.hidden){edDirty=false}
+    await resetDoc(m);status('A piece of “'+m.name+'” could not be typed live; Gemini is typing the whole recording now.');enqueue(m.id);return}
+  const full=liveJoin(L);
+  if(full!==L.shown){/* a missed piece came in at the end: put the whole text of this session in its place */
+    const fresh=htmlAppend(L.startHtml||'',full);L.pend='';
+    if(edM===m&&!ed.hidden){pg.innerHTML=fresh;snapNow();dirty()}else{const s0=(await idb.get('kv','dxdoc:'+m.id))||{font:L.font,size:L.size,line:L.line};s0.html=fresh;await idb.set('kv','dxdoc:'+m.id,s0)}}
+  if(edM===m&&!ed.hidden)await saveEd(true);else await liveStore(L);
+  const st=(await idb.get('kv','dxdoc:'+m.id))||{html:'',font:L.font,size:L.size,line:L.line};
+  if(!full.trim()&&!(st&&st.html)){await resetDoc(m);status('No words were caught live; Gemini is typing the recording now.');enqueue(m.id);return}
+  m.segs.forEach(s=>{if(s.txt==null)s.txt=''});m.status='done';delete m.pct;delete m.progress;delete m.liveOpen;m.docAt=Date.now();await saveMeta(m,true);
+  await writeDocx(m,st,true);
+  if(m.sheet&&full)toSheet(m,textToHtml(full));
+  status('“'+m.name+'” is ready (typed live). Press ⟳ Retype if you want the whole clip typed again in one go.');
+  const unsure=(full.match(/\[\?\]/g)||[]).length;
+  if(cfg.autoOpen&&!R&&$('#dxEd').hidden)openEd(m.id);
+  else toast('“'+m.name+'” is ready'+(unsure?' ('+unsure+' word'+(unsure>1?'s':'')+' marked [?] to check)':'')+'.',{label:'Open',run:()=>openEd(m.id)});
+  light();renderList();
+}
 
 /* ---------- audio → 16 kHz mono pieces (WAV) for Gemini ---------- */
 async function pcm16k(blob){
@@ -4666,6 +4787,42 @@ async function gGen(model,parts,tries){
     return txt.replace(/^```[a-z]*\s*\n?/i,'').replace(/\n?```\s*$/,'').trim();
   }catch(e){if(e.retry&&t<(tries||3)){await sleep(4000*(t+1));continue}throw e}}
 }
+/* the same call, but the text comes back as it is written (so progress can be shown), with a time-out
+   if Gemini goes silent, and a way to cancel it (Retype / Stop typing) */
+const STALL=150000;
+function gErr(e,ac,ctl){if(ctl&&ctl.cancel)return Object.assign(new Error('Cancelled'),{cancel:true});
+  if(ac&&ac.signal.aborted)return Object.assign(new Error('Gemini did not answer for '+Math.round(STALL/60000*10)/10+' minutes'),{retry:true,stall:true});
+  return Object.assign(new Error('No connection to Gemini'),{net:true})}
+async function gStream(model,parts,o){
+  o=o||{};const ctl=o.ctl,ac=new AbortController();if(ctl){if(ctl.cancel)throw gErr(null,null,ctl);ctl.ac=ac}
+  let stall=0;const kick=()=>{clearTimeout(stall);stall=setTimeout(()=>{try{ac.abort()}catch(e){}},o.stall||STALL)};kick();
+  try{
+    let r;try{r=await fetch(GB+'/v1beta/models/'+encodeURIComponent(mdl(model))+':streamGenerateContent?alt=sse&'+kq(),{method:'POST',headers:{'Content-Type':'application/json'},signal:ac.signal,
+      body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:{temperature:0.2,maxOutputTokens:65536}})})}catch(e){throw gErr(e,ac,ctl)}
+    if(!r.ok){let msg='';try{const j=await r.json();msg=(j.error&&j.error.message)||''}catch(e){}const er=new Error('Gemini '+r.status+(msg?': '+msg:''));er.status=r.status;if(r.status===429||r.status>=500)er.retry=true;throw er}
+    let txt='',fin='',buf='';const dec=new TextDecoder();
+    const eat=line=>{line=line.trim();if(!line.startsWith('data:'))return;let j;try{j=JSON.parse(line.slice(5))}catch(e){return}
+      const c=j.candidates&&j.candidates[0];if(c){const t=((c.content&&c.content.parts)||[]).map(p=>p.thought?'':(p.text||'')).join('');if(t){txt+=t;if(o.onText)try{o.onText(txt)}catch(e){}}if(c.finishReason)fin=c.finishReason}
+      else if(j.promptFeedback&&j.promptFeedback.blockReason)fin=j.promptFeedback.blockReason};
+    if(r.body&&r.body.getReader){const rd=r.body.getReader();
+      try{for(;;){const {done,value}=await rd.read();if(done)break;kick();buf+=dec.decode(value,{stream:true});let i;while((i=buf.indexOf('\n'))>=0){eat(buf.slice(0,i));buf=buf.slice(i+1)}}}
+      catch(e){throw gErr(e,ac,ctl)}
+      eat(buf)}
+    else{let all;try{all=await r.text()}catch(e){throw gErr(e,ac,ctl)}all.split('\n').forEach(eat)}
+    txt=txt.trim();
+    if(!txt){if(o.allowEmpty)return '';throw new Error('Gemini returned no text'+(fin&&fin!=='STOP'?' ('+fin+')':'')+'.')}
+    return txt.replace(/^```[a-z]*\s*\n?/i,'').replace(/\n?```\s*$/,'').trim();
+  }finally{clearTimeout(stall);if(ctl&&ctl.ac===ac)ctl.ac=null}
+}
+async function gText(model,parts,o){o=o||{};
+  for(let t=0;;t++){try{return await gStream(model,parts,o)}
+    catch(e){if(e.retry&&!e.cancel&&t<(o.tries==null?3:o.tries)){if(o.onRetry)o.onRetry(e,t);await sleep(4000*(t+1));if(o.ctl&&o.ctl.cancel)throw gErr(null,null,o.ctl);continue}throw e}}
+}
+/* progress: a percentage on the job, shown in the list, the status line and the light at the top */
+let pctT=0;
+function setPct(m,f,what){const v=Math.max(0,Math.min(100,Math.round(f*100)));if(m.pct===v&&!what)return;m.pct=v;if(what)m.progress=what;
+  if(busy===m||m.status==='processing'){status('Gemini is typing “'+m.name+'”: '+v+'%'+(m.progress?' ('+m.progress+')':'')+'…')}
+  light();const now=Date.now();if(now-pctT>450){pctT=now;renderList()}else{clearTimeout(setPct.t);setPct.t=setTimeout(renderList,460)}}
 const b64=blob=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=()=>rej(r.error);r.readAsDataURL(blob)});
 function vocab(m){const w=[];if(P&&proj&&m&&m.sheet&&m.sheet.matter===proj.name){w.push(P.name);(P.docs||[]).forEach(d=>d&&d.title&&w.push(d.title))}
   String(cfg.vocab||'').split(/[\n;]+/).map(s=>s.trim()).filter(Boolean).forEach(s=>w.push(s));return [...new Set(w)].slice(0,150).join('; ')}
@@ -4682,7 +4839,7 @@ function audioPrompt(m,k,n,prev){
   (vocab(m)?'Names and terms that may occur: '+vocab(m)+'\n':'')+
   (n>1?'This audio is part '+k+' of '+n+' of one continuous dictation.'+(prev?' The previous part ended with: «'+prev.slice(-400)+'». Continue straight on from there without repeating it.':'')+'\n':'');
 }
-async function transcribeAudio(m){
+async function transcribeAudio(m,ctl){
   if(!hasKey())throw Object.assign(new Error('Add your Gemini API key in Dictation settings (⚙).'),{nokey:true});
   const todo=m.segs.filter(s=>s.txt==null);if(!todo.length)return '';
   /* gather every piece to send (each part split again if long, e.g. an uploaded hearing) */
@@ -4690,11 +4847,19 @@ async function transcribeAudio(m){
   for(const s of todo){const b=await idb.get('files',fKey(m.id,s.f));if(!b)throw new Error('The audio of part '+s.n+' is no longer on this device.');
     const blob=b instanceof Blob?b:new Blob([b],{type:s.mime});
     status('Preparing part '+s.n+'…');let pcm=null;try{pcm=await pcm16k(blob)}catch(e){pcm=null}
-    if(pcm){const ps=pieces(pcm,330);ps.forEach((p,i)=>jobs.push({s,blob:wavOf(p),mime:'audio/wav',last:i===ps.length-1}));if(!s.dur)s.dur=pcm.length/16000}
-    else{if(blob.size>14e6)throw new Error('Part '+s.n+' could not be read on this device and is too large to send as it is.');jobs.push({s,blob,mime:baseMime(s.mime)||'audio/webm',last:true})}}
+    if(ctl&&ctl.cancel)throw gErr(null,null,ctl);
+    if(pcm){const ps=pieces(pcm,330);ps.forEach((p,i)=>jobs.push({s,blob:wavOf(p),mime:'audio/wav',last:i===ps.length-1,secs:p.length/16000}));if(!s.dur)s.dur=pcm.length/16000}
+    else{if(blob.size>14e6)throw new Error('Part '+s.n+' could not be read on this device and is too large to send as it is.');jobs.push({s,blob,mime:baseMime(s.mime)||'audio/webm',last:true,secs:s.dur||Math.max(5,blob.size/6000)})}}
   const done=m.segs.filter(s=>s.txt!=null);let prev=done.length?done[done.length-1].txt:'';const N=jobs.length;let acc={};
-  for(let i=0;i<N;i++){const j=jobs[i];m.progress='part '+(i+1)+' of '+N;status('Gemini is typing “'+m.name+'”, '+m.progress+'…');saveMeta(m);
-    const t=await gGen(cfg.model,[{inline_data:{mime_type:j.mime,data:await b64(j.blob)}},{text:audioPrompt(m,i+1,N,prev)}]);
+  const total=jobs.reduce((a,j)=>a+j.secs,0)||1;let doneS=0;setPct(m,0.01,N>1?'part 1 of '+N:'');saveMeta(m);
+  for(let i=0;i<N;i++){const j=jobs[i];const what=N>1?'part '+(i+1)+' of '+N:'';setPct(m,doneS/total,what);saveMeta(m);
+    /* about 11 typed characters for every second of dictation: that gives the share of this piece done so far */
+    /* until the first words come back, show that Gemini is still listening, with the seconds counting */
+    let got=false;const t0=Date.now(),tm=setInterval(()=>{if(!got)setPct(m,doneS/total,(what?what+', ':'')+'Gemini is listening '+Math.round((Date.now()-t0)/1000)+' s')},1000);
+    let t;try{t=await gText(cfg.model,[{inline_data:{mime_type:j.mime,data:await b64(j.blob)}},{text:audioPrompt(m,i+1,N,prev)}],
+      {ctl,onText:x=>{if(!got){got=true;m.progress=what}setPct(m,(doneS+j.secs*Math.min(.95,x.length/(j.secs*11)))/total)},onRetry:e=>{got=false;status('Gemini was slow; asking again ('+e.message+')…')}})}
+    finally{clearInterval(tm)}
+    doneS+=j.secs;setPct(m,doneS/total);
     acc[j.s.n]=(acc[j.s.n]?acc[j.s.n]+' ':'')+t;prev=t;
     if(j.last){j.s.txt=acc[j.s.n];await saveMeta(m,true)}}
   return todo.map(s=>s.txt||'').join(' ').trim();
@@ -4741,7 +4906,7 @@ function docPrompt(m,from,to,total){
   'Keep the layout: headings, cause titles, paragraph numbers, lists and tables. Mark words you cannot read as [illegible] and stamps, seals or signatures as [stamp], [seal], [signature]. Do not add page headers you invent, comments or explanations.\n'+
   'Return only an HTML fragment using these tags: <p>, <br>, <b>, <i>, <u>, <table>, <tr>, <td>. Use <p align="center"> for centred lines and <p align="right"> for right-aligned lines. No markdown, no code fences, no <html> or <body>.';
 }
-async function typeDoc(m){
+async function typeDoc(m,ctl){
   if(!hasKey())throw Object.assign(new Error('Add your Gemini API key in Dictation settings (⚙).'),{nokey:true});
   m.parts=m.parts||[];const out=[];
   /* build the chunks: up to 5 pages of PDF, or up to 4 photos, per request */
@@ -4757,35 +4922,37 @@ async function typeDoc(m){
   const merged=[];for(const c of chunks){const l=merged[merged.length-1];if(c.img&&l&&l.img&&l.img.length<4){l.img.push(c.img[0]);l.to++;l.total++}else merged.push(c)}
   let total=merged.length;
   for(let i=0;i<merged.length;i++){const c=merged[i];if(m.parts[i]!=null){out.push(m.parts[i]);continue}
-    m.progress='section '+(i+1)+' of '+total;status('Gemini is reading “'+m.name+'”, '+m.progress+'…');saveMeta(m);
+    if(ctl&&ctl.cancel)throw gErr(null,null,ctl);
+    setPct(m,i/total,'section '+(i+1)+' of '+total);saveMeta(m);const pgs=Math.max(1,(c.to-c.from+1)),prog=x=>setPct(m,(i+Math.min(.95,x.length/(pgs*2600)))/total);
     let parts=[];
     if(c.pdf){let from=c.from,to=c.to;const one=async(f,t)=>{const d=await PDFLib.PDFDocument.create();const pages=await d.copyPages(c.pdf,Array.from({length:t-f+1},(_,k)=>f-1+k));pages.forEach(p=>d.addPage(p));return new Blob([await d.save()],{type:'application/pdf'})};
       let blob=await one(from,to);
       if(blob.size>14e6&&to>from){/* too big in one go: send page by page */let html='';for(let p=from;p<=to;p++){const b1=await one(p,p);if(b1.size>18e6)throw new Error('Page '+p+' of “'+c.name+'” is too large to send.');
-          html+=await gGen(cfg.docModel||cfg.model,[{inline_data:{mime_type:'application/pdf',data:await b64(b1)}},{text:docPrompt(m,p,p,c.total)}])+'\n'}
+          html+=await gText(cfg.docModel||cfg.model,[{inline_data:{mime_type:'application/pdf',data:await b64(b1)}},{text:docPrompt(m,p,p,c.total)}],{ctl})+'\n'}
         m.parts[i]=html;out.push(html);await saveMeta(m,true);continue}
       parts=[{inline_data:{mime_type:'application/pdf',data:await b64(blob)}},{text:docPrompt(m,from,to,c.total)}]}
     else{for(const im of c.img){if(im.blob.size>14e6)throw new Error('A photo in “'+c.name+'” is larger than 14 MB.');parts.push({inline_data:{mime_type:im.mime||'image/jpeg',data:await b64(im.blob)}})}
       parts.push({text:docPrompt(m,1,c.img.length,c.img.length).replace(/These are pages [^\n]*\n/,'These are '+c.img.length+' photographed page'+(c.img.length>1?'s, in order':'')+'.\n')})}
-    const html=await gGen(cfg.docModel||cfg.model,parts);m.parts[i]=html;out.push(html);await saveMeta(m,true)}
+    const html=await gText(cfg.docModel||cfg.model,parts,{ctl,onText:prog});m.parts[i]=html;out.push(html);setPct(m,(i+1)/total);await saveMeta(m,true)}
   return out.join('\n');
 }
 
 /* ---------- the work queue: one job at a time; the light is orange while it runs ---------- */
-const Q=[];let busy=null;
+const Q=[];let busy=null,curJob=null;
 function enqueue(id){if(!Q.includes(id)&&!(busy&&busy.id===id))Q.push(id);const m=byM(id);if(m&&m.status!=='processing'){m.status='queued';saveMeta(m)}pump()}
 async function pump(){
   if(busy)return;const id=Q.shift();if(!id)return;const m=byM(id);if(!m){pump();return}
   if(!navigator.onLine){m.status='waiting';saveMeta(m);status('No internet: “'+m.name+'” will be sent when you are back online.');pump();return}
-  busy=m;m.status='processing';delete m.err;await saveMeta(m,true);light();
+  busy=m;const ctl={m};curJob=ctl;m.status='processing';delete m.err;m.pct=0;await saveMeta(m,true);light();status('Sending “'+m.name+'” to Gemini…');
   try{
     let html;
-    if(m.kind==='doc')html=clean(await typeDoc(m));
-    else{const t=await transcribeAudio(m);html=textToHtml(t)}
+    if(m.kind==='doc')html=clean(await typeDoc(m,ctl));
+    else{const t=await transcribeAudio(m,ctl);html=textToHtml(t)}
     const old=await idb.get('kv','dxdoc:'+m.id);
+    if(!html&&!(old&&old.html&&old.html.replace(/<[^>]+>|&nbsp;|\s/g,'')))throw new Error('Gemini sent back no text for this recording. Press ⟳ Retype.');
     const st=old||{html:'',font:cfg.font,size:cfg.size,line:cfg.line};
     st.html=(st.html||'')+(html||'');await idb.set('kv','dxdoc:'+m.id,st);
-    m.status='done';delete m.progress;m.docAt=Date.now();await saveMeta(m,true);
+    m.status='done';delete m.progress;delete m.pct;delete m.liveOpen;m.docAt=Date.now();await saveMeta(m,true);
     await writeDocx(m,st,true);
     if(m.sheet&&m.kind!=='doc'&&html)toSheet(m,html);
     status('“'+m.name+'” is ready.');
@@ -4793,12 +4960,40 @@ async function pump(){
     if(cfg.autoOpen&&!R&&$('#dxEd').hidden)openEd(m.id);
     else toast('“'+m.name+'” is ready'+(unsure?' ('+unsure+' word'+(unsure>1?'s':'')+' marked [?] to check)':'')+'.',{label:'Open',run:()=>openEd(m.id)});
   }catch(e){
-    m.err=String(e.message||e).slice(0,300);m.status=e.net?'waiting':'failed';delete m.progress;await saveMeta(m,true);
+    if(e.cancel){delete m.progress;delete m.pct;m.status='stopped';await saveMeta(m,true);
+      if(m.retypeAfter){delete m.retypeAfter;await resetDoc(m);Q.push(m.id);m.status='queued';await saveMeta(m,true);status('Typing “'+m.name+'” again from the start…')}
+      else status('Typing of “'+m.name+'” stopped. Press ⌨ Type when you want it typed.');
+      return}
+    m.err=String(e.message||e).slice(0,300);m.status=e.net?'waiting':'failed';delete m.progress;delete m.pct;await saveMeta(m,true);
     status(e.net?'No connection: “'+m.name+'” will be sent again automatically.':'Could not finish “'+m.name+'”: '+m.err);
     if(e.nokey)toast('Add your Gemini API key first.',{label:'Settings',run:openSet});
     else if(!e.net)toast('Gemini could not finish “'+m.name+'”. The audio is safe; press Try again in the Dictation box.');
-  }finally{busy=null;light();pump()}
+  }finally{busy=null;curJob=null;light();renderList();pump()}
 }
+/* ⌨ Type: send it now (also un-sticks a job that shows "typing" but is not moving) */
+async function typeNow(m){
+  if(R&&R.m===m){toast('Stop the recording first.');return}
+  if(busy===m){status('“'+m.name+'” is being typed: '+(m.pct||0)+'%. If it does not move, press ⟳ Retype.');return}
+  if(LIVE.has(m.id)){status('The live typing of “'+m.name+'” is still finishing.');return}
+  const allTyped=m.kind==='audio'&&(m.segs||[]).length&&m.segs.every(s=>s.txt!=null);const st=await idb.get('kv','dxdoc:'+m.id);
+  const empty=!(st&&st.html&&st.html.replace(/<[^>]+>|&nbsp;|\s/g,''));
+  /* typed live before the app closed, or "typed" but nothing came: start clean so nothing is doubled or missed */
+  if(m.liveOpen||(allTyped&&empty))await resetDoc(m);
+  const i=Q.indexOf(m.id);if(i>=0)Q.splice(i,1);enqueue(m.id)}
+/* ⟳ Retype: the whole clip again from the start; a job that is running is stopped first */
+async function retype(m){
+  if(R&&R.m===m){toast('Stop the recording first.');return}
+  if(m.gone){toast('The audio of “'+m.name+'” was deleted after '+(cfg.keep||10)+' days, so it cannot be typed again.');return}
+  const st=await idb.get('kv','dxdoc:'+m.id);
+  if(st&&st.html&&!confirm('Type “'+m.name+'” again from the start?\n\nThe present Word document will be replaced by the new typing.'))return;
+  if(busy===m&&curJob){m.retypeAfter=true;curJob.cancel=true;try{curJob.ac&&curJob.ac.abort()}catch(e){}status('Stopping and starting “'+m.name+'” again…');return}
+  const L=LIVE.get(m.id);if(L){L.dead=true;LIVE.delete(m.id)}
+  await resetDoc(m);enqueue(m.id)}
+function stopTyping(m){if(busy===m&&curJob){curJob.cancel=true;try{curJob.ac&&curJob.ac.abort()}catch(e){}}else{const i=Q.indexOf(m.id);if(i>=0)Q.splice(i,1);m.status='stopped';delete m.pct;saveMeta(m,true)}}
+async function resetDoc(m){const i=Q.indexOf(m.id);if(i>=0)Q.splice(i,1);
+  (m.segs||[]).forEach(s=>delete s.txt);delete m.parts;delete m.liveOpen;delete m.pct;delete m.progress;delete m.docAt;delete m.err;
+  try{await idb.del('kv','dxdoc:'+m.id)}catch(e){}if(edM===m&&!ed.hidden){pg.innerHTML='<p><br></p>';edDirty=false;edSt('Being typed again…')}
+  m.status='stopped';await saveMeta(m,true)}
 window.addEventListener('online',()=>setTimeout(()=>{list.filter(m=>m.status==='waiting').forEach(m=>enqueue(m.id))},1500));
 setInterval(()=>{if(navigator.onLine&&!busy)list.filter(m=>m.status==='waiting').forEach(m=>enqueue(m.id))},60000);
 
@@ -4806,7 +5001,7 @@ setInterval(()=>{if(navigator.onLine&&!busy)list.filter(m=>m.status==='waiting')
 function light(){
   const b=$('#dxBtn');if(!b)return;b.classList.remove('rec','paused','busy','attn');const t=$('#dxBtnT');
   if(R){b.classList.add(R.paused?'paused':'rec');t.textContent=mmss(curSecs());b.title=R.paused?'Dictation paused':'Recording. Click to see the dictation box.'}
-  else if(busy||list.some(m=>m.status==='processing'||m.status==='queued')){b.classList.add('busy');t.textContent='Typing…';b.title='Gemini is typing your dictation'}
+  else if(busy||list.some(m=>m.status==='processing'||m.status==='queued')){b.classList.add('busy');const x=busy||list.find(m=>m.status==='processing');t.textContent=x&&x.pct!=null?'Typing '+x.pct+'%':'Typing…';b.title='Gemini is typing your dictation'}
   else if(list.some(m=>m.status==='interrupted'||m.status==='failed')){b.classList.add('attn');t.textContent='Dictate';b.title='A dictation needs your attention'}
   else{t.textContent='Dictate';b.title='Dictation (Gemini)'}
 }
@@ -4831,25 +5026,28 @@ function renderList(){
     const dur=live?curSecs():(m.segs||[]).reduce((a,s)=>a+(s.dur||0),0);
     const d=document.createElement('div');d.className='dxit';
     d.innerHTML='<div class="nm"></div><div class="mt"></div><div class="acts"></div>';d.querySelector('.nm').textContent=(m.kind==='doc'?'📄 ':'🎙 ')+m.name;
-    d.querySelector('.mt').innerHTML=escH(new Date(m.created).toLocaleString([], {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}))+(m.kind==='audio'?' · '+mmss(dur):'')+' · <span class="'+st[0]+'">'+escH(st[1]+(m.progress&&m.status==='processing'?', '+m.progress:''))+'</span>'+(m.gone?' · '+(m.kind==='audio'?'audio':'source file')+' deleted after '+(cfg.keep||10)+' days':'')+(m.err&&(m.status==='failed'||m.status==='waiting')?'<br><span class="bad">'+escH(m.err)+'</span>':'');
+    const run=m.status==='processing',pc=run&&m.pct!=null?m.pct:null;
+    d.querySelector('.mt').innerHTML=escH(new Date(m.created).toLocaleString([], {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}))+(m.kind==='audio'?' · '+mmss(dur):'')+' · <span class="'+st[0]+'">'+escH(st[1]+(pc!=null?' '+pc+'%':'')+(m.progress&&run?', '+m.progress:''))+'</span>'+(run?'<div class="dxbar"><i style="width:'+(pc||2)+'%"></i></div>':'')+(m.gone?' · '+(m.kind==='audio'?'audio':'source file')+' deleted after '+(cfg.keep||10)+' days':'')+(m.err&&(m.status==='failed'||m.status==='waiting')?'<br><span class="bad">'+escH(m.err)+'</span>':'');
     const acts=d.querySelector('.acts');const add=(t,f,cls)=>{const b=document.createElement('button');b.className='btn'+(cls?' '+cls:'');b.textContent=t;b.onclick=f;acts.append(b)};
     if(!live){
-      if(m.kind==='audio'&&!m.gone&&m.status==='interrupted'){add('● Continue recording',()=>startRec(m),'primary');add('Type what is there',()=>enqueue(m.id))}
+      const canAudio=m.kind!=='audio'||!m.gone,liveRun=LIVE.has(m.id),typing=run||m.status==='queued';
+      if(m.kind==='audio'&&!m.gone&&m.status==='interrupted')add('● Continue recording',()=>startRec(m),'primary');
       if(m.status==='done')add('Open',()=>openEd(m.id),'primary');
-      if(m.status==='failed'||m.status==='waiting'||m.status==='stopped')add('Try again',()=>enqueue(m.id),'primary');
+      if(canAudio&&!liveRun&&/^(failed|waiting|stopped|interrupted)$/.test(m.status))add('⌨ Type',()=>typeNow(m),m.status==='interrupted'?'':'primary');
+      if(typing&&!liveRun)add('■ Stop typing',()=>stopTyping(m));
+      if(canAudio&&(m.status==='done'||typing||m.status==='failed'||liveRun))add('⟳ Retype',()=>retype(m));
       if(m.kind==='audio'&&!m.gone&&(m.status==='done'||m.status==='stopped'||m.status==='failed'))add('● Dictate more',()=>startRec(m));
-      if(m.kind==='audio'&&!m.gone)add('▶ Play',()=>playAll(m));
+      if(m.kind==='audio'&&!m.gone){if(play&&play.mid===m.id){add(play.ctx.state==='suspended'?'▶ Resume':'❚❚ Pause',togglePlay,'primary');add('■ Stop',()=>{stopPlay();status('')})}else add('▶ Play',()=>playAll(m))}
       if(m.status==='done')add('⬇ Word',async()=>{const st=await idb.get('kv','dxdoc:'+m.id);if(st)downloadDocx(m,st)});
-      if(m.kind==='audio'&&!m.gone&&m.status==='done')add('Type again',()=>{if(!confirm('Send the whole recording to Gemini again? The present Word document will be replaced.'))return;m.segs.forEach(s=>delete s.txt);idb.del('kv','dxdoc:'+m.id).then(()=>enqueue(m.id))});
-      if(m.status!=='processing'&&m.status!=='queued')add('Delete',()=>{if(!confirm('Delete “'+m.name+'” from this list'+(m.gone?'':' along with its audio')+'?'))return;if(!confirm('Really delete it? This cannot be undone. (A Word file already saved in your folder stays there.)'))return;delAll(m)},'warn');
+      if(!typing&&!liveRun)add('Delete',()=>{if(!confirm('Delete “'+m.name+'” from this list'+(m.gone?'':' along with its audio')+'?'))return;if(!confirm('Really delete it? This cannot be undone. (A Word file already saved in your folder stays there.)'))return;delAll(m)},'warn');
     }
     d.onclick=e=>{if(e.target.tagName!=='BUTTON')selId=m.id};box.append(d)}
 }
 async function playAll(m){selId=m.id;stopPlay();const AC=window.AudioContext||window.webkitAudioContext;const ctx=new AC();const bufs=[];
   for(const s of m.segs){const b=await idb.get('files',fKey(m.id,s.f));if(!b)continue;const ab=await decodeBlob(ctx,b);if(ab)bufs.push(ab)}
   if(!bufs.length){toast('The audio is not on this device.');ctx.close();return}
-  let t=ctx.currentTime+0.05;const srcs=bufs.map(ab=>{const s=ctx.createBufferSource();s.buffer=ab;s.connect(ctx.destination);s.start(t);t+=ab.duration;return s});
-  play={ctx,src:{stop(){srcs.forEach(s=>{try{s.stop()}catch(e){}})}}};$('#dxRepStop').hidden=false;status('Playing “'+m.name+'”…');
+  const t0=ctx.currentTime+0.05;let t=t0;const srcs=bufs.map(ab=>{const s=ctx.createBufferSource();s.buffer=ab;s.connect(ctx.destination);s.start(t);t+=ab.duration;return s});
+  play={ctx,mid:m.id,src:{stop(){srcs.forEach(s=>{try{s.stop()}catch(e){}})}}};playShown('Playing “'+m.name+'”',t-t0,t0);status('Playing “'+m.name+'”…');renderList();
   srcs[srcs.length-1].onended=()=>{if(play&&play.ctx===ctx){stopPlay();status('')}}}
 function openPanel2(){panel.hidden=false;fillPresets();renderList();renderWarn();$('#dxKeepNote').textContent='Audio clips are kept for '+(cfg.keep||10)+' days'+(dirH?' in “'+dirH.name+'” and here':' here')+', then deleted automatically. Word files stay.'}
 $('#dxBtn').onclick=()=>{if(panel.hidden)openPanel2();else panel.hidden=true};
@@ -4860,6 +5058,7 @@ $('#dxStop').onclick=()=>finishRec('go');
 $('#dxDiscard').onclick=()=>{if(confirm('Throw this recording away? It will not be kept.'))finishRec('discard')};
 panel.querySelectorAll('[data-rep]').forEach(b=>b.onclick=()=>replay(+b.dataset.rep));
 $('#dxRepStop').onclick=()=>{stopPlay();status(R?'Paused. Press Resume to carry on.':'')};
+$('#dxRepPause').onclick=togglePlay;
 $('#dxPreset').onchange=()=>{cfg.preset=$('#dxPreset').value;saveCfg()};
 panel.addEventListener('keydown',e=>e.stopPropagation());
 panel.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation()});
@@ -4913,14 +5112,14 @@ $('#dxDocGo').onclick=async()=>{
 /* ---------- settings ---------- */
 function openSet(){const s=$('#dxSet');$('#dxKey').value=cfg.key||'';$('#dxModel').value=cfg.model||'';$('#dxDocModel').value=cfg.docModel||'';$('#dxKeep').value=cfg.keep||10;
   $('#dxFont').innerHTML=FONTS.map(f=>'<option>'+f+'</option>').join('');$('#dxFont').value=cfg.font;$('#dxSize').innerHTML=SIZES.map(z=>'<option value="'+z+'">'+z+' pt</option>').join('');$('#dxSize').value=String(cfg.size);
-  $('#dxLine').value=String(cfg.line);$('#dxAuto').checked=!!cfg.autoOpen;$('#dxVocab').value=cfg.vocab||'';$('#dxTestInfo').textContent=hasKey()?'A key is saved on this device.':'';renderPresets();updDir();s.hidden=false}
+  $('#dxLine').value=String(cfg.line);$('#dxAuto').checked=!!cfg.autoOpen;$('#dxLiveSec').value=String(cfg.live==null?10:cfg.live);$('#dxVocab').value=cfg.vocab||'';$('#dxTestInfo').textContent=hasKey()?'A key is saved on this device.':'';renderPresets();updDir();s.hidden=false}
 function renderPresets(){const box=$('#dxPresets');box.innerHTML='';
   cfg.presets.forEach((p,i)=>{const d=document.createElement('div');d.className='dxpre';d.innerHTML='<input type="text" aria-label="Name of the instruction"><textarea rows="2" aria-label="Instruction"></textarea><div class="row"><button class="btn warn" style="height:26px">Remove</button></div>';
     const [n,t]=[d.querySelector('input'),d.querySelector('textarea')];n.value=p.name;t.value=p.text;n.oninput=()=>{p.name=n.value};t.oninput=()=>{p.text=t.value};
     d.querySelector('button').onclick=()=>{if(cfg.presets.length<2){toast('Keep at least one instruction.');return}if(confirm('Remove “'+p.name+'”?')){cfg.presets.splice(i,1);renderPresets()}};box.append(d)})}
 $('#dxPreAdd').onclick=()=>{cfg.presets.push({id:uid(),name:'My instruction',text:'Describe here what Gemini should do with the dictation.'});renderPresets()};
 function readSet(){cfg.key=$('#dxKey').value.trim();cfg.model=$('#dxModel').value.trim()||'gemini-3.8-flash';cfg.docModel=$('#dxDocModel').value.trim();cfg.keep=Math.max(1,Math.min(365,parseInt($('#dxKeep').value,10)||10));
-  cfg.font=$('#dxFont').value;cfg.size=+$('#dxSize').value;cfg.line=+$('#dxLine').value;cfg.autoOpen=$('#dxAuto').checked;cfg.vocab=$('#dxVocab').value;cfg.presets=cfg.presets.filter(p=>p.name.trim()&&p.text.trim());if(!cfg.presets.length)cfg.presets=PRESETS0.map(p=>Object.assign({},p));saveCfg()}
+  cfg.font=$('#dxFont').value;cfg.size=+$('#dxSize').value;cfg.line=+$('#dxLine').value;cfg.autoOpen=$('#dxAuto').checked;cfg.live=+$('#dxLiveSec').value||0;cfg.vocab=$('#dxVocab').value;cfg.presets=cfg.presets.filter(p=>p.name.trim()&&p.text.trim());if(!cfg.presets.length)cfg.presets=PRESETS0.map(p=>Object.assign({},p));saveCfg()}
 $('#dxSetDone').onclick=()=>{readSet();$('#dxSet').hidden=true;fillPresets();renderWarn();purge();if(hasKey())list.filter(m=>m.status==='waiting'||(m.status==='failed'&&/key/i.test(m.err||''))).forEach(m=>enqueue(m.id))};
 $('#dxSet').addEventListener('keydown',e=>e.stopPropagation());
 $('#dxSetBtn').onclick=openSet;$('#dxSetFromMain').onclick=()=>{document.querySelectorAll('.panel').forEach(p=>p.hidden=true);openSet()};$('#dxDirPick').onclick=dirPick;$('#dxDirAllow').onclick=dirAsk;
@@ -4939,7 +5138,7 @@ function toSheet(m,html){
 /* ================= the Word-style editor ================= */
 const ed=$('#dxEd'),pg=$('#dxePage');let edM=null,edDirty=false,hist=[],fut=[],histT=null;
 $('#dxeFont').innerHTML=FONTS.map(f=>'<option>'+f+'</option>').join('');$('#dxeSize').innerHTML=SIZES.map(z=>'<option value="'+z+'">'+z+'</option>').join('');
-async function openEd(id){const m=byM(id);if(!m)return;const st=(await idb.get('kv','dxdoc:'+id))||{html:'',font:cfg.font,size:cfg.size,line:cfg.line};
+async function openEd(id){const m=byM(id);if(!m)return;const LL=LIVE.get(id);if(LL)await liveStore(LL);const st=(await idb.get('kv','dxdoc:'+id))||{html:'',font:cfg.font,size:cfg.size,line:cfg.line};
   if(edM&&edDirty)await saveEd(true);edM=m;$('#dxeName').value=m.name;pg.style.setProperty('--dxf',"'"+(st.font||cfg.font)+"'");pg.style.setProperty('--dxs',(st.size||cfg.size)+'pt');pg.style.setProperty('--dxlh',st.line||cfg.line);
   pg.dataset.font=st.font||cfg.font;pg.dataset.size=st.size||cfg.size;pg.dataset.line=st.line||cfg.line;
   pg.innerHTML=st.html||'<p><br></p>';hist=[];fut=[];snapNow();edDirty=false;edSt('');ed.hidden=false;try{document.execCommand('defaultParagraphSeparator',false,'p')}catch(e){}
