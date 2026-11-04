@@ -94,6 +94,15 @@ button,label.btn,input,select,textarea{font:inherit;color:inherit}
 .dtab span.t{overflow:hidden;text-overflow:ellipsis}
 .dtab[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink)}
 .dtab.inview::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--link)}
+.dtab .g{width:20px;height:20px;border-radius:4px;display:grid;place-items:center;font-size:12px;opacity:.75;cursor:pointer}
+.dtab .g:hover{background:color-mix(in srgb,var(--accent) 16%,transparent);opacity:1}
+.ngprev details{border:1px solid var(--line);border-radius:7px;padding:6px 10px;margin-top:6px}
+.ngprev summary{cursor:pointer}.ngprev ul{margin:6px 0 2px 18px;padding:0;font-size:13px;color:var(--muted)}
+.ngbar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}.ngbar i{display:block;height:100%;width:2%;background:var(--accent);transition:width .5s}
+.ngopt{display:flex;gap:8px;align-items:flex-start;margin:4px 0}
+.panel>.pc>*{flex-shrink:0}
+.libjump{position:sticky;bottom:0;align-self:flex-end;display:flex;gap:6px;margin-top:-8px;z-index:2}
+.libjump .btn{height:34px;min-width:44px;border-radius:17px;box-shadow:0 2px 10px rgba(0,0,0,.18);background:color-mix(in srgb,var(--surface) 88%,transparent);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .dtab .x{width:20px;height:20px;border-radius:4px;display:grid;place-items:center;font-size:14px;color:var(--muted)}
 .dtab .x:hover{background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger)}
 .dtab .x.arm{width:auto;padding:0 6px;font-size:11px;color:var(--danger);font-weight:600}
@@ -599,6 +608,7 @@ main.split.w3{grid-template-columns:minmax(0,var(--pdfw,33%)) 12px minmax(0,1fr)
         <div class="drow">
           <div class="dtabs" id="dtabs" role="tablist" aria-label="PDFs in this matter"></div>
           <button class="btn" id="addBtn" aria-haspopup="menu">+ Add PDF</button>
+          <button class="btn" id="ngBtn" title="Generate notes from this PDF with Gemini or Claude: your default notes, or notes as you instruct">✨ Notes</button>
           <button class="btn" id="cmbBtn" title="Join this matter's PDFs (OA, reply, rejoinder…) into one PDF, in the order you choose">⧉ Combine</button>
           <input class="sr" type="file" id="pdfIn" multiple accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
           <input class="sr" type="file" id="appendIn" multiple accept="application/pdf,.pdf">
@@ -823,7 +833,37 @@ main.split.w3{grid-template-columns:minmax(0,var(--pdfw,33%)) 12px minmax(0,1fr)
   <div class="row"><h3 style="flex:1">Matters</h3><button class="btn" id="libDay" title="List the matters on board for a date, with their serial numbers; they show as a strip at the top">📅 Day list</button><button class="btn" id="libBoard" title="Read the day's board (cause list) and pin your matters from it automatically">📥 Upload board</button><button class="btn" id="libRcv" title="Add a PDF or photo you received (WhatsApp, e-mail, Files) to a matter">📎 Add a received file</button><input class="sr" type="file" id="rcvIn" multiple accept="application/pdf,.pdf,image/jpeg,image/png,.jpg,.jpeg,.png,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"><button class="btn primary" id="libNew">New matter</button></div>
   <div class="libsearch"><input type="text" id="libQ" placeholder="Search by matter or PDF file name" aria-label="Search matters and PDF file names" autocomplete="off"></div>
   <ul class="plist" id="projList"></ul>
+  <div class="libjump"><button class="btn" id="libUp" title="Back to the top" aria-label="Scroll to the top">▲</button><button class="btn" id="libDown" title="Scroll down" aria-label="Scroll down">▼</button></div>
   <div class="row end"><button class="btn" id="openSample">Open the sample</button><button class="btn" data-close>Close</button></div>
+</div></div>
+
+<!-- Generate notes -->
+<div class="panel" id="ngPanel" hidden><div class="pc" role="dialog" aria-labelledby="ngTitle">
+  <h2 id="ngTitle">Generate notes</h2>
+  <div id="ngStep_ask">
+    <p id="ngDefaultInfo" style="margin:0 0 10px">Your standard notes, in eight linked sheets: <b>1 Structured facts · 2 Record index · 3 Chronology · 4 Arguments · 5 Key points · 6 Mind map · 7 Final submissions · 8 Bench questions</b>. Every point is linked to its page, with a light ring round the passage.</p>
+    <div id="ngCustomBox" hidden><label for="ngCustom" style="font-weight:600">Your key inputs</label>
+      <textarea id="ngCustom" rows="7" style="width:100%;box-sizing:border-box;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:7px;font:inherit;background:var(--bg2,var(--surface));color:inherit" placeholder="e.g. Only the seniority facts of the applicant and respondents 4 to 6, a comparative chart of their dates of appointment, and points to argue that the 2019 selection was contrary to the G.R. dated 12.03.2018."></textarea></div>
+    <div style="margin-top:10px"><b>Read</b>
+      <label class="ngopt"><input type="radio" name="ngScope" id="ngScopeThis" checked> <span>This file: <b id="ngThisName"></b></span></label>
+      <label class="ngopt" id="ngAllRow"><input type="radio" name="ngScope" id="ngScopeAll"> <span>All <b id="ngAllN"></b> PDFs of this matter together</span></label></div>
+    <div class="field" style="margin-top:8px"><label for="ngSide">I appear for (optional)</label><input type="text" id="ngSide" placeholder="e.g. Respondents 1 and 2 (Union of India)" autocomplete="off" style="width:100%;box-sizing:border-box;height:36px;flex:none"></div>
+    <p style="margin:12px 0 6px;font-weight:600">Prepare the notes with:</p>
+    <div class="row"><button class="btn primary" id="ngGem">✦ Gemini</button><button class="btn primary" id="ngCla">✳ Claude</button><button class="btn" data-close>Cancel</button></div>
+    <p style="color:var(--muted);font-size:12.5px;margin:8px 0 0">The PDF goes to the service you choose, under your own key. Large paper-books can take a few minutes; you can close this box and keep working, and a message tells you when the notes are ready.</p>
+  </div>
+  <div id="ngStep_run" hidden>
+    <p id="ngRunMsg" style="margin:0 0 8px">Working…</p>
+    <div class="ngbar"><i id="ngBar"></i></div>
+    <p id="ngRunInfo" style="color:var(--muted);font-size:13px;margin:6px 0 10px"></p>
+    <div class="row"><button class="btn" id="ngCancel">Stop</button><button class="btn" data-close>Hide (keep working)</button></div>
+  </div>
+  <div id="ngStep_done" hidden>
+    <p id="ngDoneInfo" style="margin:0"></p>
+    <div class="ngprev" id="ngPrev"></div>
+    <div class="row" style="margin-top:12px"><button class="btn primary" id="ngAttach">📎 Attach to the file</button><button class="btn" id="ngJson">⬇ Save as .xdesk.json</button><button class="btn" id="ngAgain">Prepare again</button><button class="btn warn" id="ngDiscard">Discard</button></div>
+    <p style="color:var(--muted);font-size:12.5px;margin:8px 0 0">Attaching adds the sheets to this matter's worksheet, each point linked to its passage in the file. Undo removes them again.</p>
+  </div>
 </div></div>
 
 <!-- Claude import -->
@@ -856,6 +896,12 @@ main.split.w3{grid-template-columns:minmax(0,var(--pdfw,33%)) 12px minmax(0,1fr)
   <div class="field"><label for="sUrl">Sync address (Apps Script web app URL)</label><input type="url" id="sUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
   <div class="field"><label for="sKey">Sync key</label><input type="text" id="sKey" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
   <div class="row"><button class="btn" id="sTest">Test connection</button><button class="btn primary" id="sSync">Sync now</button><span id="sInfo" style="color:var(--muted);font-size:13px"></span></div>
+  <h3>Notes by Gemini or Claude</h3>
+  <p>✨ on a PDF's tab prepares notes from it. Gemini uses the Gemini key in the Dictation settings. For Claude, paste a key from console.anthropic.com (kept only on this device).</p>
+  <div class="field"><label for="ngClaudeKey">Claude API key</label><input type="text" id="ngClaudeKey" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="sk-ant-…" style="-webkit-text-security:disc"></div>
+  <div class="field"><label for="ngClaudeModel">Claude model</label><input type="text" id="ngClaudeModel" placeholder="claude-sonnet-5-5" autocomplete="off" spellcheck="false"></div>
+  <div class="field"><label for="ngGemModel">Gemini model for notes (blank = the dictation model)</label><input type="text" id="ngGemModel" placeholder="e.g. gemini-3.8-pro" autocomplete="off" spellcheck="false"></div>
+  <div class="row"><button class="btn" id="ngClaudeTest">Test the Claude key</button><span id="ngKeyInfo" style="color:var(--muted);font-size:13px"></span></div>
   <h3>Dictation (Gemini)</h3>
   <p>The Gemini key, instructions, clip folder and Word defaults are in the Dictation box. <button class="btn" id="dxSetFromMain">Open dictation settings</button></p>
   <h3>Backup on this device</h3>
@@ -1431,12 +1477,13 @@ function renderTabs(){
   const box=$('#dtabs');box.innerHTML='';if(!P)return;const shown=new Set(views.map(v=>v.doc));
   P.docs.forEach(d=>{
     const b=document.createElement('div');b.className='dtab'+(views.length>1&&shown.has(d.id)&&d.id!==active?' inview':'');b.setAttribute('role','tab');b.tabIndex=0;b.dataset.id=d.id;b.setAttribute('aria-selected',d.id===active);b.title=d.file+'  (double-click to rename)';
-    b.innerHTML='<span class="t"></span><span class="x" role="button" aria-label="Close or delete this PDF" title="Close or delete this PDF">×</span>';b.querySelector('.t').textContent=(isWordDoc(d)?'W · ':'')+d.title;if(isWordDoc(d))b.classList.add('wordtab');box.append(b);
+    b.innerHTML='<span class="t"></span>'+(isWordDoc(d)?'':'<span class="g" role="button" aria-label="Generate notes from this file" title="Generate notes from this file">✨</span>')+'<span class="x" role="button" aria-label="Close or delete this PDF" title="Close or delete this PDF">×</span>';b.querySelector('.t').textContent=(isWordDoc(d)?'W · ':'')+d.title;if(isWordDoc(d))b.classList.add('wordtab');box.append(b);
   });
   if(!P.docs.length){const s=document.createElement('span');s.style.color='var(--muted)';s.style.fontSize='12px';s.textContent='No PDFs yet';box.append(s)}
 }
 $('#dtabs').addEventListener('click',e=>{
   const tab=e.target.closest('.dtab');if(!tab||e.target.tagName==='INPUT')return;const id=tab.dataset.id;const x=e.target.closest('.x');
+  const gb=e.target.closest('.g');if(gb){e.stopPropagation();if(window.ngMenu)window.ngMenu(gb,id);return}
   if(x){const d=docById(id);popMenu(x,[{label:'Close this PDF',hint:'Takes it off this matter\'s tabs. The file is kept (Undo brings it back).',run:()=>removeDoc(id)},
     {label:'Delete this PDF…',hint:'Deletes the file itself. You will be asked twice.',run:()=>deletePdf(id)}]);return}
   if(id!==V().doc)viewShow(V(),id);
@@ -3146,6 +3193,9 @@ $('#pickFolder').onclick=async()=>{
 };
 $('#reconnect').onclick=async()=>{try{if(rootHandle&&(await rootHandle.requestPermission({mode:'readwrite'}))==='granted'){await refreshLibrary();if(proj&&proj.store===FolderStore)touch();if(untitled()&&!P.docs.length)showWelcome()}}catch(e){toast('Permission was not granted.')}};
 $('#useBrowser').onclick=async()=>{libStore=BrowserStore;try{localStorage.setItem('xdesk:mode','browser')}catch(e){}await refreshLibrary()};
+(()=>{const pc=()=>$('#libPanel>.pc');
+  $('#libDown').onclick=()=>{const c=pc();c.scrollBy({top:Math.max(200,c.clientHeight*.8),behavior:'smooth'})};
+  $('#libUp').onclick=()=>{pc().scrollTo({top:0,behavior:'smooth'})}})();
 $('#openSample').onclick=async()=>{$('#libPanel').hidden=true;await openSample()};
 
 /* Settings */
@@ -3416,10 +3466,13 @@ async function pushFile(name,f){
   updSyncBtn('☁ Sending '+f.slice(0,24)+'…');return await driveCall({op:'write',matter:name,name:f,b64:b64FromBuf(buf),mime:'application/pdf'});
 }
 let wordTipShown=false;
-function wordSrvTip(){if(wordTipShown)return;wordTipShown=true;toast('Word files are not syncing yet: the Google sync script needs its version 3 update (one paste, then Deploy → New version). PDFs and notes sync as usual.')}
+function wordSrvTip(){if(wordTipShown)return;wordTipShown=true;toast('A Word file was sent to Google Drive but Drive does not list it back yet. In the Google sync script: Deploy → Manage deployments → ✎ → Version: New version → Deploy. PDFs and notes sync as usual.')}
+/* the script lists Word files once its file filter has .docx in it; seeing one listed is proof enough */
+const docxOK=()=>{try{return srvV>=3||localStorage.getItem('xdesk:docxok')==='1'}catch(e){return srvV>=3}};
+function sawDocx(){try{localStorage.setItem('xdesk:docxok','1')}catch(e){}}
 async function syncFiles(name,R,st,M){
   const del=new Set(((M&&M.deletedFiles)||[]).map(f=>String(f).toLowerCase()));
-  let loc=await localFiles(name),rem=(R&&R.files)||[];st.files=st.files||{};
+  let loc=await localFiles(name),rem=(R&&R.files)||[];st.files=st.files||{};if(rem.some(x=>isWordName(x.name)))sawDocx();
   /* PDFs deleted on either device: remove them here and in Drive, never fetch them again */
   for(const l of loc.filter(x=>del.has(x.name.toLowerCase()))){try{await BrowserStore.delFile(name,l.name)}catch(e){}if(isOpenLocal(name)){const d=P.docs.find(x=>x.file===l.name);if(d)dropRT(d.id)}delete st.files[l.name.toLowerCase()]}
   for(const rf of rem.filter(x=>del.has(x.name.toLowerCase()))){if(srvV>=2){try{const r=await driveCall({op:'trash',matter:name,name:rf.name});if(r.mark)st.mark=r.mark}catch(e){console.warn(e)}}}
@@ -3431,9 +3484,9 @@ async function syncFiles(name,R,st,M){
     if(need){await pullFile(name,rf);st.files[k]={lsize:rf.size,rmod:rf.modified};await setSt(name,st);got.push(rf.name)}
     else if(!s&&l&&l.size===rf.size)st.files[k]={lsize:l.size,rmod:rf.modified}}
   for(const l of loc){const k=l.name.toLowerCase(),s=st.files[k],rf=RM[k];
-    if(srvV<3&&isWordName(l.name)){wordSrvTip();continue}  /* the old Google script cannot list Word files: sending them would repeat on every sync */
+    if(!docxOK()&&isWordName(l.name)&&s&&s.tried&&!rf){wordSrvTip();continue}  /* sent once and still not listed: the script cannot list Word files yet; do not send it again and again */
     const need=!rf||(s&&l.size!==s.lsize&&(!rf||rf.modified===s.rmod))||(!s&&rf&&l.size!==rf.size);
-    if(need){const r=await pushFile(name,l.name);st.files[k]={lsize:l.size,rmod:r&&r.modified};if(r&&r.mark)st.mark=r.mark;await setSt(name,st);sent++}}
+    if(need){const r=await pushFile(name,l.name);st.files[k]={lsize:l.size,rmod:r&&r.modified};if(!docxOK()&&isWordName(l.name))st.files[k].tried=1;if(r&&r.mark)st.mark=r.mark;await setSt(name,st);sent++}}
   return {got,sent};
 }
 
@@ -4454,6 +4507,256 @@ const _rmDoc=removeDoc;removeDoc=function(id,deleting){if(WE.id===id)closeWordEd
   if(urlId){busy=true;setTimeout(()=>run(idbSrc(urlId)),600)}
   setTimeout(poll,1500);setInterval(poll,5000);window.addEventListener('focus',()=>{nextTry=0;poll()});
 })();
+/* ================= Generate notes: Gemini or Claude reads the PDFs and writes the worksheet notes ================= */
+(function(){
+const NGK='xdesk:notesai';
+let ngc={claudeKey:'',claudeModel:'claude-sonnet-5-5',gemModel:''};
+try{Object.assign(ngc,JSON.parse(localStorage.getItem(NGK)||'{}'))}catch(e){}
+const ngSave=()=>{try{localStorage.setItem(NGK,JSON.stringify(ngc))}catch(e){}};
+const dictCfg=()=>{try{return JSON.parse(localStorage.getItem('xdesk:dict')||'{}')}catch(e){return {}}};
+const gemKey=()=>String(dictCfg().key||'').trim();
+const gemModel=()=>String(ngc.gemModel||dictCfg().docModel||dictCfg().model||'gemini-3.8-flash').trim().replace(/^models\//,'');
+const escN=s=>String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
+/* ---- settings (main Settings panel) ---- */
+const sk=$('#ngClaudeKey'),sm=$('#ngClaudeModel'),sg=$('#ngGemModel');
+function ngFill(){sk.value=ngc.claudeKey||'';sm.value=ngc.claudeModel||'';sg.value=ngc.gemModel||'';$('#ngKeyInfo').textContent=ngc.claudeKey?'A Claude key is saved on this device.':'No Claude key yet.'}
+ngFill();
+[sk,sm,sg].forEach(x=>x.addEventListener('change',()=>{ngc.claudeKey=sk.value.trim();ngc.claudeModel=sm.value.trim()||'claude-sonnet-5-5';ngc.gemModel=sg.value.trim();ngSave();ngFill()}));
+$('#ngClaudeTest').onclick=async()=>{ngc.claudeKey=sk.value.trim();ngc.claudeModel=sm.value.trim()||'claude-sonnet-5-5';ngSave();const i=$('#ngKeyInfo');
+  if(!ngc.claudeKey){i.textContent='Paste the key first.';return}i.textContent='Checking…';
+  try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:claudeHeaders(),body:JSON.stringify({model:ngc.claudeModel,max_tokens:5,messages:[{role:'user',content:'Reply OK'}]})});
+    if(r.ok)i.textContent='Working. Model: '+ngc.claudeModel+'.';else{let m='';try{m=(await r.json()).error.message}catch(e){}i.textContent='Claude said '+r.status+(m?': '+m:'')}}
+  catch(e){i.textContent='Could not reach Claude (no internet?).'}};
+function claudeHeaders(){return {'content-type':'application/json','x-api-key':ngc.claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}}
+
+/* ---- what to ask ---- */
+const RULES=`You are preparing notes of argument for Sanket R. Charpe, an advocate practising in Nagpur (Bombay High Court Nagpur Bench, CAT, MAT, Industrial and Labour Courts, civil and criminal courts). Read EVERY page of the attached PDF file(s) carefully, including scanned pages, handwriting and Marathi or Hindi text.
+Rules:
+- Build the facts only from the documents. Never invent facts, dates, names, case numbers, citations or page numbers. Cross-check each date between the pleading and the annexures; note any discrepancy.
+- Page numbers written inside the notes are the handwritten or printed paper-book page numbers where the pages carry them; otherwise the PDF page number.
+- Link a fact to the actual annexure document that shows it; link to the pleading only when no annexure shows it.
+- Spell Indian names correctly in their Marathi, Hindi, Muslim, Christian or Parsi context; put [?] after any name you are not sure of.
+- Quote Marathi and Hindi documents in the original Devanagari.
+- Short, court-ready, plain English.
+A link is a "ref" object pointing to the exact place in the PDF:
+ {"f": file number as listed below, "p": PDF page number counted from 1 = first page of that file (NOT the printed page number), "q": 4 to 20 consecutive words copied EXACTLY as printed on that page (same spelling and script), "box": [ymin, xmin, ymax, xmax] position of that passage on the page in units of 0 to 1000, "c": colour}
+Colours: "blue" client's documents and credentials, "orange" impugned order or criteria, "pink" discrimination or seniority facts, "green" the other side's own favourable letters, "yellow" pleading and prayer, "purple" objections and principles.
+Reply with ONLY one JSON object, with no markdown and no words before or after it, in this form:
+{"title":"short title of the matter","sheets":[{"name":"1 Structured facts","items":[ ... ]}]}
+Item kinds (field "t"):
+ {"t":"h","text":"heading"}
+ {"t":"p","text":"one point","ref":{...}}            ref may be left out if nothing in the record shows it
+ {"t":"s","text":"↳ also: A-9, p.54","ref":{...}}     a short line under the point above, e.g. the same fact at another place
+ {"t":"x","quote":"exact passage","comment":"one line","ref":{...}}   an excerpt card supporting the point above
+ {"t":"row","cells":[{"text":"cell","ref":{...}}]}  one row of a comparative chart; the first row holds the column headings without refs
+ {"t":"g","text":"document guide line","ref":{...}}  right-hand column (document guide)
+ {"t":"m","lv":0,"text":"mind-map node","ref":{...}}  mind map: lv 0 centre, 1 branch (start the text with ●), 2 leaf (start with •)
+Give every point that rests on a document its ref.`;
+const DEFAULT_TASK=`Prepare my standard structured notes for this matter, in these eight sheets, in this exact order, with exactly these sheet names:
+"1 Structured facts": one fact per point, in date order; every date and fact linked. When a fact appears at several places in the record, give the point linked to the primary annexure and then short "s" lines "↳ also: A-9, p.54", each with its own ref. Where persons are compared (seniority, eligibility, selection, promotion), add a comparative chart with "row" items: one row per person, columns name | date of appointment | senior/junior | qualification, every date cell with its own ref.
+"2 Record index": links to the title or index page, the cause title, the impugned order or communication, the start of the grounds, the prayer clause (and the interim prayer); then every annexure, one line each: "A-x (pp.__) Document: what it shows."
+"3 Chronology": a heading with the cause title, forum, hearing date (if shown) and side; a short gist of the matter (who, what is challenged, why, relief); then the dated events "DD/MM/YYYY — event", each with its ref.
+"4 Arguments": numbered steps in the order to argue (opening; maintainability and limitation; eligibility; each ground; interim relief; ancillary directions; close). Each step: an "h" heading, the argument as a "p", then "x" excerpt cards (exact quote and a one-line comment) supporting it.
+"5 Key points": A. Killer facts; B. Anticipated objections with replies; C. Housekeeping (drafting slips in the pleading: age, address, wrong dates, blanks); D. Principles with citations marked "verify before reading out". Each point with its ref.
+"6 Mind map": "m" items — the central theme, the branches and the leaves; every linked leaf ends with a bracket saying what it points to, e.g. "(Pleading: para 4.17)" or "(Doc: A-3)".
+"7 Final submissions": A. What the client possesses (service, qualifications, experience, eligibility on every condition); B. How he was wronged, in sequence; C. Points on merits. Each point ends with "[A-x, p.__ · Para __ / Ground __]" and has "x" excerpt cards beneath. Also "g" items: a DOCUMENT GUIDE, one line per annexure saying what to point out, with its ref.
+"8 Bench questions": the "Where is it shown?" questions the Bench may ask (relative seniority, dates, criteria, vacancies, impugned clause, application in time, relief). Under each question ("h"), one-line answers "→ what the document shows [A-x, p.__]" as "p" items, each with its ref.
+Adapt the headings to the matter and to my side (if I appear for the respondents, section B of sheet 7 becomes why the applicant has no case). Mark the strongest point with ★.`;
+const CUSTOM_TASK=t=>`Prepare notes on this matter as I instruct below. Arrange them in one or more sheets as suits my instructions (give each sheet a short name), keeping the links to the record as described.
+My instructions:
+${t}`;
+
+/* ---- the panel ---- */
+let NG={job:null,res:null,mode:'default',doc:null};
+function ngOpen(docId,mode){
+  if(!P){toast('Open a matter first.');return}
+  const d=docById(docId)||docById(active);if(!d){toast('Open a PDF first.');return}
+  if(isWordDoc(d)){toast('Notes are made from PDFs. Open a PDF of this matter and press ✨ on its tab.');return}
+  NG.doc=d.id;NG.mode=mode;
+  const pdfs=P.docs.filter(x=>!isWordDoc(x));
+  $('#ngTitle').textContent=(mode==='custom'?'Customise notes':'Default notes')+' · '+d.title;
+  $('#ngCustomBox').hidden=mode!=='custom';$('#ngDefaultInfo').hidden=mode==='custom';
+  $('#ngThisName').textContent=d.title;$('#ngAllN').textContent=pdfs.length;$('#ngAllRow').hidden=pdfs.length<2;
+  $('#ngScopeThis').checked=true;
+  ngShow(NG.job?'run':'ask');openPanel('ngPanel');
+  if(mode==='custom')setTimeout(()=>$('#ngCustom').focus(),60);
+}
+function ngShow(step){['ask','run','done'].forEach(s=>$('#ngStep_'+s).hidden=s!==step)}
+$('#ngPanel').addEventListener('keydown',e=>e.stopPropagation());
+$('#ngGem').onclick=()=>ngStart('gemini');$('#ngCla').onclick=()=>ngStart('claude');
+$('#ngCancel').onclick=()=>{if(NG.job){NG.job.cancel=true;try{NG.job.ac.abort()}catch(e){}}};
+$('#ngDiscard').onclick=()=>{NG.res=null;ngShow('ask');$('#ngPanel').hidden=true};
+$('#ngAttach').onclick=()=>ngAttach();
+$('#ngJson').onclick=()=>{if(!NG.res)return;const b=new Blob([JSON.stringify(ngBuild(NG.res),null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=safeName((P&&P.name)||'Notes')+' - notes.xdesk.json';document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},3000)};
+$('#ngAgain').onclick=()=>{NG.res=null;ngShow('ask')};
+
+/* ---- run ---- */
+async function ngStart(engine){
+  if(NG.job){toast('Notes are already being prepared.');return}
+  const task=NG.mode==='custom'?$('#ngCustom').value.trim():'';
+  if(NG.mode==='custom'&&!task){toast('Write your key inputs first.');$('#ngCustom').focus();return}
+  if(engine==='gemini'&&!gemKey()){toast('Add your Gemini API key first (Dictation settings ⚙).');return}
+  if(engine==='claude'&&!ngc.claudeKey){toast('Add your Claude API key in Settings › Notes by Gemini or Claude.');openPanel('setPanel');setTimeout(()=>{try{sk.scrollIntoView({block:'center'});sk.focus()}catch(e){}},80);return}
+  const d=docById(NG.doc);if(!d)return;
+  const docs=$('#ngScopeAll').checked?P.docs.filter(x=>!isWordDoc(x)):[d];
+  const side=$('#ngSide').value.trim();
+  const job={engine,cancel:false,ac:null,docs,matter:P.name,t0:Date.now(),chars:0,expect:NG.mode==='custom'?9000:26000};NG.job=job;
+  ngShow('run');ngProg('Reading the PDF'+(docs.length>1?'s':'')+'…',0);
+  const tick=setInterval(()=>ngProg(null),1000);
+  try{
+    const files=[];let total=0;
+    for(const x of docs){const buf=await proj.store.readFile(proj.name,x.file);let pages=0;try{const rt=await ensureRT(x);pages=rt.pageData.length}catch(e){}
+      files.push({doc:x,buf,pages});total+=buf.byteLength}
+    const list='The files (refer to them by number in "f"):\n'+files.map((f,i)=>(i+1)+'. '+f.doc.title+' ('+(f.pages||'?')+' pages)').join('\n');
+    const task2=(NG.mode==='custom'?CUSTOM_TASK(task):DEFAULT_TASK)+(side?'\nI appear for: '+side+'.':'')+'\nMatter: '+P.name+'.';
+    let txt;
+    if(engine==='gemini')txt=await ngGemini(job,files,total,list+'\n\n'+task2);
+    else txt=await ngClaude(job,files,total,list+'\n\n'+task2);
+    const json=ngParse(txt);
+    NG.res={json,engine,docIds:docs.map(x=>x.id),at:Date.now(),matter:job.matter};
+    try{await idb.set('kv','ng:'+job.matter,NG.res)}catch(e){}
+    ngPreview();ngShow('done');
+    if($('#ngPanel').hidden)toast('Notes for “'+job.matter+'” are ready.',{label:'Show',run:()=>{openPanel('ngPanel');ngShow('done')}});
+  }catch(e){
+    console.warn('notes',e);ngShow('ask');
+    if(job.cancel)toast('Stopped.');else toast('Could not prepare the notes: '+String(e.message||e).slice(0,260),{label:'Try again',run:()=>ngStart(engine)});
+  }finally{clearInterval(tick);NG.job=null}
+}
+function ngProg(msg,pct){const j=NG.job;if(!j)return;if(msg)$('#ngRunMsg').textContent=msg;
+  const p=pct!=null?pct:Math.min(97,Math.round(j.chars/j.expect*100));j.pct=p;
+  $('#ngBar').style.width=Math.max(2,p)+'%';
+  $('#ngRunInfo').textContent=(j.engine==='gemini'?'Gemini':'Claude')+' · '+p+'% · '+Math.round((Date.now()-j.t0)/1000)+' s'+(j.chars?' · '+j.chars.toLocaleString()+' characters written':' · reading, nothing written yet')}
+const b64buf=buf=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=()=>rej(r.error);r.readAsDataURL(new Blob([buf]))});
+/* read a server-sent-events stream, calling eat(json) for each event */
+async function sseRead(r,job,eat){
+  let stall=0;const kick=()=>{clearTimeout(stall);stall=setTimeout(()=>{try{job.ac.abort()}catch(e){}},240000)};kick();
+  const rd=r.body.getReader(),dec=new TextDecoder();let buf='';
+  try{for(;;){const {done,value}=await rd.read();if(done)break;kick();buf+=dec.decode(value,{stream:true});let i;
+      while((i=buf.indexOf('\n'))>=0){const line=buf.slice(0,i).trim();buf=buf.slice(i+1);if(line.startsWith('data:')){try{eat(JSON.parse(line.slice(5)))}catch(e){}}}}
+    if(buf.trim().startsWith('data:'))try{eat(JSON.parse(buf.trim().slice(5)))}catch(e){}}
+  finally{clearTimeout(stall)}}
+async function okOrThrow(r,who){if(r.ok)return;let m='';try{const j=await r.json();m=(j.error&&(j.error.message||j.error.type))||''}catch(e){}throw new Error(who+' '+r.status+(m?': '+m:''))}
+const GBN='https://generativelanguage.googleapis.com';
+async function ngGemini(job,files,total,task){
+  const parts=[];
+  for(let i=0;i<files.length;i++){const f=files[i];parts.push({text:'File '+(i+1)+': '+f.doc.title});
+    if(total<=18e6)parts.push({inline_data:{mime_type:'application/pdf',data:await b64buf(f.buf)}});
+    else{ngProg('Sending '+f.doc.title+' to Gemini…',1);parts.push({file_data:{mime_type:'application/pdf',file_uri:await gemUpload(job,f)}})}}
+  parts.push({text:task});
+  ngProg('Gemini is reading and writing the notes…',2);
+  job.ac=new AbortController();
+  const r=await fetch(GBN+'/v1beta/models/'+encodeURIComponent(gemModel())+':streamGenerateContent?alt=sse&key='+encodeURIComponent(gemKey()),{method:'POST',signal:job.ac.signal,headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({systemInstruction:{parts:[{text:RULES}]},contents:[{role:'user',parts}],generationConfig:{temperature:0.2,maxOutputTokens:65536,responseMimeType:'application/json'}})});
+  await okOrThrow(r,'Gemini');let txt='',fin='';
+  await sseRead(r,job,j=>{const c=j.candidates&&j.candidates[0];if(c){const t=((c.content&&c.content.parts)||[]).map(p=>p.thought?'':(p.text||'')).join('');if(t){txt+=t;job.chars=txt.length;ngProg('Gemini is writing the notes…')}if(c.finishReason)fin=c.finishReason}});
+  if(fin==='MAX_TOKENS')throw new Error('The notes were too long for one reply. Choose “This file only”, or use Customise and ask for fewer sheets.');
+  return txt}
+async function gemUpload(job,f){
+  const k=encodeURIComponent(gemKey()),n=f.buf.byteLength;
+  const s=await fetch(GBN+'/upload/v1beta/files?key='+k,{method:'POST',headers:{'X-Goog-Upload-Protocol':'resumable','X-Goog-Upload-Command':'start','X-Goog-Upload-Header-Content-Length':String(n),'X-Goog-Upload-Header-Content-Type':'application/pdf','Content-Type':'application/json'},body:JSON.stringify({file:{display_name:f.doc.title.slice(0,100)}})});
+  await okOrThrow(s,'Gemini upload');const url=s.headers.get('X-Goog-Upload-URL')||s.headers.get('x-goog-upload-url');if(!url)throw new Error('Gemini did not accept the upload of '+f.doc.title+' (file too large for this browser).');
+  const u=await fetch(url,{method:'POST',headers:{'X-Goog-Upload-Offset':'0','X-Goog-Upload-Command':'upload, finalize'},body:f.buf});await okOrThrow(u,'Gemini upload');
+  let fl=(await u.json()).file;
+  for(let t=0;fl&&fl.state==='PROCESSING'&&t<60;t++){if(job.cancel)throw new Error('Stopped');await new Promise(r=>setTimeout(r,2000));const g=await fetch(GBN+'/v1beta/'+fl.name+'?key='+k);await okOrThrow(g,'Gemini');fl=await g.json()}
+  if(!fl||!fl.uri||fl.state==='FAILED')throw new Error('Gemini could not read '+f.doc.title+'.');return fl.uri}
+async function ngClaude(job,files,total,task){
+  if(total>30e6)throw new Error('These PDFs are too large to send to Claude together ('+Math.round(total/1e6)+' MB; the limit is about 30 MB). Choose “This file only”.');
+  const content=[];for(let i=0;i<files.length;i++){const f=files[i];content.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:await b64buf(f.buf)},title:'File '+(i+1)+': '+f.doc.title})}
+  content.push({type:'text',text:task});
+  ngProg('Claude is reading and writing the notes…',2);
+  job.ac=new AbortController();
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:job.ac.signal,headers:claudeHeaders(),
+    body:JSON.stringify({model:ngc.claudeModel||'claude-sonnet-5-5',max_tokens:32000,stream:true,system:RULES,messages:[{role:'user',content}]})});
+  await okOrThrow(r,'Claude');let txt='',stop='';
+  await sseRead(r,job,j=>{if(j.type==='content_block_delta'&&j.delta&&j.delta.type==='text_delta'){txt+=j.delta.text;job.chars=txt.length;ngProg('Claude is writing the notes…')}
+    else if(j.type==='message_delta'&&j.delta&&j.delta.stop_reason)stop=j.delta.stop_reason;else if(j.type==='error')throw new Error('Claude: '+((j.error&&j.error.message)||'error'))});
+  if(stop==='max_tokens')throw new Error('The notes were too long for one reply. Choose “This file only”, or use Customise and ask for fewer sheets.');
+  return txt}
+function ngParse(txt){
+  let t=String(txt||'').trim().replace(/^```[a-z]*\s*/i,'').replace(/```\s*$/,'').trim();let j=null;
+  try{j=JSON.parse(t)}catch(e){const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a>=0&&b>a)try{j=JSON.parse(t.slice(a,b+1))}catch(e2){}}
+  if(!j||!Array.isArray(j.sheets)||!j.sheets.length)throw new Error('The reply could not be read as notes. Please try again.');
+  j.sheets=j.sheets.filter(s=>s&&Array.isArray(s.items)&&s.items.length);if(!j.sheets.length)throw new Error('The reply had no notes in it.');return j}
+
+/* ---- preview ---- */
+function ngPreview(){const r=NG.res,box=$('#ngPrev');if(!r)return;let n=0,refs=0;
+  box.innerHTML=r.json.sheets.map(s=>{const its=s.items;n+=its.length;its.forEach(i=>{if(i.ref)refs++;(i.cells||[]).forEach(c=>{if(c.ref)refs++})});
+    const first=its.slice(0,4).map(i=>'<li>'+escN(String(i.text||i.quote||(i.cells||[]).map(c=>c.text).join(' | ')).slice(0,140))+'</li>').join('');
+    return '<details><summary><b>'+escN(s.name||'Sheet')+'</b> · '+its.length+' item'+(its.length===1?'':'s')+'</summary><ul>'+first+(its.length>4?'<li>…</li>':'')+'</ul></details>'}).join('');
+  $('#ngDoneInfo').textContent=(r.engine==='gemini'?'Gemini':'Claude')+' prepared '+r.json.sheets.length+' sheet'+(r.json.sheets.length===1?'':'s')+' with '+n+' items and '+refs+' links to the record.'+(r.matter!==(P&&P.name)?' (These were made for “'+r.matter+'”.)':'')}
+
+/* ---- notes → worksheet items (excerpt-desk/1) ---- */
+const COLS=['yellow','green','pink','blue','orange','purple'];
+function ngBuild(r){
+  const docs=r.docIds.map(id=>docById(id)).filter(Boolean);const out={format:FMT,name:P.name,docs:docs.map(d=>({id:d.id,file:d.file,title:d.title})),sheets:[],items:[],links:[]};
+  const H=(text,size,w)=>{const per=Math.max(8,(w||settings.noteWidth||440)/(size*.5));return String(text||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/per)),0)*size*1.45+10};
+  const anc=ref=>{if(!ref||typeof ref!=='object')return null;const d=docs[(parseInt(ref.f,10)||1)-1]||docs[0];if(!d)return null;
+    const a={doc:d.id,page:Math.max(1,parseInt(ref.p,10)||1),color:COLS.includes(ref.c)?ref.c:'yellow'};if(ref.q)a.quote=String(ref.q).replace(/\s+/g,' ').trim();
+    if(Array.isArray(ref.box)&&ref.box.length===4&&ref.box.every(v=>isFinite(+v)))a._box=ref.box.map(Number);return a};
+  r.json.sheets.forEach((s,si)=>{const sid='ng'+si;out.sheets.push({id:sid,name:String(s.name||('Notes '+(si+1))).slice(0,60)});
+    let y=40,gy=40,lastP=null;const lastM={};
+    const put=o=>{o.id=uid();o.sheet=sid;out.items.push(o);return o};
+    s.items.forEach(it=>{if(!it||typeof it!=='object')return;const t=it.t||'p';
+      if(t==='h'){put({type:'text',x:40,y,text:String(it.text||''),size:19});y+=H(it.text,19)+12;lastP=null}
+      else if(t==='s'){const o=put({type:'text',x:72,y,text:String(it.text||''),size:13,anchor:anc(it.ref)});y+=H(it.text,13,400)+4;if(lastP)out.links.push({a:lastP.id,b:o.id})}
+      else if(t==='x'){const a=anc(it.ref)||{doc:docs[0]&&docs[0].id,page:1,color:'yellow'};a.quote=String(it.quote||a.quote||'').trim();a._ex=true;
+        const o=put({type:'excerpt',x:72,y,anchor:a,comment:String(it.comment||'')});y+=estH(o)+14;if(lastP)out.links.push({a:lastP.id,b:o.id})}
+      else if(t==='row'){const cells=Array.isArray(it.cells)?it.cells:[];const w=cells.length>4?120:150;let h=0;
+        cells.forEach((c,ci)=>{const txt=String((c&&c.text)||'');put({type:'text',x:40+ci*(w+8),y,text:txt,size:13,anchor:anc(c&&c.ref)});h=Math.max(h,H(txt,13,w))});y+=h+6}
+      else if(t==='g'){put({type:'text',x:620,y:gy,text:String(it.text||''),size:13,anchor:anc(it.ref)});gy+=H(it.text,13,340)+8}
+      else if(t==='m'){const lv=Math.max(0,Math.min(2,parseInt(it.lv,10)||0));const o=put({type:'text',x:40+lv*250,y,text:String(it.text||''),size:lv?13:17,anchor:anc(it.ref)});
+        y+=H(it.text,lv?13:17,240)+8;lastM[lv]=o;if(lv&&lastM[lv-1])out.links.push({a:lastM[lv-1].id,b:o.id})}
+      else{const o=put({type:'text',x:40,y,text:String(it.text||''),size:15,anchor:anc(it.ref)});y+=H(it.text,15)+10;lastP=o}
+    })});
+  out.items.forEach(i=>{if(!i.anchor)delete i.anchor});
+  return out}
+/* find each passage on its page: a light ring round it; if the words cannot be found (a scan), use the position given, else a pin */
+async function ngPlace(src){
+  const rts={};let found=0,boxed=0,pins=0;
+  for(const it of src.items){const a=it.anchor;if(!a)continue;const d=docById(a.doc);if(!d)continue;
+    let rt=rts[d.id];if(rt===undefined){try{rt=rts[d.id]=await ensureRT(d)}catch(e){rt=rts[d.id]=null}}
+    let r=null;if(rt&&a.quote&&a.quote.length>3){try{r=await resolveQuote(rt,a.quote,a.page)}catch(e){r=null}if(r&&Math.abs(r.page-a.page)>3)r=null}
+    const bx=a._box;delete a._box;const ex=a._ex;delete a._ex;
+    if(r&&r.rects.length){const xs=r.rects.map(q=>q[0]),ys=r.rects.map(q=>q[1]),x2=r.rects.map(q=>q[0]+q[2]),y2=r.rects.map(q=>q[1]+q[3]);
+      const x0=Math.max(0,Math.min(...xs)-.006),y0=Math.max(0,Math.min(...ys)-.004);a.page=r.page;a.rects=[[x0,y0,Math.min(1,Math.max(...x2)+.006)-x0,Math.min(1,Math.max(...y2)+.004)-y0]];a.area=true;found++}
+    else if(bx&&bx[2]>bx[0]&&bx[3]>bx[1]&&bx[2]<=1000&&bx[3]<=1000){a.rects=[[bx[1]/1000,bx[0]/1000,(bx[3]-bx[1])/1000,(bx[2]-bx[0])/1000]];a.area=true;boxed++}
+    else if(ex){a.rects=[[.06,.08,.88,.06]];a.area=true;boxed++}
+    else{a.x=.05;a.y=bx?Math.max(0,Math.min(1,bx[0]/1000)):.06;pins++}
+    if(!ex&&!a.rects)delete a.quote}
+  return {found,boxed,pins}}
+async function ngAttach(){
+  const r=NG.res;if(!r||!P)return;if(r.matter!==P.name&&!confirm('These notes were made for “'+r.matter+'”. Attach them to “'+P.name+'” anyway?'))return;
+  if(!r.docIds.some(id=>docById(id))){toast('The PDF these notes were made from is not in this matter.');return}
+  $('#ngAttach').disabled=true;$('#ngDoneInfo').textContent='Finding each passage in the PDF…';
+  try{
+    const src=ngBuild(r);const st=await ngPlace(src);
+    commitHist(true);
+    /* the notes always go on sheets of their own: a blank open sheet is used for the first one, otherwise new sheets are added */
+    const empty=!P.items.some(onSheet)&&!(P.ink||[]).some(k=>k.doc==null&&onSheet(k));
+    if(src.sheets.length===1&&!empty){const n1={id:uid(),name:uniqueSheetName(src.sheets[0].name)};P.sheets.push(n1);try{renderSheets()}catch(e){}switchSheet(n1.id)}
+    const target=curSheet,firstNew=P.sheets.length;const rep=importInto(src,false);
+    if(empty){const t=P.sheets.find(x=>x.id===target);if(t){t.name='';t.name=uniqueSheetName(src.sheets[0].name)}}
+    renderItems();touch();commitHist(true);
+    try{renderSheets()}catch(e){}const ns=empty||src.sheets.length===1?P.sheets.find(x=>x.id===target):P.sheets[firstNew];if(ns&&ns.id!==curSheet)try{switchSheet(ns.id)}catch(e){}
+    for(const v of views){const rt=v.doc&&RT[v.doc];if(rt)await resolveAnchors(rt)}drawMarks();
+    $('#ngPanel').hidden=true;NG.res=null;try{await idb.del('kv','ng:'+r.matter)}catch(e){}showPane('desk');
+    toast('Notes attached: '+rep.items+' items on '+r.json.sheets.length+' sheet'+(r.json.sheets.length===1?'':'s')+'. '+st.found+' passages ringed'+(st.boxed?', '+st.boxed+' placed by position (scanned pages: check them)':'')+(st.pins?', '+st.pins+' pinned to the page':'')+'.');
+  }catch(e){console.error(e);toast('Could not attach the notes: '+(e.message||e))}
+  finally{$('#ngAttach').disabled=false}}
+/* notes made earlier but not attached yet are kept per matter */
+window.ngResume=async function(){if(!P||NG.job)return;try{const r=await idb.get('kv','ng:'+P.name);if(r&&r.json){NG.res=r;NG.doc=r.docIds[0];ngPreview();openPanel('ngPanel');$('#ngTitle').textContent='Notes ready · '+P.name;ngShow('done')}else toast('No unattached notes for this matter.')}catch(e){}};
+
+/* ---- the ✨ on each file tab, and the toolbar button ---- */
+function ngMenu(btn,docId){popMenu(btn,[{label:'Default notes',hint:'Your standard eight sheets: structured facts, record index, chronology, arguments, key points, mind map, final submissions, Bench questions',run:()=>ngOpen(docId,'default')},
+  {label:'Customise notes',hint:'Type your key inputs; Gemini or Claude prepares the notes as you ask',run:()=>ngOpen(docId,'custom')},
+  {label:'Notes made earlier, not attached',hint:'Show the last notes prepared for this matter',run:()=>window.ngResume()}])}
+window.ngMenu=ngMenu;
+if(/[?&]ngtest\b/.test(location.search))window.__ngP=()=>P;
+$('#ngBtn').onclick=e=>{if(!active){toast('Open a PDF first.');return}ngMenu(e.currentTarget,active)};
+})();
+
+
 /* ================= Dictation desk: record, keep safe, transcribe with Gemini, edit as Word ================= */
 (function(){
 const GB='https://generativelanguage.googleapis.com';
@@ -5267,7 +5570,18 @@ function docxBlob(st){
   const drels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
   return zip([{name:'[Content_Types].xml',data:enc(ct)},{name:'_rels/.rels',data:enc(rels)},{name:'word/document.xml',data:enc(doc)},{name:'word/_rels/document.xml.rels',data:enc(drels)},{name:'word/styles.xml',data:enc(styles)}]);
 }
+/* every saved dictation document also goes to Google Drive (Excerpt Desk › ~Dictations › Word documents) and to the backup folder */
+const upT={};
+function backupDocx(m,st){clearTimeout(upT[m.id]);upT[m.id]=setTimeout(async()=>{
+  const nm=fileSafe(m.name)+' ('+m.id.slice(0,4)+').docx';let blob;try{blob=docxBlob(st)}catch(e){return}
+  if(typeof syncOn==='function'&&syncOn()&&navigator.onLine){try{const buf=new Uint8Array(await blob.arrayBuffer());
+      await driveCall({op:'write',matter:'~Dictations',sub:'Word documents',name:nm,b64:b64FromBuf(buf),mime:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+      m.driveAt=Date.now();delete m.driveErr;saveMeta(m)}catch(e){console.warn('dictation to Drive',e);m.driveErr=String(e.message||e).slice(0,120);saveMeta(m)}}
+  if(typeof BK!=='undefined'&&BK.h&&BK.ok){try{await bkWrite(await bkSub('Dictations',true),nm,blob)}catch(e){console.warn('dictation backup',e)}}
+},2500)}
+window.addEventListener('online',()=>setTimeout(()=>{list.filter(m=>m.status==='done'&&m.driveErr).forEach(async m=>{const st=await idb.get('kv','dxdoc:'+m.id);if(st)backupDocx(m,st)})},4000));
 async function writeDocx(m,st,quiet){ /* into the PC folder, under the name given; returns a short "where" */
+  backupDocx(m,st);
   if(!dirH||!dirOK)return '';let fn=m.docFile;
   if(!fn){const base=fileSafe(m.name);fn=base+'.docx';let k=2;while(await dExists('Documents/'+fn)&&k<100)fn=base+' ('+(k++)+').docx';m.docFile=fn;await saveMeta(m,true)}
   return (await dWrite('Documents/'+fn,docxBlob(st)))?'Documents\\'+fn:''}
