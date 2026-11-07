@@ -1,5 +1,5 @@
 /* Excerpt Desk: keeps the app usable offline. Pages load fresh when online, so updates arrive by themselves. */
-const CACHE = 'xdesk-v2';
+const CACHE = 'xdesk-v3';   /* a new name clears every older offline copy */
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './apple-touch-icon.png',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
@@ -37,8 +37,11 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.hostname.endsWith('google.com') || url.hostname.endsWith('googleusercontent.com')) return;
   if (req.mode === 'navigate' || url.pathname.endsWith('/index.html')) {
-    e.respondWith(fetch(req).then(r => { const copy = r.clone(); caches.open(CACHE).then(c => c.put('./index.html', copy)); return r; })
-      .catch(() => caches.match('./index.html').then(r => r || caches.match('./'))));
+    /* always ask GitHub afresh (no browser cache); keep that copy for offline use, and finish saving it even if the page is closed */
+    e.respondWith(fetch(req.url, {cache: 'no-store', credentials: 'same-origin'}).then(r => {
+      if (r && r.ok) { const copy = r.clone(); e.waitUntil(caches.open(CACHE).then(c => c.put('./index.html', copy)).catch(() => null)); }
+      return r;
+    }).catch(() => caches.match('./index.html').then(r => r || caches.match('./'))));
     return;
   }
   e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(r => {
