@@ -1253,7 +1253,7 @@ async function ensureRT(doc){
 }
 /* keep only a few PDFs open in memory; others are reopened when you go back to them */
 let rtHold=0;
-function trimRT(){if(rtHold)return;const keep=new Set(views.map(v=>v.doc));const max=LOWMEM?2:6;const ids=Object.keys(RT).filter(id=>!keep.has(id)).sort((a,b)=>RT[a].used-RT[b].used);
+function trimRT(){if(rtHold)return;const keep=new Set(views.map(v=>v.doc));const max=LOWMEM?1:6;const ids=Object.keys(RT).filter(id=>!keep.has(id)).sort((a,b)=>RT[a].used-RT[b].used);
   while(Object.keys(RT).length>max&&ids.length)dropRT(ids.shift())}
 function dropRT(id){const rt=RT[id];if(rt){try{rt.pdf.destroy()}catch(e){}delete RT[id]}views.forEach(v=>{const c=v.cache[id];if(c)c.pages.forEach(unrenderPage);delete v.cache[id]})}
 
@@ -1907,7 +1907,7 @@ function tapHint(mouse){clearTimeout(tapHintT);tapHintT=setTimeout(()=>{if(Date.
   toast(mouse?'Double-click on the worksheet to type there.':'Press and hold on the worksheet to type there. A quick tap is ignored.')},380)}
 
 /* ================= problem recorder: a short diary of recent actions, kept on this device only ================= */
-const APPV='2026-10-18';
+const APPV='2026-11-07';
 let crumbs=[];try{crumbs=JSON.parse(localStorage.getItem('xdesk:log')||'[]')}catch(e){crumbs=[]}
 function crumb(m){try{crumbs.push([Date.now(),String(m).slice(0,160)]);if(crumbs.length>90)crumbs=crumbs.slice(-90);localStorage.setItem('xdesk:log',JSON.stringify(crumbs))}catch(e){}}
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
@@ -1915,7 +1915,19 @@ const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorag
 const prevAlive=+ls('xdesk:alive')||0,prevClean=ls('xdesk:clean');
 const unexpectedReload=prevClean==='0'&&Date.now()-prevAlive<120000;
 if(unexpectedReload){crumb('UNEXPECTED RELOAD (the device closed the page)');ls('xdesk:reloads',String((+ls('xdesk:reloads')||0)+1))}
-crumb('app started · '+(LOWMEM?'touch device':'laptop')+' · '+innerWidth+'×'+innerHeight);
+crumb('app started · version '+APPV+' · '+(LOWMEM?'touch device':'laptop')+' · '+innerWidth+'×'+innerHeight);
+/* never run an older copy than one this device has already run: an old offline copy is cleared and the latest loaded */
+const NEWESTV=ls('xdesk:newestv')||'';
+if(NEWESTV&&NEWESTV>APPV){crumb('an older copy ('+APPV+') opened; newest seen here is '+NEWESTV);
+  let tried=null;try{tried=sessionStorage.getItem('xdesk:vfix')}catch(e){}
+  if(navigator.onLine&&!tried){try{sessionStorage.setItem('xdesk:vfix','1')}catch(e){}
+    (async()=>{try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}catch(e){}
+      try{const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.update().catch(()=>0)))}catch(e){}
+      location.replace(location.pathname+'?v='+Date.now())})()}}
+else ls('xdesk:newestv',APPV);
+/* two unexpected closures within three minutes: start safely in the Library instead of reopening the same heavy page */
+let SAFE_START=false;
+if(unexpectedReload){let rl=[];try{rl=JSON.parse(ls('xdesk:rl')||'[]')}catch(e){}rl=rl.filter(t=>Date.now()-t<180000);rl.push(Date.now());ls('xdesk:rl',JSON.stringify(rl));SAFE_START=rl.length>=2;if(SAFE_START)crumb('safe start: closed '+rl.length+' times in 3 minutes')}
 ls('xdesk:clean','0');ls('xdesk:alive',String(Date.now()));
 setInterval(()=>{if(document.visibilityState==='visible')ls('xdesk:alive',String(Date.now()))},4000);
 /* remember exactly where you are, so a reload brings you back to it */
@@ -1928,6 +1940,14 @@ document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='hidden'){ls('xdesk:clean','1');if(LOWMEM)freeForBackground()}
   else{ls('xdesk:clean','0');ls('xdesk:alive',String(Date.now()));if(LOWMEM)views.forEach(v=>{if(v.pages.length)observeView(v)})}});
 window.addEventListener('pagehide',()=>ls('xdesk:clean','1'));
+/* now and then, look on GitHub for a newer upload and offer to load it */
+let verAt=0,verTold='';
+async function checkNewer(){if(!navigator.onLine||(location.protocol!=='https:'&&location.hostname!=='127.0.0.1')||Date.now()-verAt<30*60000)return;verAt=Date.now();
+  try{const r=await fetch('./index.html?check='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();const m=t.match(/const APPV='([^']+)'/);
+    if(m&&m[1]>APPV&&m[1]!==verTold){verTold=m[1];ls('xdesk:newestv',m[1]);crumb('newer version on GitHub: '+m[1]);
+      toast('A newer version of Excerpt Desk ('+m[1]+') is ready.',{label:'Load it now',run:async()=>{try{if(proj&&saveT)await saveNow()}catch(e){}location.replace(location.pathname+'?v='+Date.now())}})}}catch(e){}}
+setTimeout(checkNewer,20000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(checkNewer,3000)});
 async function problemReport(){
   const L=[];const d=new Date();
   L.push('Excerpt Desk problem report · app '+APPV+' · '+d.toLocaleString('en-IN'));
@@ -3208,7 +3228,7 @@ $('#setBtn').onclick=()=>{
 $('#sStart').addEventListener('change',e=>{settings.startup=e.target.value;applySettings()});
 $('#prCopy').onclick=async()=>{const t=await problemReport();if(await copyText(t))toast('Problem report copied. Paste it in your chat with Claude.');else{$('#copyTitle').textContent='Problem report';$('#copyText').value=t;openPanel('copyPanel');setTimeout(()=>$('#copyText').select(),50)}};
 $('#prClear').onclick=()=>{crumbs=[];ls('xdesk:log','[]');ls('xdesk:reloads','0');updPrInfo();toast('Record cleared')};
-function updPrInfo(){const n=+ls('xdesk:reloads')||0;$('#prInfo').innerHTML=(n?'<b>The app was closed unexpectedly '+n+' time'+(n===1?'':'s')+' on this device.</b> ':'')+'If the app misbehaves or reloads by itself, press <b>Copy problem report</b> and paste it to Claude. It lists recent actions and device details, not the contents of your matters.'}
+function updPrInfo(){const n=+ls('xdesk:reloads')||0;$('#prInfo').innerHTML='App version <b>'+APPV+'</b>. '+(n?'<b>The app was closed unexpectedly '+n+' time'+(n===1?'':'s')+' on this device.</b> ':'')+'If the app misbehaves or reloads by itself, press <b>Copy problem report</b> and paste it to Claude. It lists recent actions and device details, not the contents of your matters.'}
 $('#sTap').addEventListener('change',e=>{settings.tap=e.target.value;applySettings()});
 $('#sSize').addEventListener('change',e=>{settings.fontSize=Math.max(10,Math.min(36,parseInt(e.target.value,10)||15));e.target.value=settings.fontSize;applySettings()});
 $('#sFont').addEventListener('change',e=>{settings.font=e.target.value;applySettings();drawLinks()});
@@ -3638,10 +3658,12 @@ window.addEventListener('beforeunload',e=>{
   await loadSyncCfg();
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   if('serviceWorker' in navigator&&location.protocol==='https:'&&!inPreview){try{navigator.serviceWorker.register('sw.js')}catch(e){}}
-  if(syncOn())setTimeout(()=>syncAll(false),1500);
+  if(syncOn())setTimeout(()=>syncAll(false),LOWMEM?8000:1500);
   await setViews(1);
   let again=null;try{again=JSON.parse(sessionStorage.getItem('xdesk:open')||'null')}catch(e){}
   let res=null;try{res=JSON.parse(ls('xdesk:resume')||'null')}catch(e){}
+  if(SAFE_START){await openUntitled(true);openLibrary();
+    toast('The iPad closed Excerpt Desk twice in a row'+(res&&res.name?' while “'+res.name+'” was open':'')+', so it has started with the Library this time. Open the matter again; if it keeps closing, press Settings › Copy problem report and send it to Claude.');return}
   if(unexpectedReload&&res&&Date.now()-res.ts<45*60000&&res.kind==='browser'){
     try{if((await BrowserStore.list()).includes(res.name)){await openProject(BrowserStore,res.name);
       if(res.sheet&&P.sheets.some(x=>x.id===res.sheet))switchSheet(res.sheet);
