@@ -597,6 +597,7 @@ html.paper ::selection{background:rgba(160,120,50,.28)}
 
 /* PDF size and compression prompt (Nov 2026) */
 #czPanel{z-index:9500}
+.vmic{width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);cursor:pointer;display:grid;place-items:center;flex:none}.vmic span{width:16px;height:24px;border-radius:8px;background:#fff;box-shadow:0 9px 0 -6px #fff}.vmic.on{background:#d22d2d;animation:vpulse 1.2s infinite}.vmic.on span{width:18px;height:18px;border-radius:4px;box-shadow:none}@keyframes vpulse{0%{box-shadow:0 0 0 0 rgba(210,45,45,.5)}70%{box-shadow:0 0 0 14px rgba(210,45,45,0)}100%{box-shadow:0 0 0 0 rgba(210,45,45,0)}}
 .cz-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;max-height:40vh;overflow:auto}
 .cz-list li{display:flex;gap:10px;align-items:baseline;padding:8px 10px;border:1px solid var(--line);border-radius:8px}
 .cz-list li .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -825,7 +826,8 @@ html.paper ::selection{background:rgba(160,120,50,.28)}
   </div>
   <p class="muted" style="margin:0;font-size:12.5px">Add the matters listed that day with their <b>serial numbers</b>. They show in that order as a strip at the top of the screen; click one to open it (the open matter is saved first).</p>
   <ol class="olist dylist" id="dyList"></ol>
-  <div class="row" style="gap:8px;flex-wrap:wrap"><select id="dyAdd" style="flex:1;min-width:220px;height:34px"></select><button class="btn" id="dyAddBtn">+ Add to this day</button></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap"><select id="dyAdd" style="flex:1;min-width:220px;height:34px"></select><button class="btn" id="dyAddBtn">+ Add to this day</button><button class="btn primary" id="dyVoiceBtn" title="Say the date and the matters, e.g. “For 12th November pin O.A. 297, Kshirsagar ULP and the Dhande suit”">🎙 Pin by voice</button></div>
+  <div id="dyVoice" hidden style="border:1px solid var(--line);border-radius:8px;padding:8px 12px"></div>
   <div class="row end"><button class="btn warn" id="dyClear">Remove this day's list</button><button class="btn warn" id="dyClearPast" title="Remove the pins of every date before today">Clear past dates</button><button class="btn warn" id="dyClearAll" style="margin-right:auto" title="Remove every pinned case on every date">Clear all pinned cases</button><button class="btn" id="dyBoard" title="Read a cause list (PDF or text) and pin your matters from it">📥 Upload board</button><button class="btn" data-close>Close</button><button class="btn primary" id="dyShow">Show at the top</button></div>
 </div></div>
 
@@ -879,8 +881,13 @@ html.paper ::selection{background:rgba(160,120,50,.28)}
   <h2 id="ngTitle">Generate notes</h2>
   <div id="ngStep_ask">
     <p id="ngDefaultInfo" style="margin:0 0 10px">Your standard notes, in eight linked sheets: <b>1 Structured facts · 2 Record index · 3 Chronology · 4 Arguments · 5 Key points · 6 Mind map · 7 Final submissions · 8 Bench questions</b>. Every point is linked to its page, with a light ring round the passage.</p>
-    <div id="ngCustomBox" hidden><label for="ngCustom" style="font-weight:600">Your key inputs</label>
-      <textarea id="ngCustom" rows="7" style="width:100%;box-sizing:border-box;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:7px;font:inherit;background:var(--bg2,var(--surface));color:inherit" placeholder="e.g. Only the seniority facts of the applicant and respondents 4 to 6, a comparative chart of their dates of appointment, and points to argue that the 2019 selection was contrary to the G.R. dated 12.03.2018."></textarea></div>
+    <div id="ngDraftBox" hidden>
+      <div class="field" style="margin:0 0 8px"><label for="ngKind" style="font-weight:600">What to draft</label>
+        <select id="ngKind" style="width:100%;height:36px"><option>Written statement / Reply</option><option>Reply to Original Application (CAT / MAT)</option><option>Sur-rejoinder</option><option>Writ petition</option><option>Original Application</option><option>Affidavit</option><option>Application</option><option>Appeal / Revision</option><option>Other (as I say)</option></select></div>
+      <p class="muted" style="margin:0 0 6px;font-size:12.5px">With the draft you also get a <b>Drafting notes</b> sheet: every important statement of the draft, linked to the page of the PDF it is taken from, and anything the AI could not find in the papers — so you can check that nothing is made up.</p></div>
+    <div id="ngCustomBox" hidden><label for="ngCustom" style="font-weight:600" id="ngCustomLbl">Your key inputs</label>
+      <div id="ngMic"></div>
+      <textarea id="ngCustom" rows="7" style="width:100%;box-sizing:border-box;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:7px;font:inherit;background:var(--bg2,var(--surface));color:inherit" placeholder="Speak or type, e.g. Sheet 1 — the seniority facts of the applicant and respondents 4 to 6. Sheet 2 — a comparative chart of their dates of appointment. Sheet 3 — points to argue that the 2019 selection was contrary to the G.R. dated 12.03.2018."></textarea></div>
     <div style="margin-top:10px"><b>Read</b>
       <label class="ngopt"><input type="radio" name="ngScope" id="ngScopeThis" checked> <span>This file: <b id="ngThisName"></b></span></label>
       <label class="ngopt" id="ngAllRow"><input type="radio" name="ngScope" id="ngScopeAll"> <span>All <b id="ngAllN"></b> PDFs of this matter together</span></label></div>
@@ -898,7 +905,7 @@ html.paper ::selection{background:rgba(160,120,50,.28)}
   <div id="ngStep_done" hidden>
     <p id="ngDoneInfo" style="margin:0"></p>
     <div class="ngprev" id="ngPrev"></div>
-    <div class="row" style="margin-top:12px"><button class="btn primary" id="ngAttach">📎 Attach to the file</button><button class="btn" id="ngJson">⬇ Save as .xdesk.json</button><button class="btn" id="ngAgain">Prepare again</button><button class="btn warn" id="ngDiscard">Discard</button></div>
+    <div class="row" style="margin-top:12px"><button class="btn primary" id="ngOpenDraft" hidden>📝 Open the draft (Word page)</button><button class="btn primary" id="ngAttach">📎 Attach to the file</button><button class="btn" id="ngJson">⬇ Save as .xdesk.json</button><button class="btn" id="ngAgain">Prepare again</button><button class="btn warn" id="ngDiscard">Discard</button></div>
     <p style="color:var(--muted);font-size:12.5px;margin:8px 0 0">Attaching adds the sheets to this matter's worksheet, each point linked to its passage in the file. Undo removes them again.</p>
   </div>
 </div></div>
@@ -939,6 +946,8 @@ html.paper ::selection{background:rgba(160,120,50,.28)}
   <div class="field"><label for="ngClaudeModel">Claude model</label><input type="text" id="ngClaudeModel" placeholder="claude-sonnet-5-5" autocomplete="off" spellcheck="false"></div>
   <div class="field"><label for="ngGemModel">Gemini model for notes (blank = the dictation model)</label><input type="text" id="ngGemModel" placeholder="e.g. gemini-3.8-pro" autocomplete="off" spellcheck="false"></div>
   <div class="row"><button class="btn" id="ngClaudeTest">Test the Claude key</button><span id="ngKeyInfo" style="color:var(--muted);font-size:13px"></span></div>
+  <div class="field"><label for="ngDraftModel">Claude model for drafting pleadings</label><input type="text" id="ngDraftModel" placeholder="claude-opus-5-5" autocomplete="off" spellcheck="false"></div>
+  <div class="field"><label for="ngDraftStyle">My drafting style (followed in every pleading; blank = the standard one)</label><textarea id="ngDraftStyle" rows="6" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--line);border-radius:7px;font:inherit;background:var(--surface);color:inherit"></textarea></div>
   <h3>Dictation (Gemini)</h3>
   <p>The Gemini key, instructions, clip folder and Word defaults are in the Dictation box. <button class="btn" id="dxSetFromMain">Open dictation settings</button></p>
   <h3>Backup on this device</h3>
@@ -1947,7 +1956,7 @@ function tapHint(mouse){clearTimeout(tapHintT);tapHintT=setTimeout(()=>{if(Date.
   toast(mouse?'Double-click on the worksheet to type there.':'Press and hold on the worksheet to type there. A quick tap is ignored.')},380)}
 
 /* ================= problem recorder: a short diary of recent actions, kept on this device only ================= */
-const APPV='2026-11-10';
+const APPV='2026-11-10b';
 let crumbs=[];try{crumbs=JSON.parse(localStorage.getItem('xdesk:log')||'[]')}catch(e){crumbs=[]}
 function crumb(m){try{crumbs.push([Date.now(),String(m).slice(0,160)]);if(crumbs.length>90)crumbs=crumbs.slice(-90);localStorage.setItem('xdesk:log',JSON.stringify(crumbs))}catch(e){}}
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
@@ -2829,6 +2838,66 @@ function pleadOrder(docs){return docs.map((d,i)=>({d,i,r:pleadRank(d.title)})).s
    travels with the matter through Google Drive sync — made on the clerk's PC, it shows on the iPad.
    DAYS is the index built from all matters in the Library. */
 const DKEY='xdesk:days';
+/* ================= voice helpers (Nov 2026): record, then Gemini types it ================= */
+const vCfg=()=>{try{return JSON.parse(localStorage.getItem('xdesk:dict')||'{}')||{}}catch(e){return {}}};
+const vKey=()=>String(vCfg().key||'').trim();
+const vModel=()=>String(vCfg().model||'gemini-3.8-flash').trim().replace(/^models\//,'');
+const vB64=blob=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=()=>rej(r.error);r.readAsDataURL(blob)});
+async function vGem(parts,json){
+  if(!vKey())throw new Error('Add your Gemini API key first (🎙 Dictate › ⚙ settings).');
+  const body={contents:[{role:'user',parts}],generationConfig:{temperature:.2,maxOutputTokens:8192}};if(json)body.generationConfig.responseMimeType='application/json';
+  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(vModel())+':generateContent?key='+encodeURIComponent(vKey()),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error('Gemini: '+((j.error&&j.error.message)||'HTTP '+r.status));
+  const c=j.candidates&&j.candidates[0],t=c&&c.content&&(c.content.parts||[]).map(x=>x.thought?'':(x.text||'')).join('');
+  if(!t)throw new Error('Gemini sent back nothing.');return t}
+async function vTranscribe(blob){
+  return (await vGem([{inline_data:{mime_type:(blob.type||'audio/webm').split(';')[0],data:await vB64(blob)}},
+    {text:'Type out exactly what is said in this recording (English, Hindi or Marathi mixed), with correct punctuation. Indian legal context: case numbers like O.A. 297/2026, ULP 106/2026; names are Indian (Marathi, Hindi, Christian, Parsi, Muslim) — spell them correctly, put [?] after any you are unsure of. Reply with the words only.'}])).trim()}
+/* a small recorder: a round microphone button that starts at once and stops on a second press */
+function vRecorder(host,onDone,msg){
+  let rec=null,stream=null,chunks=[],tm=null,t0=0,cancelled=false;
+  host.innerHTML='<div style="display:flex;gap:12px;align-items:center;margin:6px 0"><button type="button" class="vmic" aria-label="Start or stop listening"><span></span></button><div style="display:flex;flex-direction:column"><b class="vlab">Starting the microphone…</b><span class="vtim muted" style="font-variant-numeric:tabular-nums"></span></div></div>';
+  const mic=host.querySelector('.vmic'),lab=host.querySelector('.vlab'),tim=host.querySelector('.vtim');
+  const tick=()=>{const s=Math.round((Date.now()-t0)/1000);tim.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+  async function start(){cancelled=false;
+    try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}})}catch(e){lab.textContent='The microphone could not be used ('+(e.message||e.name)+'). You can type instead.';return}
+    const type=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg'].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||'';
+    rec=new MediaRecorder(stream,type?{mimeType:type}:undefined);chunks=[];
+    rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+    rec.onstop=()=>{clearInterval(tm);stream.getTracks().forEach(t=>t.stop());mic.classList.remove('on');if(cancelled)return;
+      const blob=new Blob(chunks,{type:(rec.mimeType||'audio/webm').split(';')[0]});if(blob.size<1500){lab.textContent='Nothing was heard. Press the microphone and speak.';return}
+      lab.textContent='Got it.';onDone(blob)};
+    rec.start(1000);t0=Date.now();tick();tm=setInterval(tick,500);mic.classList.add('on');lab.textContent=msg||'Listening — press the microphone when you finish'}
+  function stop(c){cancelled=!!c;if(rec&&rec.state!=='inactive')rec.stop();else if(stream)stream.getTracks().forEach(t=>t.stop());clearInterval(tm);mic.classList.remove('on')}
+  mic.onclick=()=>{if(rec&&rec.state==='recording')stop(false);else start()};
+  return {start,stop,set:t=>{lab.textContent=t}}}
+
+/* ================= pin matters to a date by voice ================= */
+async function pinByVoice(){
+  const host=$('#dyVoice');host.hidden=false;
+  const r=vRecorder(host,async blob=>{
+    r.set('Matching what you said to your matters…');
+    try{
+      const names=(libNames||[]).slice(0,600);
+      const out=JSON.parse((await vGem([{inline_data:{mime_type:blob.type||'audio/webm',data:await vB64(blob)}},{text:
+        'The advocate is saying which of his matters to pin to a court date (a day list). Today is '+isoDay(new Date())+'. The date now open is '+dyDate+'.\n'+
+        'His matters (exact names):\n'+names.map((n,i)=>(i+1)+'. '+n).join('\n')+'\n\n'+
+        'For each case he mentions, find the matter in the list it refers to (by case number, party names or short names). Keep the serial number (Sr. No.) if he says one, and the stage if he says one.\n'+
+        'Return JSON: {"date":"YYYY-MM-DD if he says a date, else null","said":"what he said, in words","items":[{"matter":"exact name from the list, or null if none fits","said":"how he referred to it","sr":"","st":""}]}'}],true)).replace(/^```(?:json)?|```$/g,''));
+      const want=(out.items||[]).map(x=>({...x,ok:!!(x.matter&&names.includes(x.matter))}));
+      if(out.date&&/^\d{4}-\d{2}-\d{2}$/.test(out.date)&&out.date!==dyDate){const a=dayAll();if(a[dyDate]&&!a[dyDate].items.length&&!a[dyDate].t){delete a[dyDate];daySave(a)}dyDate=out.date;$('#dyDate').value=dyDate;const b=dayAll();$('#dyTitleIn').value=(b[dyDate]&&b[dyDate].t)||'';drawDay()}
+      host.innerHTML='<div class="muted" style="font-size:12.5px;margin:4px 0">'+esc(out.said||'')+'</div><b>Pin to '+esc(dayFmt(dyDate))+':</b><ul style="list-style:none;padding:0;margin:6px 0">'+
+        want.map((x,i)=>'<li style="padding:3px 0"><label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" data-i="'+i+'"'+(x.ok?' checked':' disabled')+'><span>'+(x.ok?esc(x.matter):'<span style="color:var(--danger)">Not found among your matters: “'+esc(x.said||'')+'”</span>')+(x.sr?' · Sr. '+esc(x.sr):'')+'</span></label></li>').join('')+'</ul>'+
+        '<div class="row"><button class="btn primary" id="dyVOk">Pin the ticked matters</button><button class="btn" id="dyVNo">Cancel</button></div>';
+      host.querySelector('#dyVNo').onclick=()=>{host.hidden=true;host.innerHTML=''};
+      host.querySelector('#dyVOk').onclick=()=>{const a=dayAll();a[dyDate]=a[dyDate]||{t:'',items:[]};let n=0;
+        host.querySelectorAll('input[data-i]:checked').forEach(c=>{const x=want[+c.dataset.i];if(a[dyDate].items.some(y=>y.m===x.matter))return;const g=dayGuess(x.matter);a[dyDate].items.push({m:x.matter,sr:String(x.sr||''),no:g.no,who:g.who,st:String(x.st||'')});n++});
+        daySave(a);drawDay();renderDayBar();host.hidden=true;host.innerHTML='';toast(n+' matter'+(n===1?'':'s')+' pinned to '+dayFmt(dyDate)+'.')};
+    }catch(e){host.innerHTML='<div style="color:var(--danger)">'+esc(e.message||e)+'</div>'}
+  },'Listening — say the date and the matters, then press the microphone');
+  r.start();
+}
+
 let DAYS={},PINS={},dayFlushT=null;
 function dayAll(){return JSON.parse(JSON.stringify(DAYS))}
 function daySave(o){DAYS=o;clearTimeout(dayFlushT);dayFlushT=setTimeout(dayFlush,700)}
@@ -2928,6 +2997,7 @@ $('#dyAddBtn').onclick=()=>{const n=$('#dyAdd').value;if(!n){toast('Choose a mat
 $('#dyShow').onclick=()=>{const a=dayAll();if(!(a[dyDate]&&a[dyDate].items.length)){toast('Add at least one matter to this day first.');return}dayOn=dyDate;dayHidden=false;$('#dayPanel').hidden=true;renderDayBar()};
 $('#dyClear').onclick=e=>popMenu(e.currentTarget,[{label:'Yes, remove the list for '+dayFmt(dyDate),hint:'Only the list goes; the matters themselves are not touched.',run:()=>{const a=dayAll();delete a[dyDate];daySave(a);if(dayOn===dyDate)dayOn=null;$('#dayPanel').hidden=true;renderDayBar()}},{label:'No, keep it',run:()=>{}}]);
 $('#libDay').onclick=()=>openDay(dayPick()||null);
+$('#dyVoiceBtn').onclick=()=>pinByVoice();
 /* ---------- upload the day's board (cause list) and pin your matters from it ---------- */
 const CASE_STOP=new Set(['BOARD','LIST','DAILY','CAUSE','DATE','DATED','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY','NO','OF','DT','ON','IN','AT','TO','BY','SR','PAGE','DATED','DATE','THE','AND','COURT','HALL','ITEM','YEAR','DAY','TIME','ROOM','PIN','PH','TEL','MOB','FAX','GR','RES','REG']);
 function normType(t){let x=String(t||'').toUpperCase().replace(/[^A-Z]/g,'');
@@ -4674,7 +4744,10 @@ const gemModel=()=>String(ngc.gemModel||dictCfg().docModel||dictCfg().model||'ge
 const escN=s=>String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 
 /* ---- settings (main Settings panel) ---- */
-const sk=$('#ngClaudeKey'),sm=$('#ngClaudeModel'),sg=$('#ngGemModel');
+const sk=$('#ngClaudeKey'),sm=$('#ngClaudeModel'),sg=$('#ngGemModel'),sdm=$('#ngDraftModel'),sds=$('#ngDraftStyle');
+sds.placeholder='Leave blank to use the standard style (cause title, "As to Para X:-" replies with lean denials, Specific Submissions, prayer, plain Verification).';
+sdm.value=ngc.draftModel||'';sds.value=ngc.draftStyle||'';
+sdm.addEventListener('change',()=>{ngc.draftModel=sdm.value.trim();ngSave()});sds.addEventListener('change',()=>{ngc.draftStyle=sds.value.trim();ngSave()});sds.addEventListener('keydown',e=>e.stopPropagation());
 function ngFill(){sk.value=ngc.claudeKey||'';sm.value=ngc.claudeModel||'';sg.value=ngc.gemModel||'';$('#ngKeyInfo').textContent=ngc.claudeKey?'A Claude key is saved on this device.':'No Claude key yet.'}
 ngFill();
 [sk,sm,sg].forEach(x=>x.addEventListener('change',()=>{ngc.claudeKey=sk.value.trim();ngc.claudeModel=sm.value.trim()||'claude-sonnet-5-5';ngc.gemModel=sg.value.trim();ngSave();ngFill()}));
@@ -4718,9 +4791,27 @@ const DEFAULT_TASK=`Prepare my standard structured notes for this matter, in the
 "7 Final submissions": A. What the client possesses (service, qualifications, experience, eligibility on every condition); B. How he was wronged, in sequence; C. Points on merits. Each point ends with "[A-x, p.__ · Para __ / Ground __]" and has "x" excerpt cards beneath. Also "g" items: a DOCUMENT GUIDE, one line per annexure saying what to point out, with its ref.
 "8 Bench questions": the "Where is it shown?" questions the Bench may ask (relative seniority, dates, criteria, vacancies, impugned clause, application in time, relief). Under each question ("h"), one-line answers "→ what the document shows [A-x, p.__]" as "p" items, each with its ref.
 Adapt the headings to the matter and to my side (if I appear for the respondents, section B of sheet 7 becomes why the applicant has no case). Mark the strongest point with ★.`;
-const CUSTOM_TASK=t=>`Prepare notes on this matter as I instruct below. Arrange them in one or more sheets as suits my instructions (give each sheet a short name), keeping the links to the record as described.
-My instructions:
+const CUSTOM_TASK=t=>`Prepare notes on this matter as I instruct below. Where I say what each sheet should contain ("Sheet 1 …", "Sheet 2 …"), make exactly those sheets, in that order, named as I describe them; otherwise arrange them in one or more sheets as suits my instructions (give each sheet a short name).
+Every point, fact, date and figure must carry its "ref" to the exact place in the PDF where it is shown, so that I can open it with one click; if something I ask for is not in the papers, say so in a point without a ref instead of guessing.
+My instructions (dictated; spelling of names as in the papers):
 ${t}`;
+/* drafting a pleading: the draft itself, plus a sheet linking each statement to its source */
+const DRAFT_STYLE_DEFAULT=`Indian court pleading style of Adv. Sanket R. Charpe, Nagpur:
+- Cause title at the top (court, case number, parties with their ranks), the title of the pleading in capitals, then the body.
+- Replies and written statements answer the other side's paragraphs one by one under bold headings "As to Para X:-" with lean, firm denials ("It is denied that…", "The contents are matters of record; nothing contrary to the record is admitted."), without needless elaboration; then a section "SPECIFIC SUBMISSIONS" with the affirmative defences in numbered paragraphs; then the prayer.
+- Petitions and applications: synopsis of facts in numbered paragraphs, grounds (each beginning "Because…"), interim relief, prayer clauses (a), (b), (c).
+- End with a plain "VERIFICATION" block (not a solemn affirmation), and signature lines for the party and "Counsel for …".
+- Formal Indian legal English; dates as DD.MM.YYYY; paragraphs numbered 1, 2, 3 …`;
+const DRAFT_TASK=(kind,t,style)=>`Draft a "${kind}" in this matter from the attached papers, as I instruct below.
+DRAFTING STYLE:
+${style}
+
+My instructions (dictated):
+${t||'(none — draft it fully from the papers)'}
+
+Strict rules for the draft: take every fact, date, name, number and document only from the papers; where something needed is not in the papers, leave a blank like [__] and list it under "doubts". Mark the important words in **bold** (headings, "As to Para X:-"). Separate paragraphs by a blank line.
+Also make ONE sheet named "Drafting notes": for each important statement in the draft (every date, appointment, order, amount, admission or denial of fact), a "p" point "Para N: <the statement in short> — <where it comes from>" with its "ref" to the exact place in the PDF; an "h" heading per part of the draft; at the end, under the heading "Not found in the papers — check", one point for each blank or doubt.
+Reply with ONLY one JSON object: {"title":"…","draft":"the complete pleading as plain text","doubts":["…"],"sheets":[{"name":"Drafting notes","items":[ … ]}]}`;
 
 /* ---- the panel ---- */
 let NG={job:null,res:null,mode:'default',doc:null};
@@ -4730,13 +4821,26 @@ function ngOpen(docId,mode){
   if(isWordDoc(d)){toast('Notes are made from PDFs. Open a PDF of this matter and press ✨ on its tab.');return}
   NG.doc=d.id;NG.mode=mode;
   const pdfs=P.docs.filter(x=>!isWordDoc(x));
-  $('#ngTitle').textContent=(mode==='custom'?'Customise notes':'Default notes')+' · '+d.title;
-  $('#ngCustomBox').hidden=mode!=='custom';$('#ngDefaultInfo').hidden=mode==='custom';
+  $('#ngTitle').textContent=(mode==='draft'?'Draft a pleading':mode==='custom'?'Customise notes':'Default notes')+' · '+d.title;
+  $('#ngCustomBox').hidden=mode==='default';$('#ngDefaultInfo').hidden=mode!=='default';$('#ngDraftBox').hidden=mode!=='draft';
+  $('#ngCustomLbl').textContent=mode==='draft'?'Your instructions for the draft':'Your key inputs';
+  ngMicStart(mode);
   $('#ngThisName').textContent=d.title;$('#ngAllN').textContent=pdfs.length;$('#ngAllRow').hidden=pdfs.length<2;
   $('#ngScopeThis').checked=true;
   ngShow(NG.job?'run':'ask');openPanel('ngPanel');
-  if(mode==='custom')setTimeout(()=>$('#ngCustom').focus(),60);
+  if(mode==='custom'&&!ngMicOn)setTimeout(()=>$('#ngCustom').focus(),60);
 }
+/* Customise / Draft: the microphone is switched on as the box opens; what is said is typed into the box */
+let ngRec=null,ngMicOn=false;
+function ngMicStart(mode){
+  const host=$('#ngMic');if(ngRec){try{ngRec.stop(true)}catch(e){}ngRec=null}ngMicOn=false;
+  if(mode==='default'||NG.job){host.innerHTML='';return}
+  if(!vKey()){host.innerHTML='<p class="muted" style="font-size:12.5px;margin:4px 0">Add your Gemini key (🎙 Dictate › ⚙) to speak your instructions; or type them below.</p>';return}
+  ngRec=vRecorder(host,async blob=>{ngRec.set('Typing what you said…');
+    try{const t=await vTranscribe(blob);const ta=$('#ngCustom');ta.value=(ta.value.trim()?ta.value.trim()+'\n':'')+t;ngRec.set('Done — check the text below, speak again to add more, then choose Gemini or Claude.')}
+    catch(e){ngRec.set(String(e.message||e))}},mode==='draft'?'Listening — say what to draft and anything to include; press the microphone when you finish':'Listening — say what each sheet should contain; press the microphone when you finish');
+  ngRec.start();ngMicOn=true}
+$('#ngPanel').addEventListener('click',e=>{if(ngRec&&(e.target===$('#ngPanel')||e.target.closest('[data-close]')))try{ngRec.stop(true)}catch(x){}},true);
 function ngShow(step){['ask','run','done'].forEach(s=>$('#ngStep_'+s).hidden=s!==step)}
 $('#ngPanel').addEventListener('keydown',e=>e.stopPropagation());
 $('#ngGem').onclick=()=>ngStart('gemini');$('#ngCla').onclick=()=>ngStart('claude');
@@ -4749,14 +4853,15 @@ $('#ngAgain').onclick=()=>{NG.res=null;ngShow('ask')};
 /* ---- run ---- */
 async function ngStart(engine){
   if(NG.job){toast('Notes are already being prepared.');return}
-  const task=NG.mode==='custom'?$('#ngCustom').value.trim():'';
-  if(NG.mode==='custom'&&!task){toast('Write your key inputs first.');$('#ngCustom').focus();return}
+  if(ngRec){try{ngRec.stop(true)}catch(e){}ngRec=null}
+  const task=NG.mode!=='default'?$('#ngCustom').value.trim():'';
+  if(NG.mode==='custom'&&!task){toast('Write or speak your key inputs first.');$('#ngCustom').focus();return}
   if(engine==='gemini'&&!gemKey()){toast('Add your Gemini API key first (Dictation settings ⚙).');return}
   if(engine==='claude'&&!ngc.claudeKey){toast('Add your Claude API key in Settings › Notes by Gemini or Claude.');openPanel('setPanel');setTimeout(()=>{try{sk.scrollIntoView({block:'center'});sk.focus()}catch(e){}},80);return}
   const d=docById(NG.doc);if(!d)return;
   const docs=$('#ngScopeAll').checked?P.docs.filter(x=>!isWordDoc(x)):[d];
   const side=$('#ngSide').value.trim();
-  const job={engine,cancel:false,ac:null,docs,matter:P.name,t0:Date.now(),chars:0,expect:NG.mode==='custom'?9000:26000};NG.job=job;
+  const job={engine,cancel:false,ac:null,docs,matter:P.name,t0:Date.now(),chars:0,expect:NG.mode==='custom'?9000:NG.mode==='draft'?30000:26000,mode:NG.mode,model:NG.mode==='draft'?(ngc.draftModel||'claude-opus-5-5'):''};NG.job=job;
   ngShow('run');ngProg('Reading the PDF'+(docs.length>1?'s':'')+'…',0);
   const tick=setInterval(()=>ngProg(null),1000);
   try{
@@ -4764,12 +4869,12 @@ async function ngStart(engine){
     for(const x of docs){const buf=await proj.store.readFile(proj.name,x.file);let pages=0;try{const rt=await ensureRT(x);pages=rt.pageData.length}catch(e){}
       files.push({doc:x,buf,pages});total+=buf.byteLength}
     const list='The files (refer to them by number in "f"):\n'+files.map((f,i)=>(i+1)+'. '+f.doc.title+' ('+(f.pages||'?')+' pages)').join('\n');
-    const task2=(NG.mode==='custom'?CUSTOM_TASK(task):DEFAULT_TASK)+(side?'\nI appear for: '+side+'.':'')+'\nMatter: '+P.name+'.';
+    const task2=(NG.mode==='draft'?DRAFT_TASK($('#ngKind').value,task,ngc.draftStyle||DRAFT_STYLE_DEFAULT):NG.mode==='custom'?CUSTOM_TASK(task):DEFAULT_TASK)+(side?'\nI appear for: '+side+'.':'')+'\nMatter: '+P.name+'.';
     let txt;
     if(engine==='gemini')txt=await ngGemini(job,files,total,list+'\n\n'+task2);
     else txt=await ngClaude(job,files,total,list+'\n\n'+task2);
     const json=ngParse(txt);
-    NG.res={json,engine,docIds:docs.map(x=>x.id),at:Date.now(),matter:job.matter};
+    NG.res={json,engine,docIds:docs.map(x=>x.id),at:Date.now(),matter:job.matter,kind:job.mode==='draft'?$('#ngKind').value:''};
     try{await idb.set('kv','ng:'+job.matter,NG.res)}catch(e){}
     ngPreview();ngShow('done');
     if($('#ngPanel').hidden)toast('Notes for “'+job.matter+'” are ready.',{label:'Show',run:()=>{openPanel('ngPanel');ngShow('done')}});
@@ -4822,7 +4927,7 @@ async function ngClaude(job,files,total,task){
   ngProg('Claude is reading and writing the notes…',2);
   job.ac=new AbortController();
   const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:job.ac.signal,headers:claudeHeaders(),
-    body:JSON.stringify({model:ngc.claudeModel||'claude-sonnet-5-5',max_tokens:32000,stream:true,system:RULES,messages:[{role:'user',content}]})});
+    body:JSON.stringify({model:job.model||ngc.claudeModel||'claude-sonnet-5-5',max_tokens:32000,stream:true,system:RULES,messages:[{role:'user',content}]})});
   await okOrThrow(r,'Claude');let txt='',stop='';
   await sseRead(r,job,j=>{if(j.type==='content_block_delta'&&j.delta&&j.delta.type==='text_delta'){txt+=j.delta.text;job.chars=txt.length;ngProg('Claude is writing the notes…')}
     else if(j.type==='message_delta'&&j.delta&&j.delta.stop_reason)stop=j.delta.stop_reason;else if(j.type==='error')throw new Error('Claude: '+((j.error&&j.error.message)||'error'))});
@@ -4831,6 +4936,7 @@ async function ngClaude(job,files,total,task){
 function ngParse(txt){
   let t=String(txt||'').trim().replace(/^```[a-z]*\s*/i,'').replace(/```\s*$/,'').trim();let j=null;
   try{j=JSON.parse(t)}catch(e){const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a>=0&&b>a)try{j=JSON.parse(t.slice(a,b+1))}catch(e2){}}
+  if(j&&typeof j.draft==='string'&&j.draft.trim()&&!(Array.isArray(j.sheets)&&j.sheets.length))j.sheets=[{name:'Drafting notes',items:[{t:'p',text:'No drafting notes came with this draft. Check it against the papers.'}]}];
   if(!j||!Array.isArray(j.sheets)||!j.sheets.length)throw new Error('The reply could not be read as notes. Please try again.');
   j.sheets=j.sheets.filter(s=>s&&Array.isArray(s.items)&&s.items.length);if(!j.sheets.length)throw new Error('The reply had no notes in it.');return j}
 
@@ -4839,7 +4945,14 @@ function ngPreview(){const r=NG.res,box=$('#ngPrev');if(!r)return;let n=0,refs=0
   box.innerHTML=r.json.sheets.map(s=>{const its=s.items;n+=its.length;its.forEach(i=>{if(i.ref)refs++;(i.cells||[]).forEach(c=>{if(c.ref)refs++})});
     const first=its.slice(0,4).map(i=>'<li>'+escN(String(i.text||i.quote||(i.cells||[]).map(c=>c.text).join(' | ')).slice(0,140))+'</li>').join('');
     return '<details><summary><b>'+escN(s.name||'Sheet')+'</b> · '+its.length+' item'+(its.length===1?'':'s')+'</summary><ul>'+first+(its.length>4?'<li>…</li>':'')+'</ul></details>'}).join('');
-  $('#ngDoneInfo').textContent=(r.engine==='gemini'?'Gemini':'Claude')+' prepared '+r.json.sheets.length+' sheet'+(r.json.sheets.length===1?'':'s')+' with '+n+' items and '+refs+' links to the record.'+(r.matter!==(P&&P.name)?' (These were made for “'+r.matter+'”.)':'')}
+  const dr=typeof r.json.draft==='string'&&r.json.draft.trim();$('#ngOpenDraft').hidden=!dr;$('#ngAttach').textContent=dr?'📎 Attach the drafting notes':'📎 Attach to the file';
+  if(dr){const dbt=(r.json.doubts||[]).filter(Boolean);box.insertAdjacentHTML('afterbegin','<p style="margin:0 0 6px"><b>Draft:</b> '+escN(r.json.title||r.kind||'pleading')+' · about '+Math.round(dr.split(/\s+/).length)+' words</p>'+(dbt.length?'<div style="background:#fff6e5;border:1px solid #f0c36d;border-radius:8px;padding:6px 10px;font-size:12.5px;margin-bottom:6px"><b>To check:</b><br>'+dbt.map(escN).join('<br>')+'</div>':''))}
+  $('#ngDoneInfo').textContent=(r.engine==='gemini'?'Gemini':'Claude')+' prepared '+(dr?'the draft and ':'')+r.json.sheets.length+' sheet'+(r.json.sheets.length===1?'':'s')+' with '+n+' items and '+refs+' links to the record.'+(r.matter!==(P&&P.name)?' (These were made for “'+r.matter+'”.)':'')}
+$('#ngOpenDraft').onclick=async()=>{const r=NG.res;if(!r||!r.json.draft)return;
+  if(!window.XD_newWordDoc){toast('Reload Excerpt Desk once, then try again.');return}
+  const name=((r.kind||'Draft')+' - '+(r.matter||'')).replace(/[\\/:*?"<>|]+/g,'-').slice(0,90);
+  $('#ngPanel').hidden=true;await window.XD_newWordDoc(name,r.json.draft);
+  toast('The draft is open in the Word page. Attach the drafting notes too, to check it against the papers.',{label:'Attach notes',run:()=>{openPanel('ngPanel');ngShow('done');ngAttach()}})};
 
 /* ---- notes → worksheet items (excerpt-desk/1) ---- */
 const COLS=['yellow','green','pink','blue','orange','purple'];
@@ -4904,7 +5017,8 @@ window.ngResume=async function(){if(!P||NG.job)return;try{const r=await idb.get(
 
 /* ---- the ✨ on each file tab, and the toolbar button ---- */
 function ngMenu(btn,docId){popMenu(btn,[{label:'Default notes',hint:'Your standard eight sheets: structured facts, record index, chronology, arguments, key points, mind map, final submissions, Bench questions',run:()=>ngOpen(docId,'default')},
-  {label:'Customise notes',hint:'Type your key inputs; Gemini or Claude prepares the notes as you ask',run:()=>ngOpen(docId,'custom')},
+  {label:'Customise notes',hint:'Speak or type what each sheet should contain; Gemini or Claude prepares the notes as you ask, every point linked to the PDF',run:()=>ngOpen(docId,'custom')},
+  {label:'Draft a pleading',hint:'Written statement, reply, petition, OA, affidavit, application — with a Drafting notes sheet linking each statement to its page',run:()=>ngOpen(docId,'draft')},
   {label:'Notes made earlier, not attached',hint:'Show the last notes prepared for this matter',run:()=>window.ngResume()}])}
 window.ngMenu=ngMenu;
 if(/[?&]ngtest\b/.test(location.search))window.__ngP=()=>P;
@@ -5589,6 +5703,12 @@ $('#dxPick').onclick=()=>{$('#dxDocIn').value='';$('#dxDocIn').click()};
 $('#dxDocIn').onchange=()=>{picked=[...$('#dxDocIn').files];$('#dxPicked').textContent=picked.map(f=>f.name).join(', ');$('#dxDocJob').querySelector('[value=files]').checked=true};
 $('#dxDocNo').onclick=()=>{$('#dxDocJob').hidden=true};
 $('#dxDocJob').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')$('#dxDocJob').hidden=true});
+/* a new Word document from text prepared elsewhere (a drafted pleading) */
+window.XD_newWordDoc=async(name,text)=>{const now=Date.now();
+  const m={id:uid()+uid().slice(0,4),kind:'doc',task:'custom',extra:'',created:now,day:dayOf(now),status:'done',srcs:[],name:String(name||'Draft').slice(0,100),docAt:now};
+  const st={html:textToHtml(text),font:cfg.font,size:cfg.size,line:cfg.line};
+  await idb.set('kv','dxdoc:'+m.id,st);await saveMeta(m,true);try{await writeDocx(m,st,true)}catch(e){}try{renderList()}catch(e){}
+  await openEd(m.id);return m.id};
 $('#dxDocGo').onclick=async()=>{
   const useCur=$('#dxDocJob').querySelector('[value=cur]').checked;const task=$('#dxTask').value,extra=$('#dxDocExtra').value.trim();
   if(task==='custom'&&!extra){toast('Write your instruction for Gemini.');return}
