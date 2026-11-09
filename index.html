@@ -575,6 +575,33 @@ main.split.w3{grid-template-columns:minmax(0,var(--pdfw,33%)) 12px minmax(0,1fr)
 .wed .docx-wrapper[contenteditable="true"]>section.docx{cursor:text}
 .dtab.wordtab .t{color:#1e4fa8}
 @media (prefers-reduced-motion:reduce){.hl.flash,.item.flash,.pin.flash{animation:none;outline:3px solid var(--accent)}}
+
+/* ✕ at the top of every window (Nov 2026) */
+.panel>.pc{position:relative}
+.pcx{position:sticky;top:-20px;align-self:flex-end;margin:-12px -10px -38px 0;z-index:3;width:34px;height:34px;flex:none;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center}
+.pcx:hover{border-color:var(--muted);background:color-mix(in srgb,var(--ink) 6%,var(--surface))}
+
+/* Paper mode (Nov 2026): warm, dim, low-contrast, as close to paper as a screen gets */
+html:root.paper{
+  --desk:#e4dccb; --gutter:#d9d0bc; --surface:#f1ead9; --ink:#3a3127; --muted:#7b6f5d;
+  --line:#d2c6ae; --dot:#cbbd9c; --accent:#7d5b2c; --accent-ink:#fbf6ea; --link:#8c6e3f; --danger:#a5452f;
+  --shadow:rgba(70,50,20,.13); color-scheme:light}
+html.paper body{background:var(--desk)}
+html.paper .page{background:#f1ead9;box-shadow:0 1px 2px rgba(70,50,20,.12),0 10px 26px -14px rgba(70,50,20,.35)}
+html.paper .page canvas{filter:sepia(.38) brightness(.93) contrast(.9)}
+html.paper .dxpage{background:#f3ecdc;color:#2f281f}
+html.paper body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:900;opacity:.07;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .27 0 0 0 0 .15 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+html.paper ::selection{background:rgba(160,120,50,.28)}
+#paperBtn.on{background:color-mix(in srgb,var(--accent) 16%,var(--surface));border-color:var(--accent)}
+
+/* PDF size and compression prompt (Nov 2026) */
+#czPanel{z-index:9500}
+.cz-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;max-height:40vh;overflow:auto}
+.cz-list li{display:flex;gap:10px;align-items:baseline;padding:8px 10px;border:1px solid var(--line);border-radius:8px}
+.cz-list li .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cz-list li .mb{font-variant-numeric:tabular-nums;font-weight:600}
+.cz-bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}.cz-bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
 </style>
 </head>
 <body>
@@ -597,6 +624,7 @@ main.split.w3{grid-template-columns:minmax(0,var(--pdfw,33%)) 12px minmax(0,1fr)
       <button class="btn" id="exportBtn">Export</button>
       <button class="btn" id="claudeBtn">From Claude</button>
       <button class="btn" id="libBtn">Library</button>
+      <button class="btn" id="paperBtn" aria-pressed="false" title="Paper mode: a warm, dim, paper-like screen for the PDFs and the worksheet, easier on the eyes">📄 Paper</button>
       <button class="btn" id="setBtn">Settings</button>
     </div>
   </header>
@@ -837,6 +865,15 @@ main.split.w3{grid-template-columns:minmax(0,var(--pdfw,33%)) 12px minmax(0,1fr)
   <div class="row end"><button class="btn" id="openSample">Open the sample</button><button class="btn" data-close>Close</button></div>
 </div></div>
 
+<!-- PDF size: accept as it is, or compressed -->
+<div class="panel" id="czPanel" hidden><div class="pc" role="dialog" aria-labelledby="czTitle">
+  <h2 id="czTitle">Add this PDF</h2>
+  <ul class="cz-list" id="czList"></ul>
+  <p class="muted" id="czNote" style="margin:0">Compressed: scanned pages are kept sharp enough to read small print, stamps and handwriting (about 200 dpi); typed pages and their text are left as they are. Page count and page sizes stay the same, so notes and links land in the same places.</p>
+  <div id="czRun" hidden><div class="cz-bar"><i id="czBarI"></i></div><p class="muted" id="czMsg" style="margin:6px 0 0"></p></div>
+  <div class="row end" id="czBtns"><button class="btn" id="czAsIs">Accept as it is</button><button class="btn primary" id="czSmall">Accept compressed</button></div>
+</div></div>
+
 <!-- Generate notes -->
 <div class="panel" id="ngPanel" hidden><div class="pc" role="dialog" aria-labelledby="ngTitle">
   <h2 id="ngTitle">Generate notes</h2>
@@ -987,6 +1024,7 @@ main.split.w3{grid-template-columns:minmax(0,var(--pdfw,33%)) 12px minmax(0,1fr)
   <select id="dxLiveSec" style="width:auto"><option value="0">Off: type only after I stop</option><option value="5">On: send every 5 seconds</option><option value="10">On: send every 10 seconds (recommended)</option><option value="15">On: send every 15 seconds</option></select>
   <p class="dxnote">With live typing on, the words appear in the Dictation box a few seconds after you say them. Each piece is cut at a pause, so words are not split. The recording is still kept in full, so you can press ⟳ Retype at any time to have the whole clip typed again in one go.</p>
   <label class="opt"><input type="checkbox" id="dxAuto"> Open the Word document as soon as it is ready (not while recording)</label>
+  <label class="opt"><input type="checkbox" id="dxAutoNum"> Number the paragraphs (1., 2., 3. …) when a dictation is typed. Say “para 5” to start a paragraph at 5. The ¶ button in the Word page numbers or renumbers by hand.</label>
   <label class="f" for="dxVocab">Names and terms Gemini should know (one per line)</label>
   <textarea id="dxVocab" rows="4" placeholder="Charpe&#10;MSRTC Wardha&#10;Ordnance Factory Ambajhari&#10;MRTU and PULP Act"></textarea>
   <label class="f">Instructions to Gemini (choose one in the Dictation box)</label>
@@ -1009,6 +1047,8 @@ main.split.w3{grid-template-columns:minmax(0,var(--pdfw,33%)) 12px minmax(0,1fr)
     <span class="sep"></span>
     <button class="btn tg" data-al="left" title="Align left">Left</button><button class="btn tg" data-al="center" title="Centre">Centre</button><button class="btn tg" data-al="right" title="Align right">Right</button><button class="btn tg" data-al="justify" title="Justify">Justify</button>
     <select id="dxeLine" title="Line spacing"><option value="1">Single</option><option value="1.15">1.15</option><option value="1.5">1.5 lines</option><option value="2">Double</option></select>
+    <span class="sep"></span>
+    <button class="btn" id="dxeNum" title="Number the paragraphs 1., 2., 3. … (only the selected ones if you select some text). Press again after editing to renumber.">¶ 1, 2, 3</button><button class="btn sq" id="dxeUnnum" title="Remove paragraph numbers (from the selected paragraphs, or all)">¶✕</button>
     <span class="sep"></span>
     <button class="btn" id="dxeSheet" title="Put this text on the worksheet of the open matter">➕ Worksheet</button>
     <button class="btn" id="dxePrint" title="Print">🖨</button>
@@ -1907,7 +1947,7 @@ function tapHint(mouse){clearTimeout(tapHintT);tapHintT=setTimeout(()=>{if(Date.
   toast(mouse?'Double-click on the worksheet to type there.':'Press and hold on the worksheet to type there. A quick tap is ignored.')},380)}
 
 /* ================= problem recorder: a short diary of recent actions, kept on this device only ================= */
-const APPV='2026-11-07';
+const APPV='2026-11-10';
 let crumbs=[];try{crumbs=JSON.parse(localStorage.getItem('xdesk:log')||'[]')}catch(e){crumbs=[]}
 function crumb(m){try{crumbs.push([Date.now(),String(m).slice(0,160)]);if(crumbs.length>90)crumbs=crumbs.slice(-90);localStorage.setItem('xdesk:log',JSON.stringify(crumbs))}catch(e){}}
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
@@ -2296,9 +2336,102 @@ async function readAttachedWs(bytes){
     const ent=at&&Object.values(at).find(a=>a&&a.filename===WS);if(!ent)return null;const ws=JSON.parse(new TextDecoder().decode(ent.content));return ws&&Array.isArray(ws.items)?ws:null}
   catch(e){return null}
 }
+/* ================= PDF size: accept as it is, or compressed (Nov 2026) =================
+   Every PDF that comes in (+ Add PDF, dropped, shared, received, from Charpe Suite, a new matter) is shown with
+   its size in MB first. "Accept compressed" re-draws only the SCANNED pages at about 200 dpi (greyscale unless
+   the page has colour, e.g. a stamp), which keeps small print, stamps and handwriting readable for you and for
+   Gemini/Claude. Typed (digital) pages are copied untouched with their text. Page count and page sizes stay the
+   same, so highlights, notes and links land where they always did. A scan that already carries searchable
+   English text keeps that text (invisibly, as before); one with Marathi text is left as it is. */
+const mb=n=>(n/1048576).toFixed(n<10485760?2:1)+' MB';
+let czRes=null,czBusy=false;
+$('#czPanel').addEventListener('click',e=>{const p=$('#czPanel');
+  if(e.target!==p&&!e.target.closest('[data-close]'))return;
+  if(czBusy){e.stopImmediatePropagation();e.preventDefault();return}
+  if(czRes){const r=czRes;czRes=null;r(null)}},true);
+function czGate(pdfs){
+  if(!pdfs.length)return Promise.resolve([]);
+  const ul=$('#czList');ul.innerHTML='';
+  const total=pdfs.reduce((a,f)=>a+(f.size||0),0);
+  pdfs.forEach(f=>{const li=document.createElement('li');li.innerHTML='<span class="n"></span><span class="mb"></span>';li.querySelector('.n').textContent=f.name;li.querySelector('.n').title=f.name;li.querySelector('.mb').textContent=mb(f.size||0);ul.append(li)});
+  $('#czTitle').textContent=pdfs.length===1?'Add this PDF — '+mb(total):'Add '+pdfs.length+' PDFs — '+mb(total)+' in all';
+  $('#czRun').hidden=true;$('#czBtns').hidden=false;$('#czNote').hidden=false;
+  openPanel('czPanel');setTimeout(()=>$('#czSmall').focus(),40);
+  return new Promise(res=>{
+    czRes=res;
+    $('#czAsIs').onclick=()=>{czRes=null;$('#czPanel').hidden=true;res(pdfs)};
+    $('#czSmall').onclick=async()=>{czRes=null;czBusy=true;$('#czBtns').hidden=true;$('#czNote').hidden=true;$('#czRun').hidden=false;
+      const out=[],lis=[...ul.children];let before=0,after=0;
+      for(let i=0;i<pdfs.length;i++){const f=pdfs[i],li=lis[i];
+        try{const r=await czCompress(f,(k,n)=>{$('#czBarI').style.width=Math.round(((i+k/n)/pdfs.length)*100)+'%';$('#czMsg').textContent=(pdfs.length>1?'File '+(i+1)+' of '+pdfs.length+' · ':'')+'page '+k+' of '+n+'…'});
+          out.push(r.file);before+=f.size;after+=r.file.size;li.querySelector('.mb').textContent=mb(f.size)+' → '+mb(r.file.size)+(r.note?' · '+r.note:'')}
+        catch(e){console.error(e);out.push(f);before+=f.size;after+=f.size;li.querySelector('.mb').textContent=mb(f.size)+' · kept as it is ('+(e.message||'could not compress')+')'}}
+      $('#czBarI').style.width='100%';$('#czMsg').textContent='Done: '+mb(before)+' → '+mb(after)+'.';
+      czBusy=false;setTimeout(()=>{$('#czPanel').hidden=true;res(out)},900)};
+  })}
+async function czCompress(f,prog){
+  const bytes=new Uint8Array(await f.arrayBuffer());
+  if(await readAttachedWs(bytes))return {file:f,note:'a case file with notes, kept as it is'};
+  if(!window.PDFLib||!window.pdfjsLib)throw new Error('the PDF tools did not load');
+  const {PDFDocument,StandardFonts,degrees}=PDFLib;
+  const src=await pdfjsLib.getDocument({data:bytes.slice()}).promise;
+  const orig=await PDFDocument.load(bytes,{ignoreEncryption:true});if(orig.isEncrypted){try{src.destroy()}catch(e){}throw new Error('a protected PDF')}
+  const out=await PDFDocument.create();let font=null;
+  const OPS=pdfjsLib.OPS,IMG=new Set([OPS.paintImageXObject,OPS.paintJpegXObject,OPS.paintInlineImageXObject,OPS.paintImageXObjectRepeat,OPS.paintImageMaskXObject].filter(x=>x!=null));
+  const n=src.numPages;let redone=0,kept=0;
+  const cv=document.createElement('canvas'),cx=cv.getContext('2d',{willReadFrequently:true});
+  try{
+    for(let i=1;i<=n;i++){prog(i,n);
+      const page=await src.getPage(i);
+      const ops=await page.getOperatorList();const hasImg=ops.fnArray.some(x=>IMG.has(x));
+      const tc=await page.getTextContent();const items=tc.items.filter(t=>t.str&&t.str.trim());const txt=items.map(t=>t.str).join('');
+      const latin=!/[^\x20-\x7E -ÿ‘’“”–—]/.test(txt);
+      if(!hasImg||(txt.trim().length>20&&!latin)){const [cp]=await out.copyPages(orig,[i-1]);out.addPage(cp);kept++;page.cleanup();continue}
+      /* a scanned page: draw it again, unrotated, at about 200 dpi */
+      const vw=page.view,mbx={x:vw[0],y:vw[1],width:vw[2]-vw[0],height:vw[3]-vw[1]},rot=((page.rotate||0)%360+360)%360;
+      let sc=200/72;const v0=page.getViewport({scale:1,rotation:0});const maxPx=9e6;
+      if(v0.width*v0.height*sc*sc>maxPx)sc=Math.sqrt(maxPx/(v0.width*v0.height));
+      const vp=page.getViewport({scale:sc,rotation:0});
+      cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);
+      await page.render({canvasContext:cx,viewport:vp}).promise;
+      /* colour (a stamp, a coloured seal) stays in colour; everything else goes to greyscale */
+      const id=cx.getImageData(0,0,cv.width,cv.height),d=id.data;let col=0,tot=0;
+      for(let k=0;k<d.length;k+=4*97){const r=d[k],g=d[k+1],b=d[k+2];tot++;if(Math.max(r,g,b)-Math.min(r,g,b)>40)col++}
+      const colour=col/tot>.004;
+      if(!colour){for(let k=0;k<d.length;k+=4){const y=(d[k]*.299+d[k+1]*.587+d[k+2]*.114)|0;d[k]=d[k+1]=d[k+2]=y}cx.putImageData(id,0,0)}
+      const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',colour?.72:.7));
+      const jpg=await out.embedJpg(new Uint8Array(await blob.arrayBuffer()));
+      const np=out.addPage([mbx.width,mbx.height]);np.setMediaBox(mbx.x,mbx.y,mbx.width,mbx.height);
+      np.drawImage(jpg,{x:mbx.x,y:mbx.y,width:mbx.width,height:mbx.height});
+      if(items.length&&latin){/* keep the scan's searchable text where it was, invisible as before */
+        font=font||await out.embedFont(StandardFonts.Helvetica);
+        for(const t of items){const tr=t.transform,size=Math.hypot(tr[2],tr[3])||Math.hypot(tr[0],tr[1])||10;
+          const str=t.str.replace(/[^\x20-\x7E -ÿ]/g,' ');if(!str.trim())continue;
+          try{np.drawText(str,{x:tr[4],y:tr[5],size,font,opacity:0})}catch(e){}}}
+      if(rot)np.setRotation(degrees(rot));
+      redone++;page.cleanup();await new Promise(r=>setTimeout(r,0));
+    }
+  }finally{cv.width=cv.height=0;try{src.destroy()}catch(e){}}
+  if(!redone)return {file:f,note:'no scanned pages, already compact'};
+  const res=await out.save({useObjectStreams:true});
+  if(res.length>=bytes.length*.92)return {file:f,note:'already compact, kept as it is'};
+  return {file:new File([res],f.name,{type:'application/pdf',lastModified:Date.now()}),note:redone+' scanned page'+(redone===1?'':'s')+' compressed'};
+}
+
+/* Paper mode: switched on the first screen, remembered on this device */
+function setPaper(on){document.documentElement.classList.toggle('paper',on);const b=$('#paperBtn');if(b){b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))}
+  try{localStorage.setItem('xd_paper',on?'1':'')}catch(e){}}
+try{setPaper(localStorage.getItem('xd_paper')==='1')}catch(e){}
+$('#paperBtn').onclick=()=>{const on=!document.documentElement.classList.contains('paper');setPaper(on);toast(on?'Paper mode on.':'Paper mode off.')};
+
+/* ✕ at the top of every window */
+document.querySelectorAll('.panel>.pc').forEach(pc=>{if(pc.querySelector(':scope>.pcx'))return;const x=document.createElement('button');x.className='pcx';x.type='button';x.setAttribute('data-close','');x.setAttribute('aria-label','Close');x.title='Close';x.textContent='×';pc.prepend(x)});
+
 async function addPdfs(files){
   if(!proj)return;
-  const pdfs=files.filter(isDocFile);if(!pdfs.length){toast('Only PDF and Word (.docx) files can be added.');return}
+  let pdfs=files.filter(isDocFile);if(!pdfs.length){toast('Only PDF and Word (.docx) files can be added.');return}
+  {const plain=pdfs.filter(isPdf),gated=await czGate(plain);if(gated===null){toast('Nothing was added.');return}
+   let g=0;pdfs=pdfs.map(f=>isPdf(f)?gated[g++]:f)}
   const taken=await takenNames();let last=null,loaded=0,cases=0;
   for(const f of pdfs){
     const bytes=new Uint8Array(await f.arrayBuffer());
@@ -4792,7 +4925,7 @@ const PRESETS0=[
 ];
 const FONTS=['Georgia','Times New Roman','Bookman Old Style','Cambria','Arial','Calibri','Verdana','Mangal','Nirmala UI'];
 const SIZES=[9,10,10.5,11,12,13,14,15,16,18,20,24,28];
-let cfg={key:'',model:'gemini-3.8-flash',docModel:'',keep:10,font:'Georgia',size:13,line:1.5,autoOpen:true,live:10,vocab:'',preset:'clean',presets:PRESETS0.map(p=>Object.assign({},p))};
+let cfg={key:'',model:'gemini-3.8-flash',docModel:'',keep:10,font:'Georgia',size:13,line:1.5,autoOpen:true,autoNum:true,live:10,vocab:'',preset:'clean',presets:PRESETS0.map(p=>Object.assign({},p))};
 try{const o=JSON.parse(localStorage.getItem(DXK)||'{}');Object.assign(cfg,o)}catch(e){}
 if(!Array.isArray(cfg.presets)||!cfg.presets.length)cfg.presets=PRESETS0.map(p=>Object.assign({},p));
 const saveCfg=()=>{try{localStorage.setItem(DXK,JSON.stringify(cfg))}catch(e){}};
@@ -5066,6 +5199,7 @@ async function liveFinish(m,L){
     const fresh=htmlAppend(L.startHtml||'',full);L.pend='';
     if(edM===m&&!ed.hidden){pg.innerHTML=fresh;snapNow();dirty()}else{const s0=(await idb.get('kv','dxdoc:'+m.id))||{font:L.font,size:L.size,line:L.line};s0.html=fresh;await idb.set('kv','dxdoc:'+m.id,s0)}}
   if(edM===m&&!ed.hidden)await saveEd(true);else await liveStore(L);
+  if(cfg.autoNum!==false){if(edM===m&&!ed.hidden){pg.innerHTML=numberParas(pg.innerHTML);snapNow();await saveEd(true)}else{const s1=await idb.get('kv','dxdoc:'+m.id);if(s1&&s1.html){s1.html=numberParas(s1.html);await idb.set('kv','dxdoc:'+m.id,s1)}}}
   const st=(await idb.get('kv','dxdoc:'+m.id))||{html:'',font:L.font,size:L.size,line:L.line};
   if(!full.trim()&&!(st&&st.html)){await resetDoc(m);status('No words were caught live; Gemini is typing the recording now.');enqueue(m.id);return}
   m.segs.forEach(s=>{if(s.txt==null)s.txt=''});m.status='done';delete m.pct;delete m.progress;delete m.liveOpen;m.docAt=Date.now();await saveMeta(m,true);
@@ -5194,6 +5328,43 @@ function textToHtml(t){
   const inl=s=>escH(s).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/__([^_]+)__/g,'<u>$1</u>');
   return String(t||'').replace(/\r/g,'').split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean).map(p=>'<p>'+p.split('\n').map(inl).join('<br>')+'</p>').join('');
 }
+/* ---------- paragraph numbering (Nov 2026) ----------
+   Body paragraphs get 1., 2., 3. … Headings, the cause title, "As to Para 3:-" replies, sub-paragraphs
+   such as (a) or (i), the prayer heading, verification, place/date and signature lines are left alone.
+   A dictated "para 5 …" or "paragraph no. 5 …" starts that paragraph at 5 and the count goes on from there. */
+const PN_SKIP=/^(in the |before the |between\b|and\s*$|versus\b|vs\.?\s*$|\.{3}|verification\b|prayer\b|synopsis\b|index\b|list of (dates|documents)|place\s*:|date[d]?\s*:|nagpur\b|counsel\b|advocate\b|deponent\b|through\b|sub(ject)?\s*[:.-]|ref(erence)?\s*[:.-]|to,?\s*$|sir,?\s*$|madam,?\s*$|yours\b|thanking you|as to para|para[- ]?wise\b|reply to\b|it is therefore\b|it is,? therefore\b|in view of the above,? it is prayed|the applicant|the petitioner|the respondent|the plaintiff|the defendant)/i;
+const PN_CMD=/^\s*(?:para(?:graph)?|पॅरा|परिच्छेद)\s*(?:no\.?|number|क्र\.?|क्रमांक)?\s*(\d{1,3})\s*[:.,-]?\s*/i;
+const PN_OLD=/^\s*(\d{1,3})\s*[.)]\s+/;
+function pnText(p){return (p.textContent||'').replace(/ /g,' ').trim()}
+function pnIsBody(p){
+  const t=pnText(p);if(!t)return false;
+  if(PN_CMD.test(t)||PN_OLD.test(t))return true;
+  if(/^\(?([a-z]|[ivx]{1,4})\)\s|^\(?[a-z]\.\s|^[•\-–]\s/i.test(t))return false;          /* (a) (i) a. sub-paragraphs and bullets */
+  const align=(p.style&&p.style.textAlign)||'';if(align==='center'||align==='right')return false;
+  const letters=t.replace(/[^A-Za-z]/g,''),caps=t.replace(/[^A-Z]/g,'');
+  if(letters.length>=4&&caps.length/letters.length>.8)return false;                     /* ALL-CAPS heading */
+  const b=p.querySelector('b,strong');if(b&&pnText(b).length>=t.length-2&&t.length<120)return false;   /* wholly bold heading */
+  if(PN_SKIP.test(t)&&t.length<160)return false;
+  if(t.length<45&&!/[.;:]\s*$/.test(t)&&t.split(/\s+/).length<8)return false;            /* short line: title, signature, date */
+  if(/:-?\s*$/.test(t)&&t.length<90)return false;                                        /* "Brief facts:-" */
+  return true}
+/* take the leading number (and a dictated "para 5") off a paragraph; returns the dictated number, if any */
+function pnStrip(p){
+  let want=null;const w=document.createTreeWalker(p,NodeFilter.SHOW_TEXT);let n;
+  while((n=w.nextNode())){if(!n.nodeValue.trim())continue;
+    let v=n.nodeValue;const m=v.match(PN_CMD);if(m){want=+m[1];v=v.slice(m[0].length)}
+    const o=v.match(PN_OLD);if(o)v=v.slice(o[0].length);
+    n.nodeValue=v.replace(/^\s+/,'');break}
+  return want}
+function pnPut(p,k){const w=document.createTreeWalker(p,NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode())&&!n.nodeValue.trim()){}
+  const t=document.createTextNode(k+'. ');if(n)n.parentNode.insertBefore(t,n);else p.prepend(t)}
+/* number paragraphs in an HTML string (all of them) */
+function numberParas(html){
+  const box=document.createElement('div');box.innerHTML=html||'';numberIn([...box.querySelectorAll('p')],1);return box.innerHTML}
+function numberIn(ps,start){let k=start;
+  for(const p of ps){if(p.closest('td,th'))continue;if(!pnIsBody(p))continue;const want=pnStrip(p);if(want)k=want;if(!pnText(p))continue;pnPut(p,k);k++}
+  return k}
+function unnumberIn(ps){for(const p of ps){const t=pnText(p);if(PN_OLD.test(t))pnStrip(p)}}
 /* HTML from Gemini or a paste → only the safe, Word-friendly tags */
 function clean(html){
   const doc=new DOMParser().parseFromString('<div>'+html+'</div>','text/html');const root=doc.body.firstChild;
@@ -5276,7 +5447,7 @@ async function pump(){
     const old=await idb.get('kv','dxdoc:'+m.id);
     if(!html&&!(old&&old.html&&old.html.replace(/<[^>]+>|&nbsp;|\s/g,'')))throw new Error('Gemini sent back no text for this recording. Press ⟳ Retype.');
     const st=old||{html:'',font:cfg.font,size:cfg.size,line:cfg.line};
-    st.html=(st.html||'')+(html||'');await idb.set('kv','dxdoc:'+m.id,st);
+    st.html=(st.html||'')+(html||'');if(cfg.autoNum!==false&&m.kind!=='doc')st.html=numberParas(st.html);await idb.set('kv','dxdoc:'+m.id,st);
     m.status='done';delete m.progress;delete m.pct;delete m.liveOpen;m.docAt=Date.now();await saveMeta(m,true);
     await writeDocx(m,st,true);
     if(m.sheet&&m.kind!=='doc'&&html)toSheet(m,html);
@@ -5437,14 +5608,14 @@ $('#dxDocGo').onclick=async()=>{
 /* ---------- settings ---------- */
 function openSet(){const s=$('#dxSet');$('#dxKey').value=cfg.key||'';$('#dxModel').value=cfg.model||'';$('#dxDocModel').value=cfg.docModel||'';$('#dxKeep').value=cfg.keep||10;
   $('#dxFont').innerHTML=FONTS.map(f=>'<option>'+f+'</option>').join('');$('#dxFont').value=cfg.font;$('#dxSize').innerHTML=SIZES.map(z=>'<option value="'+z+'">'+z+' pt</option>').join('');$('#dxSize').value=String(cfg.size);
-  $('#dxLine').value=String(cfg.line);$('#dxAuto').checked=!!cfg.autoOpen;$('#dxLiveSec').value=String(cfg.live==null?10:cfg.live);$('#dxVocab').value=cfg.vocab||'';$('#dxTestInfo').textContent=hasKey()?'A key is saved on this device.':'';renderPresets();updDir();s.hidden=false}
+  $('#dxLine').value=String(cfg.line);$('#dxAuto').checked=!!cfg.autoOpen;$('#dxAutoNum').checked=cfg.autoNum!==false;$('#dxLiveSec').value=String(cfg.live==null?10:cfg.live);$('#dxVocab').value=cfg.vocab||'';$('#dxTestInfo').textContent=hasKey()?'A key is saved on this device.':'';renderPresets();updDir();s.hidden=false}
 function renderPresets(){const box=$('#dxPresets');box.innerHTML='';
   cfg.presets.forEach((p,i)=>{const d=document.createElement('div');d.className='dxpre';d.innerHTML='<input type="text" aria-label="Name of the instruction"><textarea rows="2" aria-label="Instruction"></textarea><div class="row"><button class="btn warn" style="height:26px">Remove</button></div>';
     const [n,t]=[d.querySelector('input'),d.querySelector('textarea')];n.value=p.name;t.value=p.text;n.oninput=()=>{p.name=n.value};t.oninput=()=>{p.text=t.value};
     d.querySelector('button').onclick=()=>{if(cfg.presets.length<2){toast('Keep at least one instruction.');return}if(confirm('Remove “'+p.name+'”?')){cfg.presets.splice(i,1);renderPresets()}};box.append(d)})}
 $('#dxPreAdd').onclick=()=>{cfg.presets.push({id:uid(),name:'My instruction',text:'Describe here what Gemini should do with the dictation.'});renderPresets()};
 function readSet(){cfg.key=$('#dxKey').value.trim();cfg.model=$('#dxModel').value.trim()||'gemini-3.8-flash';cfg.docModel=$('#dxDocModel').value.trim();cfg.keep=Math.max(1,Math.min(365,parseInt($('#dxKeep').value,10)||10));
-  cfg.font=$('#dxFont').value;cfg.size=+$('#dxSize').value;cfg.line=+$('#dxLine').value;cfg.autoOpen=$('#dxAuto').checked;cfg.live=+$('#dxLiveSec').value||0;cfg.vocab=$('#dxVocab').value;cfg.presets=cfg.presets.filter(p=>p.name.trim()&&p.text.trim());if(!cfg.presets.length)cfg.presets=PRESETS0.map(p=>Object.assign({},p));saveCfg()}
+  cfg.font=$('#dxFont').value;cfg.size=+$('#dxSize').value;cfg.line=+$('#dxLine').value;cfg.autoOpen=$('#dxAuto').checked;cfg.autoNum=$('#dxAutoNum').checked;cfg.live=+$('#dxLiveSec').value||0;cfg.vocab=$('#dxVocab').value;cfg.presets=cfg.presets.filter(p=>p.name.trim()&&p.text.trim());if(!cfg.presets.length)cfg.presets=PRESETS0.map(p=>Object.assign({},p));saveCfg()}
 $('#dxSetDone').onclick=()=>{readSet();$('#dxSet').hidden=true;fillPresets();renderWarn();purge();if(hasKey())list.filter(m=>m.status==='waiting'||(m.status==='failed'&&/key/i.test(m.err||''))).forEach(m=>enqueue(m.id))};
 $('#dxSet').addEventListener('keydown',e=>e.stopPropagation());
 $('#dxSetBtn').onclick=openSet;$('#dxSetFromMain').onclick=()=>{document.querySelectorAll('.panel').forEach(p=>p.hidden=true);openSet()};$('#dxDirPick').onclick=dirPick;$('#dxDirAllow').onclick=dirAsk;
@@ -5528,6 +5699,16 @@ $('#dxeSave').onclick=()=>saveEd(false);
 $('#dxeDocx').onclick=async()=>{if(!edM)return;await saveEd(true);downloadDocx(edM,{html:pg.innerHTML,font:pg.dataset.font,size:+pg.dataset.size,line:+pg.dataset.line})};
 $('#dxeSheet').onclick=()=>{if(!edM)return;if(!P||!proj){toast('Open a matter first.');return}const m=Object.assign({},edM);if(m.sheet&&m.sheet.matter!==proj.name)m.sheet=null;toSheet(m,pg.innerHTML);toast('Added to the worksheet of “'+proj.name+'”.')};
 $('#dxePrint').onclick=()=>window.print();
+/* paragraphs touched by the selection (or every paragraph when nothing is selected) */
+function selParas(){const all=[...pg.querySelectorAll('p')],s=getSelection();
+  if(!s.rangeCount||s.isCollapsed||!pg.contains(s.anchorNode))return {ps:all,whole:true};
+  const r=s.getRangeAt(0),ps=all.filter(p=>r.intersectsNode(p));return ps.length?{ps,whole:false}:{ps:all,whole:true}}
+$('#dxeNum').onclick=()=>{const {ps,whole}=selParas();snapNow();
+  let start=1;if(!whole){const all=[...pg.querySelectorAll('p')],i=all.indexOf(ps[0]);for(let j=i-1;j>=0;j--){const m=pnText(all[j]).match(PN_OLD);if(m){start=+m[1]+1;break}}}
+  /* "number by hand" numbers what was selected even if it looks like a heading */
+  let k=start;if(whole)k=numberIn(ps,start);else for(const p of ps){if(!pnText(p))continue;const want=pnStrip(p);if(want)k=want;pnPut(p,k);k++}
+  snapNow();dirty();toast((k-start)+' paragraph'+(k-start===1?'':'s')+' numbered.')};
+$('#dxeUnnum').onclick=()=>{const {ps}=selParas();snapNow();unnumberIn(ps);snapNow();dirty();toast('Paragraph numbers removed.')};
 async function closeEd(){if(edDirty)await saveEd(true);ed.hidden=true;edM=null}
 $('#dxeClose').onclick=closeEd;
 
