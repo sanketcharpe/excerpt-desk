@@ -913,6 +913,7 @@ html.paper ::selection{background:rgba(160,120,50,.28)}
 <!-- Claude import -->
 <div class="panel" id="claudePanel" hidden><div class="pc" role="dialog" aria-labelledby="clTitle">
   <h2 id="clTitle">From Claude</h2>
+  <div id="clInbox" style="border:1px solid var(--line);border-radius:8px;padding:10px 12px"><b>📥 From the Claude app</b> <span class="muted" style="font-size:12.5px">— notes Claude prepared for you in the Claude app wait here</span><div id="clInboxL" style="margin-top:6px"></div></div>
   <p>Ask Claude to study this matter's PDFs and prepare <b>notes of argument</b>. Claude gives you either a <b>case file</b> (a PDF with everything inside: open it with <b>New › Open a case file</b>) or a worksheet file <b>worksheet.xdesk.json</b> (add it here and its notes, excerpts and links join this worksheet).</p>
   <h3>Request to give Claude</h3>
   <div class="prompt" id="clPrompt"></div>
@@ -1956,7 +1957,7 @@ function tapHint(mouse){clearTimeout(tapHintT);tapHintT=setTimeout(()=>{if(Date.
   toast(mouse?'Double-click on the worksheet to type there.':'Press and hold on the worksheet to type there. A quick tap is ignored.')},380)}
 
 /* ================= problem recorder: a short diary of recent actions, kept on this device only ================= */
-const APPV='2026-11-10b';
+const APPV='2026-11-10c';
 let crumbs=[];try{crumbs=JSON.parse(localStorage.getItem('xdesk:log')||'[]')}catch(e){crumbs=[]}
 function crumb(m){try{crumbs.push([Date.now(),String(m).slice(0,160)]);if(crumbs.length>90)crumbs=crumbs.slice(-90);localStorage.setItem('xdesk:log',JSON.stringify(crumbs))}catch(e){}}
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
@@ -3443,8 +3444,25 @@ $('#sApply').onclick=()=>{if(!P)return;P.items.forEach(i=>{if(i.type==='text')i.
 $('#claudeBtn').onclick=()=>{
   const files=P&&P.docs.length?P.docs.map(d=>'"'+d.file+'"').join(', '):'[the PDF files of this matter]';
   $('#clPrompt').textContent=`Study ${files} for the matter "${P&&!untitled()?P.name:''}" and prepare my notes of argument for Excerpt Desk: the points to argue, each tied to the exact passage and page that supports it, with links between related points, headings, and bookmarks. Give me the Excerpt Desk case file (PDF) so I can open it directly.`;
-  $('#clText').value='';$('#clFileName').textContent='';openPanel('claudePanel');
+  $('#clText').value='';$('#clFileName').textContent='';openPanel('claudePanel');clInbox();
 };
+/* ---- the Claude app's inbox in Drive (through the eCourts backend of Charpe Suite) ---- */
+function ibCfg(){let c={};try{c=(JSON.parse(localStorage.getItem('cpm_s')||'{}')||{}).eco||{}}catch(e){}if(!c.url){try{c=JSON.parse(localStorage.getItem('xdesk:inbox')||'{}')||{}}catch(e){}}return c}
+async function ibPost(body){const c=ibCfg();if(!c.url||!c.tok)throw new Error('nocfg');body.token=c.tok;
+  const r=await fetch(c.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body),redirect:'follow'});const j=JSON.parse(await r.text());if(!j.ok)throw new Error(j.error||'error');return j}
+let IB=[];
+async function clInbox(){const L=$('#clInboxL');L.innerHTML='<span class="muted">Checking…</span>';
+  try{IB=(await ibPost({action:'inbox',kind:'notes'})).items||[]}
+  catch(e){if(e.message==='nocfg'){L.innerHTML='<div class="muted" style="font-size:12.5px">To receive notes here, give the eCourts backend address and password of Charpe Suite (Charpe Suite – MASTER SETUP › Addresses and passwords).</div><div class="row" style="margin-top:6px"><input id="ibUrl" placeholder="https://script.google.com/macros/s/…/exec" style="flex:2;min-width:200px;height:32px"><input id="ibTok" placeholder="password" style="flex:1;min-width:120px;height:32px"><button class="btn" id="ibSave">Save</button></div>';
+      $('#ibSave').onclick=()=>{try{localStorage.setItem('xdesk:inbox',JSON.stringify({url:$('#ibUrl').value.trim(),tok:$('#ibTok').value.trim()}))}catch(x){}clInbox()};['#ibUrl','#ibTok'].forEach(k=>$(k).onkeydown=ev=>ev.stopPropagation());return}
+    L.innerHTML='<span class="muted">'+esc(/unknown action/i.test(e.message)?'The eCourts backend needs its Claude Inbox update first.':'Could not check: '+e.message)+'</span>';return}
+  if(!IB.length){L.innerHTML='<span class="muted">Nothing waiting.</span>';return}
+  L.innerHTML=IB.map((x,i)=>'<div style="display:flex;gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--line)"><div style="flex:1"><b>'+esc(x.title||'Notes')+'</b><br><span class="muted" style="font-size:12px">'+esc(x.matter||'')+' · '+esc(String(x.created||'').slice(0,10))+(x.message?' · '+esc(x.message):'')+'</span></div><button class="btn primary" data-ia="'+i+'">Add to this matter</button><button class="btn" data-id="'+i+'">Discard</button></div>').join('');
+  L.querySelectorAll('[data-ia]').forEach(b=>b.onclick=async()=>{const x=IB[+b.dataset.ia];if(!P||untitled()){toast('Open the matter first (Library), then add the notes.');return}
+    if(x.matter&&x.matter!==P.name&&!confirm('These notes are for “'+x.matter+'”. Add them to “'+P.name+'”?'))return;
+    $('#clText').value=JSON.stringify(x.worksheet||{});await $('#clImport').onclick();try{await ibPost({action:'inboxdone',fid:x.fid})}catch(e){}});
+  L.querySelectorAll('[data-id]').forEach(b=>b.onclick=async()=>{const x=IB[+b.dataset.id];if(!confirm('Discard “'+(x.title||'these notes')+'”? It is moved to Claude Inbox › Done in your Drive.'))return;try{await ibPost({action:'inboxdone',fid:x.fid})}catch(e){toast(e.message)}clInbox()});
+}
 $('#clCopy').onclick=async()=>{if(await copyText($('#clPrompt').textContent))toast('Request copied');else{const r=document.createRange();r.selectNodeContents($('#clPrompt'));const s=getSelection();s.removeAllRanges();s.addRange(r);toast('Press Ctrl+C to copy')}};
 $('#clFile').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;$('#clText').value=await f.text();$('#clFileName').textContent=f.name});
 $('#clImport').onclick=async()=>{
