@@ -606,6 +606,10 @@ html.paper body::after{content:"";position:fixed;inset:0;pointer-events:none;z-i
 html.paper ::selection{background:rgba(60,60,60,.2)}
 html.paper .rcvc,html.paper .dxtb,html.paper .dxtb select,html.paper .pdgrid .pt,html.paper .card .shot img{background:var(--surface)!important;color:var(--ink)}
 html.paper .rcvbox{background:rgba(60,60,58,.35)}
+.xocard{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
+.xotab{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}.xotab th,.xotab td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}.xotab th{font-size:12px;color:var(--muted);font-weight:600}
+.xohits{list-style:none;margin:6px 0 0;padding:0;max-height:40vh;overflow:auto}.xohits li{border:1px solid var(--line);border-radius:7px;padding:7px 9px;margin:0 0 5px;cursor:pointer}.xohits li:hover{border-color:var(--accent)}
+#ngSide.ngneed{border-color:var(--danger);box-shadow:0 0 0 3px color-mix(in srgb,var(--danger) 25%,transparent)}
 #paperBtn.on{background:color-mix(in srgb,var(--accent) 16%,var(--surface));border-color:var(--accent)}
 
 /* PDF size and compression prompt (Nov 2026) */
@@ -652,6 +656,7 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
           <div class="dtabs" id="dtabs" role="tablist" aria-label="PDFs in this matter"></div>
           <button class="btn" id="addBtn" aria-haspopup="menu">+ Add PDF</button>
           <button class="btn" id="ngBtn" title="Generate notes from this PDF with Gemini or Claude: your default notes, or notes as you instruct">✨ Notes</button>
+          <button class="btn" id="xoBtn" title="For whom you appear, and the orders of this case from Charpe Suite">⚖ Case</button>
           <button class="btn" id="cmbBtn" title="Join this matter's PDFs (OA, reply, rejoinder…) into one PDF, in the order you choose">⧉ Combine</button>
           <input class="sr" type="file" id="pdfIn" multiple accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
           <input class="sr" type="file" id="appendIn" multiple accept="application/pdf,.pdf">
@@ -804,6 +809,22 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
   </div>
 </div></div>
 
+<div class="panel" id="xoPanel" hidden><div class="pc" role="dialog" aria-labelledby="xoTitle" style="width:min(860px,100%)">
+  <h2 id="xoTitle">⚖ This case</h2>
+  <div id="xoBody">
+    <div class="field"><label for="xoSide" style="font-weight:600">I appear for</label>
+      <div class="row" style="margin:2px 0 6px;gap:6px;flex-wrap:wrap" id="xoSideChips"><button class="btn sm" type="button" data-side="Petitioner / Applicant / Plaintiff">Petitioner / Applicant / Plaintiff</button><button class="btn sm" type="button" data-side="Respondents / Defendants / Non-applicants">Respondents / Defendants / Non-applicants</button></div>
+      <input type="text" id="xoSide" placeholder="e.g. Respondents 1 and 2 (Union of India)" autocomplete="off" style="width:100%;box-sizing:border-box;height:36px;flex:none"></div>
+    <p class="muted" style="margin:0 0 12px;font-size:12.5px">Used for the default notes and drafting notes of this matter.</p>
+    <h3 style="margin:6px 0 4px;font-size:15px">Orders from Charpe Suite</h3>
+    <div id="xoCase"></div>
+  </div>
+  <div id="xoView" hidden>
+    <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><button class="btn" id="xoBack" type="button">← Back</button><b id="xoViewT" style="flex:1"></b><button class="btn" id="xoDl" type="button">⬇ Download</button><button class="btn primary" id="xoAddAll" type="button">Add to this file as one PDF</button></div>
+    <iframe id="xoFrame" title="All orders" style="width:100%;height:68vh;border:1px solid var(--line);border-radius:8px;background:#fff"></iframe>
+  </div>
+</div></div>
+
 <div class="panel" id="combinePanel" hidden><div class="pc" role="dialog" aria-labelledby="cmbTitle" style="width:min(600px,100%)">
   <h2 id="cmbTitle">Combine PDFs into one</h2>
   <p>Tick the PDFs to combine and set their order with <b>↑</b> and <b>↓</b>. Your notes, highlights, crops and drawings move to the right pages of the combined PDF, and each part gets a bookmark.</p>
@@ -908,19 +929,21 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
 <div class="panel" id="ngPanel" hidden><div class="pc" role="dialog" aria-labelledby="ngTitle">
   <h2 id="ngTitle">Generate notes</h2>
   <div id="ngStep_ask">
-    <p id="ngDefaultInfo" style="margin:0 0 10px">Your standard notes, in eight linked sheets: <b>1 Structured facts · 2 Record index · 3 Chronology · 4 Arguments · 5 Key points · 6 Mind map · 7 Final submissions · 8 Bench questions</b>. Every point is linked to its page, with a light ring round the passage.</p>
+    <p id="ngDefaultInfo" style="margin:0 0 10px"></p>
     <div id="ngDraftBox" hidden>
       <div class="field" style="margin:0 0 8px"><label for="ngKind" style="font-weight:600">What to draft</label>
-        <select id="ngKind" style="width:100%;height:36px"><option>Written statement / Reply</option><option>Reply to Original Application (CAT / MAT)</option><option>Sur-rejoinder</option><option>Writ petition</option><option>Original Application</option><option>Affidavit</option><option>Application</option><option>Appeal / Revision</option><option>Other (as I say)</option></select></div>
-      <p class="muted" style="margin:0 0 6px;font-size:12.5px">With the draft you also get a <b>Drafting notes</b> sheet: every important statement of the draft, linked to the page of the PDF it is taken from, and anything the AI could not find in the papers — so you can check that nothing is made up.</p></div>
+        <select id="ngKind" style="width:100%;height:36px"><option>Written statement / Reply</option><option>Plaint</option><option>Rejoinder</option><option>Reply to Original Application (CAT / MAT)</option><option>Sur-rejoinder</option><option>Writ petition</option><option>Original Application</option><option>Affidavit</option><option>Application</option><option>Appeal / Revision</option><option>Other (as I say)</option></select></div>
+      <p class="muted" style="margin:0 0 6px;font-size:12.5px">With the draft you also get a <b>Drafting notes</b> sheet: paragraph by paragraph, why each plea is raised, the page of the PDF it rests on (the passage highlighted), and anything the AI could not find in the papers — so you can check that nothing is made up.</p></div>
     <div id="ngCustomBox" hidden><label for="ngCustom" style="font-weight:600" id="ngCustomLbl">Your key inputs</label>
       <div id="ngMic"></div>
       <textarea id="ngCustom" rows="7" style="width:100%;box-sizing:border-box;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:7px;font:inherit;background:var(--bg2,var(--surface));color:inherit" placeholder="Speak or type, e.g. Sheet 1 — the seniority facts of the applicant and respondents 4 to 6. Sheet 2 — a comparative chart of their dates of appointment. Sheet 3 — points to argue that the 2019 selection was contrary to the G.R. dated 12.03.2018."></textarea></div>
     <div style="margin-top:10px"><b>Read</b>
       <label class="ngopt"><input type="radio" name="ngScope" id="ngScopeThis" checked> <span>This file: <b id="ngThisName"></b></span></label>
       <label class="ngopt" id="ngAllRow"><input type="radio" name="ngScope" id="ngScopeAll"> <span>All <b id="ngAllN"></b> PDFs of this matter together</span></label></div>
-    <div class="field" style="margin-top:8px"><label for="ngSide">I appear for (optional)</label><input type="text" id="ngSide" placeholder="e.g. Respondents 1 and 2 (Union of India)" autocomplete="off" style="width:100%;box-sizing:border-box;height:36px;flex:none"></div>
-    <p style="margin:12px 0 6px;font-weight:600">Prepare the notes with:</p>
+    <div class="field" style="margin-top:8px"><label for="ngSide" id="ngSideLbl">I appear for</label>
+      <div class="row" style="margin:2px 0 6px;gap:6px;flex-wrap:wrap" id="ngSideChips"><button class="btn sm" type="button" data-side="Petitioner / Applicant / Plaintiff">Petitioner / Applicant / Plaintiff</button><button class="btn sm" type="button" data-side="Respondents / Defendants / Non-applicants">Respondents / Defendants / Non-applicants</button></div>
+      <input type="text" id="ngSide" placeholder="e.g. Respondents 1 and 2 (Union of India)" autocomplete="off" style="width:100%;box-sizing:border-box;height:36px;flex:none"></div>
+    <p style="margin:12px 0 6px;font-weight:600" id="ngWithLbl">Prepare the notes with:</p>
     <div class="row"><button class="btn primary" id="ngGem">✦ Gemini</button><button class="btn primary" id="ngCla">✳ Claude</button><button class="btn" data-close>Cancel</button></div>
     <p style="color:var(--muted);font-size:12.5px;margin:8px 0 0">The PDF goes to the service you choose, under your own key. Large paper-books can take a few minutes; you can close this box and keep working, and a message tells you when the notes are ready.</p>
   </div>
@@ -1217,7 +1240,7 @@ const fsSupported='showDirectoryPicker' in window;
 
 /* ================= project state ================= */
 let P=null, proj=null;
-const blank=name=>({format:FMT,name,docs:[],items:[],links:[],marks:[],ink:[],sheets:[{id:'s1',name:'Sheet 1'}],hiddenFiles:[],deletedFiles:[],pins:[]});
+const blank=name=>({format:FMT,name,docs:[],items:[],links:[],marks:[],ink:[],sheets:[{id:'s1',name:'Sheet 1'}],hiddenFiles:[],deletedFiles:[],pins:[],meta:{}});
 const byId=id=>P.items.find(i=>i.id===id);
 const docById=id=>P&&P.docs.find(d=>d.id===id);
 const stripName=s=>String(s||'').toLowerCase().replace(/\.pdf$/,'').replace(/\s*\(annotated\)$/,'').replace(/\s+/g,' ').trim();
@@ -1267,7 +1290,7 @@ function undoRedo(dir){
   to.push(snap());const s=from.pop();lastSnap=s;applySnap(s);updUndo();
 }
 $('#undoBtn').onclick=()=>undoRedo(-1);$('#redoBtn').onclick=()=>undoRedo(1);
-function serial(){return {format:FMT,name:P.name,updated:new Date().toISOString(),docs:P.docs,items:P.items,links:P.links,marks:P.marks,ink:P.ink||[],sheets:P.sheets,sheet:curSheet,hiddenFiles:P.hiddenFiles||[],deletedFiles:P.deletedFiles||[],pins:P.pins||[]}}
+function serial(){return {format:FMT,name:P.name,updated:new Date().toISOString(),docs:P.docs,items:P.items,links:P.links,marks:P.marks,ink:P.ink||[],sheets:P.sheets,sheet:curSheet,hiddenFiles:P.hiddenFiles||[],deletedFiles:P.deletedFiles||[],pins:P.pins||[],meta:P.meta||{}}}
 async function saveNow(){
   if(!proj)return false;clearTimeout(saveT);saveT=null;
   try{
@@ -1985,7 +2008,7 @@ function tapHint(mouse){clearTimeout(tapHintT);tapHintT=setTimeout(()=>{if(Date.
   toast(mouse?'Double-click on the worksheet to type there.':'Press and hold on the worksheet to type there. A quick tap is ignored.')},380)}
 
 /* ================= problem recorder: a short diary of recent actions, kept on this device only ================= */
-const APPV='2026-11-10d';
+const APPV='2026-11-10e';
 let crumbs=[];try{crumbs=JSON.parse(localStorage.getItem('xdesk:log')||'[]')}catch(e){crumbs=[]}
 function crumb(m){try{crumbs.push([Date.now(),String(m).slice(0,160)]);if(crumbs.length>90)crumbs=crumbs.slice(-90);localStorage.setItem('xdesk:log',JSON.stringify(crumbs))}catch(e){}}
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
@@ -2532,8 +2555,8 @@ function normInk(s){
 function maxBottom(){return P.items.filter(onSheet).reduce((m,i)=>Math.max(m,i.y+itemH(i)),0)}
 function importInto(src,fresh){
   const report={items:0,unmatched:new Set()};
-  const srcDocs=(src.docs||[]).map(d=>({id:d.id!=null?String(d.id):uid(),file:d.file||d.name||'',title:d.title||'',rot:d.rot,p1:d.p1}));
-  if(fresh)srcDocs.forEach(d=>{if(!d.file)return;const nd={id:d.id,file:d.file,title:d.title||d.file.replace(/\.pdf$/i,'')};if(d.rot&&typeof d.rot==='object')nd.rot=d.rot;if(parseInt(d.p1,10)>1)nd.p1=parseInt(d.p1,10);P.docs.push(nd)});
+  const srcDocs=(src.docs||[]).map(d=>({id:d.id!=null?String(d.id):uid(),file:d.file||d.name||'',title:d.title||'',rot:d.rot,p1:d.p1,ord:d.ord}));
+  if(fresh)srcDocs.forEach(d=>{if(!d.file)return;const nd={id:d.id,file:d.file,title:d.title||d.file.replace(/\.pdf$/i,'')};if(d.rot&&typeof d.rot==='object')nd.rot=d.rot;if(parseInt(d.p1,10)>1)nd.p1=parseInt(d.p1,10);if(d.ord&&typeof d.ord==='object')nd.ord=d.ord;P.docs.push(nd)});
   const resolveDoc=r=>{
     if(r==null||r==='')return P.docs.length===1?P.docs[0].id:{missing:''};
     const sd=srcDocs.find(d=>d.id===String(r))||srcDocs.find(d=>eqName(d.file,r)||eqName(d.title,r))||{file:String(r),title:String(r)};
@@ -2576,7 +2599,8 @@ function loadProjectJson(json,name){
   P=blank(name);curSheet='s1';
   if(json){P.hiddenFiles=Array.isArray(json.hiddenFiles)?json.hiddenFiles:[];P.deletedFiles=Array.isArray(json.deletedFiles)?json.deletedFiles.map(String):[];importInto(json,true);
     allAnchors().forEach(({a})=>{if(a.missing&&!a.rects)delete a.missing});
-    P.pins=Array.isArray(json.pins)?json.pins.filter(x=>x&&x.d).map(x=>Object.assign({},x,{id:x.id||'pin-'+x.d})):[]}
+    P.pins=Array.isArray(json.pins)?json.pins.filter(x=>x&&x.d).map(x=>Object.assign({},x,{id:x.id||'pin-'+x.d})):[];
+    P.meta=json.meta&&typeof json.meta==='object'?json.meta:{}}
 }
 
 /* ================= open a matter ================= */
@@ -4884,6 +4908,17 @@ const DEFAULT_TASK=`Prepare my standard structured notes for this matter, in the
 "7 Final submissions": A. What the client possesses (service, qualifications, experience, eligibility on every condition); B. How he was wronged, in sequence; C. Points on merits. Each point ends with "[A-x, p.__ · Para __ / Ground __]" and has "x" excerpt cards beneath. Also "g" items: a DOCUMENT GUIDE, one line per annexure saying what to point out, with its ref.
 "8 Bench questions": the "Where is it shown?" questions the Bench may ask (relative seniority, dates, criteria, vacancies, impugned clause, application in time, relief). Under each question ("h"), one-line answers "→ what the document shows [A-x, p.__]" as "p" items, each with its ref.
 Adapt the headings to the matter and to my side (if I appear for the respondents, section B of sheet 7 becomes why the applicant has no case). Mark the strongest point with ★.`;
+const DEFAULT4_TASK=side=>`Prepare my default notes for this matter in exactly these four sheets, in this order, with exactly these names. I appear for: ${side}.
+"1 Index": an index of the record, each line linked to its first page: the cause title, the pleadings (plaint / petition / O.A., written statement / reply, rejoinder, sur-rejoinder), the impugned order or communication, the prayer clause, then every annexure / exhibit / document one line each — "A-x (pp.__) Document dated DD/MM/YYYY: what it is", then the orders of the court in date order. Group with "h" headings (Pleadings · Documents of the petitioner side · Documents of the respondent side · Orders).
+"2 Case and our stand", in short, simple, precise bullet points ("p" items), every point with its ref to the page relied on:
+  h "A. What the petitioner / applicant / plaintiff seeks" (use the party's actual description and name) — each relief prayed for, linked to the prayer clause; interim relief separately.
+  h "B. Basis of his claim" — each ground or fact he relies on, one bullet each, ending "[relies on: A-x, p.__]", linked to that document; add "s" lines "↳ also: …" for the same fact elsewhere.
+  h "C. What the respondents / defendants / non-applicants / opponents say" (their actual description) — their stand and objections, one bullet each, with the documents they rely on, linked.
+  h "D. Basis of their stand" — as in B, for their side.
+  h "E. Our stand — for ${side}": how to put our case and how to hold it: numbered points in the order to argue them; each point a "p" linked to the page that proves it, followed by "x" excerpt cards quoting the exact passages to show the Bench (these are highlighted in the PDF); then how to meet each point of the other side ("Their point → our answer [A-x, p.__]"). Mark the strongest point with ★.
+"3 Bench questions": the questions the Bench is likely to ask either side — on facts, dates, limitation, maintainability, the documents, the relief, weak spots of our side — each question an "h", and under it how to answer and satisfy the Bench in "p" items "→ … [A-x, p.__]", each with its ref; where the record has no answer, say so and suggest how to handle it.
+"4 Case laws": judgments that may help our side, Supreme Court first, then the Bombay High Court (Nagpur Bench first), then others. For each, an "h" with the name and citation (year, court) and "p" items: the principle laid down, and how it applies here. First list any judgments cited in the papers themselves, linked to the page where they are cited. Name ONLY judgments you are sure exist, with the citation you are sure of; never invent a case or a citation — where unsure, state the principle and write "[authority to be found]". End every citation with "— verify before citing".
+Use the actual names of the parties. Every fact, date and document must carry its "ref".`;
 const CUSTOM_TASK=t=>`Prepare notes on this matter as I instruct below. Where I say what each sheet should contain ("Sheet 1 …", "Sheet 2 …"), make exactly those sheets, in that order, named as I describe them; otherwise arrange them in one or more sheets as suits my instructions (give each sheet a short name).
 Every point, fact, date and figure must carry its "ref" to the exact place in the PDF where it is shown, so that I can open it with one click; if something I ask for is not in the papers, say so in a point without a ref instead of guessing.
 My instructions (dictated; spelling of names as in the papers):
@@ -4903,7 +4938,7 @@ My instructions (dictated):
 ${t||'(none — draft it fully from the papers)'}
 
 Strict rules for the draft: take every fact, date, name, number and document only from the papers; where something needed is not in the papers, leave a blank like [__] and list it under "doubts". Mark the important words in **bold** (headings, "As to Para X:-"). Separate paragraphs by a blank line.
-Also make ONE sheet named "Drafting notes": for each important statement in the draft (every date, appointment, order, amount, admission or denial of fact), a "p" point "Para N: <the statement in short> — <where it comes from>" with its "ref" to the exact place in the PDF; an "h" heading per part of the draft; at the end, under the heading "Not found in the papers — check", one point for each blank or doubt.
+Also make ONE sheet named "Drafting notes", on the same lines as my notes of argument: an "h" heading per part of the draft; under it, for each paragraph and each important statement (every date, appointment, order, amount, admission or denial of fact, ground, prayer), a "p" point "Para N: <the plea in short> — why it is pleaded: <its purpose / what it meets> — source: <document, page>" with its "ref" to the exact place in the PDF, followed where useful by an "x" excerpt card quoting the passage that justifies the plea (it is highlighted in the PDF); for each denial, the document that supports the denial; at the end, under the heading "Not found in the papers — check", one point for each blank or doubt.
 Reply with ONLY one JSON object: {"title":"…","draft":"the complete pleading as plain text","doubts":["…"],"sheets":[{"name":"Drafting notes","items":[ … ]}]}`;
 
 /* ---- the panel ---- */
@@ -4914,8 +4949,14 @@ function ngOpen(docId,mode){
   if(isWordDoc(d)){toast('Notes are made from PDFs. Open a PDF of this matter and press ✨ on its tab.');return}
   NG.doc=d.id;NG.mode=mode;
   const pdfs=P.docs.filter(x=>!isWordDoc(x));
-  $('#ngTitle').textContent=(mode==='draft'?'Draft a pleading':mode==='custom'?'Customise notes':'Default notes')+' · '+d.title;
-  $('#ngCustomBox').hidden=mode==='default';$('#ngDefaultInfo').hidden=mode!=='default';$('#ngDraftBox').hidden=mode!=='draft';
+  $('#ngTitle').textContent=(mode==='draft'?'Drafting notes — draft a pleading':mode==='custom'?'Custom notes':mode==='detailed'?'Detailed notes (8 sheets)':'Default notes')+' · '+d.title;
+  const fixed=mode==='default'||mode==='detailed';
+  $('#ngCustomBox').hidden=fixed;$('#ngDefaultInfo').hidden=!fixed;$('#ngDraftBox').hidden=mode!=='draft';
+  $('#ngDefaultInfo').innerHTML=mode==='detailed'?'Your earlier standard notes, in eight linked sheets: <b>1 Structured facts · 2 Record index · 3 Chronology · 4 Arguments · 5 Key points · 6 Mind map · 7 Final submissions · 8 Bench questions</b>. Every point is linked to its page, with a light ring round the passage.'
+    :'Your default notes, in four linked sheets: <b>1 Index · 2 Case and our stand</b> (what each side seeks and on what basis, and how to put and hold our stand, with the passages highlighted) <b>· 3 Bench questions · 4 Case laws</b> (Supreme Court and Bombay High Court first). Every point is linked to its page.';
+  $('#ngSide').value=(P.meta&&P.meta.side)||'';$('#ngSide').classList.remove('ngneed');
+  $('#ngSideLbl').innerHTML=mode==='custom'?'I appear for (optional)':'I appear for <b style="color:var(--danger)">(needed)</b>';
+  $('#ngWithLbl').textContent=mode==='custom'?'Choose the AI for these notes:':'Prepare with:';
   $('#ngCustomLbl').textContent=mode==='draft'?'Your instructions for the draft':'Your key inputs';
   ngMicStart(mode);
   $('#ngThisName').textContent=d.title;$('#ngAllN').textContent=pdfs.length;$('#ngAllRow').hidden=pdfs.length<2;
@@ -4927,7 +4968,7 @@ function ngOpen(docId,mode){
 let ngRec=null,ngMicOn=false;
 function ngMicStart(mode){
   const host=$('#ngMic');if(ngRec){try{ngRec.stop(true)}catch(e){}ngRec=null}ngMicOn=false;
-  if(mode==='default'||NG.job){host.innerHTML='';return}
+  if(mode==='default'||mode==='detailed'||NG.job){host.innerHTML='';return}
   if(!vKey()){host.innerHTML='<p class="muted" style="font-size:12.5px;margin:4px 0">Add your Gemini key (🎙 Dictate › ⚙) to speak your instructions; or type them below.</p>';return}
   ngRec=vRecorder(host,async blob=>{ngRec.set('Typing what you said…');
     try{const t=await vTranscribe(blob);const ta=$('#ngCustom');ta.value=(ta.value.trim()?ta.value.trim()+'\n':'')+t;ngRec.set('Done — check the text below, speak again to add more, then choose Gemini or Claude.')}
@@ -4936,7 +4977,9 @@ function ngMicStart(mode){
 $('#ngPanel').addEventListener('click',e=>{if(ngRec&&(e.target===$('#ngPanel')||e.target.closest('[data-close]')))try{ngRec.stop(true)}catch(x){}},true);
 function ngShow(step){['ask','run','done'].forEach(s=>$('#ngStep_'+s).hidden=s!==step)}
 $('#ngPanel').addEventListener('keydown',e=>e.stopPropagation());
-$('#ngGem').onclick=()=>ngStart('gemini');$('#ngCla').onclick=()=>ngStart('claude');
+$('#ngGem').onclick=()=>ngStart('gemini');
+$('#ngSide').addEventListener('input',()=>$('#ngSide').classList.remove('ngneed'));
+$('#ngSideChips').addEventListener('click',e=>{const b=e.target.closest('[data-side]');if(!b)return;$('#ngSide').value=b.dataset.side;$('#ngSide').classList.remove('ngneed')});$('#ngCla').onclick=()=>ngStart('claude');
 $('#ngCancel').onclick=()=>{if(NG.job){NG.job.cancel=true;try{NG.job.ac.abort()}catch(e){}}};
 $('#ngDiscard').onclick=()=>{NG.res=null;ngShow('ask');$('#ngPanel').hidden=true};
 $('#ngAttach').onclick=()=>ngAttach();
@@ -4947,14 +4990,16 @@ $('#ngAgain').onclick=()=>{NG.res=null;ngShow('ask')};
 async function ngStart(engine){
   if(NG.job){toast('Notes are already being prepared.');return}
   if(ngRec){try{ngRec.stop(true)}catch(e){}ngRec=null}
-  const task=NG.mode!=='default'?$('#ngCustom').value.trim():'';
+  const task=(NG.mode==='custom'||NG.mode==='draft')?$('#ngCustom').value.trim():'';
   if(NG.mode==='custom'&&!task){toast('Write or speak your key inputs first.');$('#ngCustom').focus();return}
   if(engine==='gemini'&&!gemKey()){toast('Add your Gemini API key first (Dictation settings ⚙).');return}
   if(engine==='claude'&&!ngc.claudeKey){toast('Add your Claude API key in Settings › Notes by Gemini or Claude.');openPanel('setPanel');setTimeout(()=>{try{sk.scrollIntoView({block:'center'});sk.focus()}catch(e){}},80);return}
   const d=docById(NG.doc);if(!d)return;
   const docs=$('#ngScopeAll').checked?P.docs.filter(x=>!isWordDoc(x)):[d];
   const side=$('#ngSide').value.trim();
-  const job={engine,cancel:false,ac:null,docs,matter:P.name,t0:Date.now(),chars:0,expect:NG.mode==='custom'?9000:NG.mode==='draft'?30000:26000,mode:NG.mode,model:NG.mode==='draft'?(ngc.draftModel||'claude-opus-5-5'):''};NG.job=job;
+  if(!side&&NG.mode!=='custom'){toast('For whom do you appear in this case? Choose or type it, then press Gemini or Claude again.');$('#ngSide').focus();$('#ngSide').classList.add('ngneed');return}
+  if(side&&P&&(P.meta=P.meta||{}).side!==side){P.meta.side=side;touch();if(window.xoPaint)xoPaint()}
+  const job={engine,cancel:false,ac:null,docs,matter:P.name,t0:Date.now(),chars:0,expect:NG.mode==='custom'?9000:NG.mode==='draft'?30000:NG.mode==='default'?18000:26000,mode:NG.mode,model:NG.mode==='draft'?(ngc.draftModel||'claude-opus-5-5'):''};NG.job=job;
   ngShow('run');ngProg('Reading the PDF'+(docs.length>1?'s':'')+'…',0);
   const tick=setInterval(()=>ngProg(null),1000);
   try{
@@ -4962,7 +5007,7 @@ async function ngStart(engine){
     for(const x of docs){const buf=await proj.store.readFile(proj.name,x.file);let pages=0;try{const rt=await ensureRT(x);pages=rt.pageData.length}catch(e){}
       files.push({doc:x,buf,pages});total+=buf.byteLength}
     const list='The files (refer to them by number in "f"):\n'+files.map((f,i)=>(i+1)+'. '+f.doc.title+' ('+(f.pages||'?')+' pages)').join('\n');
-    const task2=(NG.mode==='draft'?DRAFT_TASK($('#ngKind').value,task,ngc.draftStyle||DRAFT_STYLE_DEFAULT):NG.mode==='custom'?CUSTOM_TASK(task):DEFAULT_TASK)+(side?'\nI appear for: '+side+'.':'')+'\nMatter: '+P.name+'.';
+    const task2=(NG.mode==='draft'?DRAFT_TASK($('#ngKind').value,task,ngc.draftStyle||DRAFT_STYLE_DEFAULT):NG.mode==='custom'?CUSTOM_TASK(task):NG.mode==='detailed'?DEFAULT_TASK:DEFAULT4_TASK(side))+(side?'\nI appear for: '+side+'.':'')+'\nMatter: '+P.name+'.';
     let txt;
     if(engine==='gemini')txt=await ngGemini(job,files,total,list+'\n\n'+task2);
     else txt=await ngClaude(job,files,total,list+'\n\n'+task2);
@@ -5109,9 +5154,10 @@ async function ngAttach(){
 window.ngResume=async function(){if(!P||NG.job)return;try{const r=await idb.get('kv','ng:'+P.name);if(r&&r.json){NG.res=r;NG.doc=r.docIds[0];ngPreview();openPanel('ngPanel');$('#ngTitle').textContent='Notes ready · '+P.name;ngShow('done')}else toast('No unattached notes for this matter.')}catch(e){}};
 
 /* ---- the ✨ on each file tab, and the toolbar button ---- */
-function ngMenu(btn,docId){popMenu(btn,[{label:'Default notes',hint:'Your standard eight sheets: structured facts, record index, chronology, arguments, key points, mind map, final submissions, Bench questions',run:()=>ngOpen(docId,'default')},
-  {label:'Customise notes',hint:'Speak or type what each sheet should contain; Gemini or Claude prepares the notes as you ask, every point linked to the PDF',run:()=>ngOpen(docId,'custom')},
-  {label:'Draft a pleading',hint:'Written statement, reply, petition, OA, affidavit, application — with a Drafting notes sheet linking each statement to its page',run:()=>ngOpen(docId,'draft')},
+function ngMenu(btn,docId){popMenu(btn,[{label:'Default notes',hint:'Four sheets: 1 Index · 2 What each side seeks and why, and our stand · 3 Bench questions · 4 Case laws (SC, Bombay HC)',run:()=>ngOpen(docId,'default')},
+  {label:'Custom notes',hint:'Speak or type what each sheet should contain, and choose Gemini or Claude; every point linked to the PDF',run:()=>ngOpen(docId,'custom')},
+  {label:'Drafting notes',hint:'Draft a plaint, petition, OA, reply, written statement… with notes justifying every plea, linked to its page and highlighted',run:()=>ngOpen(docId,'draft')},
+  {label:'Detailed notes (8 sheets)',hint:'The earlier standard notes: structured facts, record index, chronology, arguments, key points, mind map, final submissions, Bench questions',run:()=>ngOpen(docId,'detailed')},
   {label:'Notes made earlier, not attached',hint:'Show the last notes prepared for this matter',run:()=>window.ngResume()}])}
 window.ngMenu=ngMenu;
 if(/[?&]ngtest\b/.test(location.search))window.__ngP=()=>P;
@@ -6015,6 +6061,148 @@ function downloadDocx(m,st){const b=docxBlob(st);const a=document.createElement(
 if(/[?&]dxtest\b/.test(location.search))window.__dx={docxBlob,clean,textToHtml,list:()=>list,purge,cfg:()=>cfg,openEd};
 })();
 })();
+/* ================= ⚖ Case (Nov 2026): for whom we appear, and the orders from Charpe Suite =================
+   The matter is linked to its case in Charpe Suite's Case Manager (found from the case number in the
+   matter's name). Its orders come in as separate PDFs in date order; pressing again brings only the
+   new ones (an order once brought in — or removed by you — is never added again). If Charpe Suite is
+   behind, "Update from court" fetches the case first, with the CAPTCHA shown here. All the orders can
+   also be seen as one PDF, in date order, with a bookmark for each. */
+const XO={f:null,w:null,ready:null,busy:false,find:''};
+const XO_URL='../Charpe-suite/cases.html?embed=1';
+function xoApi(){
+  if(XO.ready)return XO.ready;
+  XO.ready=new Promise((res,rej)=>{
+    const f=document.createElement('iframe');f.src=XO_URL;f.title='Charpe Suite (in the background)';f.setAttribute('aria-hidden','true');f.tabIndex=-1;
+    f.style.cssText='position:fixed;width:2px;height:2px;left:-50px;top:0;border:0;opacity:0;pointer-events:none';document.body.append(f);XO.f=f;
+    const t0=Date.now();
+    const tick=()=>{let w=null;try{w=f.contentWindow}catch(e){}
+      if(w&&w.cmCaseInfo&&w.ordListFor&&w.ECO&&w.ECO.api&&w.C){XO.w=w;res(w);return}
+      if(Date.now()-t0>30000){XO.ready=null;try{f.remove()}catch(e){}rej(new Error('Charpe Suite could not be opened from here. Check the internet connection.'));return}
+      setTimeout(tick,300)};
+    tick()});
+  return XO.ready}
+const xoMeta=()=>{if(!P)return {};P.meta=P.meta||{};return P.meta};
+const xoDmy=d=>{const m=String(d||'').match(/^(\d{4})-(\d\d)-(\d\d)/);return m?m[3]+'.'+m[2]+'.'+m[1]:String(d||'')};
+const xoKey=(cid,key)=>cid+'|'+key;
+const xoDocs=()=>P?P.docs.filter(d=>d.ord&&d.ord.k):[];
+function xoLabel(){const b=$('#xoBtn');if(!b)return;const s=P&&P.meta&&P.meta.side;const sh=!s?'':/^petition/i.test(s)?'Petitioner side':/^respond/i.test(s)?'Respondent side':(s.length>16?s.slice(0,15)+'…':s);b.textContent='⚖ Case'+(sh?' · '+sh:'');b.title='For whom you appear, and the orders of this case from Charpe Suite'+(s?' — you appear for '+s:'')}
+/* orders first by date, after the other papers */
+function xoSort(){const o=xoDocs().slice().sort((a,b)=>String(a.ord.d).localeCompare(String(b.ord.d)));if(!o.length)return;const set=new Set(o);P.docs=P.docs.filter(d=>!set.has(d)).concat(o)}
+
+async function xoOpen(){
+  if(!P){toast('Open a matter first.');return}
+  openPanel('xoPanel');xoPaint();
+}
+async function xoPaint(){
+  xoLabel();const box=$('#xoBody');if(!box||$('#xoPanel').hidden||!P)return;
+  const m=xoMeta();
+  $('#xoSide').value=m.side||'';
+  const host=$('#xoCase');
+  host.innerHTML='<p class="muted" style="margin:6px 0">Opening Charpe Suite…</p>';
+  let w;try{w=await xoApi()}catch(e){host.innerHTML='<p style="color:var(--danger)">'+esc(e.message)+'</p>';return}
+  if(!w.C.filter(c=>!c.del).length){host.innerHTML='<p>No cases are in Charpe Suite on this browser yet. Open <b>Charpe Suite</b> here once (signed in, Drive sync on), then come back.</p>';return}
+  let info=m.cm?w.cmCaseInfo(m.cm):null;
+  if(!info){
+    const guess=w.cmFindCases([P.name].concat(P.docs.map(d=>d.title)).join(' \n '));
+    if(guess.length===1&&!XO.find){m.cm=guess[0].id;touch();info=w.cmCaseInfo(m.cm)}
+    else{xoPick(host,w,guess);return}
+  }
+  const inFile=new Set(xoDocs().map(d=>d.ord.k)),done=new Set(m.ordIn||[]);
+  const list=info.orders.slice().sort((a,b)=>String(a.d).localeCompare(String(b.d)));
+  const fresh=list.filter(o=>o.ok&&!done.has(xoKey(info.id,o.key))&&!inFile.has(xoKey(info.id,o.key)));
+  host.innerHTML=
+    '<div class="xocard"><div style="flex:1;min-width:0"><b>'+esc(info.cn||'—')+'</b> — '+esc(info.title)+'<br><small>'+esc(info.court)+(info.cl?' · Client: '+esc(info.cl):'')+(info.nd?' · Next date: '+esc(xoDmy(info.nd))+(info.ns?' ('+esc(info.ns)+')':''):'')+'</small></div>'+
+      '<button class="btn sm" id="xoChange" type="button">Change</button></div>'+
+    '<p style="margin:8px 0 6px;font-size:13.5px">'+(info.atText?'Orders and status in Charpe Suite updated as on <b>'+esc(info.atText)+'</b>':'<b style="color:var(--danger)">Not fetched from the court yet</b>')+
+      ' · '+list.filter(o=>o.ok).length+' order'+(list.filter(o=>o.ok).length===1?'':'s')+' downloaded'+(info.pending?' · <span style="color:var(--danger)">'+info.pending+' not downloaded yet</span>':'')+' · '+inFile.size+' in this file</p>'+
+    '<div class="row" style="gap:6px;flex-wrap:wrap">'+
+      '<button class="btn primary" id="xoBring" type="button"'+(fresh.length?'':' disabled')+'>⬇ Bring '+(fresh.length?fresh.length+' new order'+(fresh.length===1?'':'s'):'orders')+' into this file</button>'+
+      '<button class="btn" id="xoUpdate" type="button" title="Fetch the case from the court first (CAPTCHA where the court needs one), then bring in the new orders">⟳ Update from court, then bring in</button>'+
+      '<button class="btn" id="xoAll" type="button"'+(inFile.size?'':' disabled')+'>📑 All orders as one PDF</button></div>'+
+    '<div id="xoUpd" style="margin-top:8px"></div>'+
+    (list.length?'<table class="xotab"><thead><tr><th>Date</th><th>Order</th><th>In this file</th></tr></thead><tbody>'+list.map(o=>{const k=xoKey(info.id,o.key);
+      const st=inFile.has(k)?'<span style="color:#127a4b">✓ in the file</span>':done.has(k)?'<span class="muted">removed by you — not added again</span>':o.ok?'<b>new</b>':o.none?'<span class="muted">not available on the court site</span>':'<span style="color:var(--danger)">not downloaded yet</span>';
+      return '<tr><td>'+esc(xoDmy(o.d))+'</td><td>'+esc(o.t||'Order')+(o.no?' <small class="muted">'+esc(o.no)+'</small>':'')+'</td><td>'+st+'</td></tr>'}).join('')+'</tbody></table>'
+      :'<p class="muted">No orders of this case are on record in Charpe Suite yet — press <b>⟳ Update from court</b>.</p>');
+  $('#xoChange').onclick=()=>{XO.find=' ';xoPick(host,w,[])};
+  $('#xoBring').onclick=()=>xoBring();
+  $('#xoAll').onclick=()=>xoAll();
+  $('#xoUpdate').onclick=async()=>{
+    if(info.kind==='none'){$('#xoUpd').innerHTML='<p style="color:var(--danger)">'+esc(info.why)+'</p>';return}
+    if(XO.busy)return;XO.busy=true;$('#xoUpdate').disabled=true;
+    try{await w.cmUpdateCase(info.id,$('#xoUpd'));await xoBring(true)}catch(e){}finally{XO.busy=false;const b=$('#xoUpdate');if(b)b.disabled=false}};
+}
+function xoPick(host,w,guess){
+  const m=xoMeta();
+  host.innerHTML='<p style="margin:6px 0">'+(guess.length>1?'More than one case in Charpe Suite matches this matter. Which is it?':m.cm?'Choose the case of this matter:':'This matter could not be matched to a case in Charpe Suite by its number. Find it here:')+'</p>'+
+    '<input type="text" id="xoQ" placeholder="Case number or a party name" autocomplete="off" style="width:100%;box-sizing:border-box;height:36px">'+
+    '<ul class="xohits" id="xoHits"></ul>';
+  const show=list=>{$('#xoHits').innerHTML=list.slice(0,12).map(c=>'<li data-id="'+esc(c.id)+'"><b>'+esc(c.cn||'—')+'</b> — '+esc(c.title)+'<br><small>'+esc(c.court)+'</small></li>').join('')||'<li class="muted" style="cursor:default">Nothing found.</li>'};
+  show(guess);
+  $('#xoQ').addEventListener('keydown',e=>e.stopPropagation());
+  $('#xoQ').oninput=()=>{const q=$('#xoQ').value.trim().toLowerCase();show(q.length<2?guess:w.cmCases().filter(c=>(c.cn+' '+c.title+' '+c.cl).toLowerCase().includes(q)))};
+  $('#xoHits').onclick=e=>{const li=e.target.closest('li[data-id]');if(!li)return;m.cm=li.dataset.id;XO.find='';touch();xoPaint()};
+  setTimeout(()=>{try{$('#xoQ').focus()}catch(e){}},50);
+}
+async function xoBring(quiet){
+  if(!P||!proj)return;const m=xoMeta();if(!m.cm)return;
+  const w=await xoApi();const info=w.cmCaseInfo(m.cm);if(!info)return;
+  const inFile=new Set(xoDocs().map(d=>d.ord.k)),done=new Set(m.ordIn||[]);
+  const add=info.orders.filter(o=>o.ok&&!inFile.has(xoKey(info.id,o.key))&&!done.has(xoKey(info.id,o.key))).sort((a,b)=>String(a.d).localeCompare(String(b.d)));
+  if(!add.length){if(!quiet)toast('No new orders — this file already has every downloaded order of the case.');else toast('Charpe Suite updated. No new orders to bring in.');xoPaint();return}
+  const btn=$('#xoBring');if(btn){btn.disabled=true;btn.textContent='Bringing in…'}
+  const taken=await takenNames();let n=0,first=null;const miss=[];
+  for(const o of add){
+    try{
+      const blob=await w.ordBlobFor(info.id,o.key);const bytes=new Uint8Array(await blob.arrayBuffer());
+      const kind=/judg/i.test(o.t||'')?'Judgment':'Order';
+      const name=uniqueFile(kind+' '+xoDmy(o.d)+(info.cn?' - '+info.cn.replace(/[\\/:*?"<>|]+/g,'-'):''),taken);
+      await proj.store.writeFile(proj.name,name,bytes);taken.push(name);
+      P.hiddenFiles=(P.hiddenFiles||[]).filter(h=>h!==name);P.deletedFiles=(P.deletedFiles||[]).filter(h=>h!==name);
+      const doc={id:uid(),file:name,title:kind+' '+xoDmy(o.d),ord:{k:xoKey(info.id,o.key),d:o.d,cid:info.id}};P.docs.push(doc);
+      (m.ordIn=m.ordIn||[]).push(doc.ord.k);n++;if(!first)first=doc;
+    }catch(e){console.warn('order',e);miss.push(xoDmy(o.d))}
+  }
+  xoSort();touch();renderTabs();
+  toast((n?'Brought in '+n+' order'+(n===1?'':'s')+', in date order':'No order could be brought in')+(miss.length?' · could not open: '+miss.join(', '):'')+'.',first?{label:'Show',run:()=>viewShow(V(),first.id)}:undefined);
+  xoPaint();
+}
+async function xoAll(){
+  const docs=xoDocs().slice().sort((a,b)=>String(a.ord.d).localeCompare(String(b.ord.d)));
+  if(!docs.length){toast('No orders in this file yet.');return}
+  if(!window.PDFLib){toast('The PDF writer did not load. Check the connection and reload.');return}
+  const b=$('#xoAll');if(b){b.disabled=true;b.textContent='Joining…'}
+  try{
+    const {PDFDocument}=PDFLib;const out=await PDFDocument.create();const marks=[];
+    for(const d of docs){const src=await PDFDocument.load(new Uint8Array(await proj.store.readFile(proj.name,d.file)),{ignoreEncryption:true});
+      const cp=await out.copyPages(src,src.getPageIndices());cp.forEach(p=>out.addPage(p));marks.push({title:d.title,ref:cp[0].ref,y:null})}
+    addOutline(out,marks);out.setTitle('All orders — '+P.name);out.setCreator('Excerpt Desk');
+    const bytes=await out.save();XO.all=bytes;
+    if(XO.url)URL.revokeObjectURL(XO.url);XO.url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
+    $('#xoView').hidden=false;$('#xoBody').hidden=true;
+    $('#xoViewT').textContent='All '+docs.length+' orders, '+xoDmy(docs[0].ord.d)+' to '+xoDmy(docs[docs.length-1].ord.d)+' · '+out.getPageCount()+' pages';
+    $('#xoFrame').src=XO.url+'#view=FitH';
+  }catch(e){console.error(e);toast('Could not join the orders: '+(e.message||e))}
+  finally{if(b){b.disabled=false;b.textContent='📑 All orders as one PDF'}}
+}
+async function xoAddAll(){
+  if(!XO.all||!P)return;const name='All orders (date order).pdf';
+  let d=P.docs.find(x=>x.allOrd||x.file===name);
+  await proj.store.writeFile(proj.name,name,XO.all);
+  if(d){dropRT(d.id);for(const v of views)if(v.doc===d.id){v.doc=null;await viewShow(v,d.id,{record:false})}}
+  else{d={id:uid(),file:name,title:'All orders (date order)'};P.docs.push(d);P.hiddenFiles=(P.hiddenFiles||[]).filter(h=>h!==name)}
+  touch();renderTabs();$('#xoPanel').hidden=true;await viewShow(V(),d.id);toast('Added “All orders (date order)” to this file. Pressing it again later replaces it with the newest set.');
+}
+$('#xoBtn').onclick=()=>xoOpen();
+$('#xoBack').onclick=()=>{$('#xoView').hidden=true;$('#xoBody').hidden=false;$('#xoFrame').src='about:blank'};
+$('#xoAddAll').onclick=()=>xoAddAll();
+$('#xoDl').onclick=()=>{if(!XO.url)return;const a=document.createElement('a');a.href=XO.url;a.download=safeName('All orders - '+(P?P.name:''))+'.pdf';document.body.append(a);a.click();a.remove()};
+$('#xoSide').addEventListener('keydown',e=>e.stopPropagation());
+$('#xoSide').addEventListener('change',()=>{if(!P)return;xoMeta().side=$('#xoSide').value.trim();touch();xoLabel()});
+$('#xoSideChips').addEventListener('click',e=>{const b=e.target.closest('[data-side]');if(!b||!P)return;$('#xoSide').value=b.dataset.side;xoMeta().side=b.dataset.side;touch();xoLabel()});
+window.xoPaint=xoPaint;
+setInterval(xoLabel,1500);
+if(/[?&]xotest\b/.test(location.search))window.__xo={P:()=>P,bring:xoBring,paint:xoPaint};
 })();
 </script>
 </body>
