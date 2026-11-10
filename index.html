@@ -591,6 +591,16 @@ main.split.w3{grid-template-columns:minmax(0,var(--pdfw,33%)) 12px minmax(0,1fr)
 .pcx{position:sticky;top:-20px;align-self:flex-end;margin:-12px -10px -38px 0;z-index:3;width:34px;height:34px;flex:none;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center}
 .pcx:hover{border-color:var(--muted);background:color-mix(in srgb,var(--ink) 6%,var(--surface))}
 
+
+/* Screen tone (Nov 2026): colour, warmth and brightness of the whole screen, set with the 🎨 button */
+html.tone{filter:saturate(var(--t-sat,1)) sepia(var(--t-warm,0)) brightness(var(--t-bri,1))}
+.tonepop{position:fixed;z-index:2000;width:290px;max-width:calc(100vw - 24px);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px -10px rgba(0,0,0,.35);padding:12px 14px;display:flex;flex-direction:column;gap:10px;font:13px/1.35 var(--f-ui)}
+.tonepop label{display:flex;flex-direction:column;gap:4px}
+.tonepop label span{display:flex;justify-content:space-between}
+.tonepop input[type=range]{width:100%;accent-color:var(--accent)}
+.tonepop .row{display:flex;gap:6px;flex-wrap:wrap}
+#toneBtn.on{background:color-mix(in srgb,var(--accent) 16%,var(--surface));border-color:var(--accent)}
+
 /* Paper mode (Nov 2026): e-ink grey — dim, flat, low contrast, no colour cast */
 html:root.paper{
   --desk:#d6d6d2; --gutter:#cdcdc9; --surface:#e2e2de; --ink:#353535; --muted:#6f6f6c;
@@ -646,6 +656,7 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
       <button class="btn" id="claudeBtn">From Claude</button>
       <button class="btn" id="libBtn">Library</button>
       <button class="btn" id="paperBtn" aria-pressed="false" title="Paper mode: a warm, dim, paper-like screen for the PDFs and the worksheet, easier on the eyes">📄 Paper</button>
+      <button class="btn" id="toneBtn" aria-pressed="false" title="Screen colour: turn the colours down, warm them and dim the screen to look more like paper">🎨 Colour</button>
       <button class="btn" id="askBtn" title="Ask about all your cases — e.g. in how many cases is our written statement pending? Answer as text, figures and a list">🤖 Ask</button>
       <button class="btn" id="instrBtn" title="Instructions: give the tool an order now (e.g. pin cases to a date), and keep standing rules it always follows">📋 Instructions</button>
       <button class="btn" id="setBtn">Settings</button>
@@ -2504,6 +2515,28 @@ function setPaper(on){document.documentElement.classList.toggle('paper',on);cons
   try{localStorage.setItem('xd_paper',on?'1':'')}catch(e){}}
 try{setPaper(localStorage.getItem('xd_paper')==='1')}catch(e){}
 $('#paperBtn').onclick=()=>{const on=!document.documentElement.classList.contains('paper');setPaper(on);toast(on?'Paper mode on.':'Paper mode off.')};
+
+/* Screen tone: colour (saturation), warmth and brightness, remembered on this device */
+const TKEY='xd_tone',TDEF={sat:100,warm:0,bri:100};
+const toneGet=()=>{try{return Object.assign({},TDEF,JSON.parse(localStorage.getItem(TKEY)||'{}'))}catch(e){return {...TDEF}}};
+function toneApply(t){const r=document.documentElement,on=t.sat!==100||t.warm!==0||t.bri!==100;
+  r.style.setProperty('--t-sat',t.sat/100);r.style.setProperty('--t-warm',t.warm/100);r.style.setProperty('--t-bri',t.bri/100);r.classList.toggle('tone',on);
+  const b=$('#toneBtn');if(b){b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))}}
+function toneSet(t){toneApply(t);try{localStorage.setItem(TKEY,JSON.stringify(t))}catch(e){}}
+toneApply(toneGet());
+$('#toneBtn').onclick=e=>{e.stopPropagation();const old=document.querySelector('.tonepop');if(old){old.remove();return}
+  const t=toneGet(),pop=document.createElement('div');pop.className='tonepop';pop.setAttribute('role','dialog');pop.setAttribute('aria-label','Screen colour');
+  const sl=(k,lab,min,max,hint)=>'<label><span><b>'+lab+'</b><output data-o="'+k+'"></output></span><input type="range" data-k="'+k+'" min="'+min+'" max="'+max+'" step="1" value="'+t[k]+'"><small class="muted">'+hint+'</small></label>';
+  pop.innerHTML=sl('sat','Colour',0,100,'Lower = greyer, like printed paper')+sl('warm','Warmth',0,60,'Higher = cream / old-paper tint')+sl('bri','Brightness',60,100,'Lower = dimmer screen')+
+    '<div class="row"><button class="btn" data-p="paper">Paper</button><button class="btn" data-p="cream">Cream</button><button class="btn" data-p="grey">Grey</button><button class="btn" data-p="reset">Normal</button><button class="btn primary" data-p="done" style="margin-left:auto">Done</button></div>';
+  const show=()=>pop.querySelectorAll('output').forEach(o=>{o.textContent=t[o.dataset.o]+'%'});
+  pop.querySelectorAll('input[type=range]').forEach(r=>r.oninput=()=>{t[r.dataset.k]=+r.value;show();toneSet(t)});
+  const P={paper:{sat:45,warm:18,bri:93},cream:{sat:60,warm:35,bri:95},grey:{sat:0,warm:0,bri:90},reset:{...TDEF}};
+  pop.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{const k=b.dataset.p;if(k==='done'){pop.remove();return}Object.assign(t,P[k]);pop.querySelectorAll('input[type=range]').forEach(r=>r.value=t[r.dataset.k]);show();toneSet(t)});
+  pop.addEventListener('click',ev=>ev.stopPropagation());pop.addEventListener('keydown',ev=>{ev.stopPropagation();if(ev.key==='Escape')pop.remove()});
+  document.body.append(pop);show();
+  const r=e.currentTarget.getBoundingClientRect();pop.style.top=(r.bottom+6)+'px';pop.style.left=Math.max(12,Math.min(r.right-pop.offsetWidth,innerWidth-pop.offsetWidth-12))+'px';
+  setTimeout(()=>document.addEventListener('click',function off(){pop.remove();document.removeEventListener('click',off)}),0)};
 
 /* ✕ at the top of every window */
 document.querySelectorAll('.panel>.pc').forEach(pc=>{if(pc.querySelector(':scope>.pcx'))return;const x=document.createElement('button');x.className='pcx';x.type='button';x.setAttribute('data-close','');x.setAttribute('aria-label','Close');x.title='Close';x.textContent='×';pc.prepend(x)});
