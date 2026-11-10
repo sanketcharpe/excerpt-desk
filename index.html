@@ -606,6 +606,9 @@ html.paper body::after{content:"";position:fixed;inset:0;pointer-events:none;z-i
 html.paper ::selection{background:rgba(60,60,60,.2)}
 html.paper .rcvc,html.paper .dxtb,html.paper .dxtb select,html.paper .pdgrid .pt,html.paper .card .shot img{background:var(--surface)!important;color:var(--ink)}
 html.paper .rcvbox{background:rgba(60,60,58,.35)}
+.akans{white-space:pre-wrap;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:color-mix(in srgb,var(--accent) 5%,var(--surface));font-size:14.5px}
+.akstats{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}.akstats>div{border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:120px;background:var(--surface)}.akstats b{display:block;font-size:22px}.akstats span{font-size:12.5px;color:var(--muted)}
+.aktab td{vertical-align:top}
 .xocard{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
 .xotab{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}.xotab th,.xotab td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}.xotab th{font-size:12px;color:var(--muted);font-weight:600}
 .xohits{list-style:none;margin:6px 0 0;padding:0;max-height:40vh;overflow:auto}.xohits li{border:1px solid var(--line);border-radius:7px;padding:7px 9px;margin:0 0 5px;cursor:pointer}.xohits li:hover{border-color:var(--accent)}
@@ -643,6 +646,7 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
       <button class="btn" id="claudeBtn">From Claude</button>
       <button class="btn" id="libBtn">Library</button>
       <button class="btn" id="paperBtn" aria-pressed="false" title="Paper mode: a warm, dim, paper-like screen for the PDFs and the worksheet, easier on the eyes">📄 Paper</button>
+      <button class="btn" id="askBtn" title="Ask about all your cases — e.g. in how many cases is our written statement pending? Answer as text, figures and a list">🤖 Ask</button>
       <button class="btn" id="instrBtn" title="Instructions: give the tool an order now (e.g. pin cases to a date), and keep standing rules it always follows">📋 Instructions</button>
       <button class="btn" id="setBtn">Settings</button>
     </div>
@@ -807,6 +811,22 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
     <label class="btn" for="restoreIn">Restore from backup…</label><input class="sr" type="file" id="restoreIn" accept=".json,application/json">
     <button class="btn warn" id="restoreGo" hidden>Replace this worksheet with the backup</button>
   </div>
+</div></div>
+
+<div class="panel" id="askPanel" hidden><div class="pc" role="dialog" aria-labelledby="akTitle" style="width:min(980px,100%)">
+  <h2 id="akTitle">🤖 Ask about my cases</h2>
+  <p class="muted" style="margin:0 0 6px;font-size:13px">Ask for any report from your cases in Charpe Suite — e.g. <i>“In how many cases is our written statement pending, including those that went ahead without it?”</i>, <i>“Cases that proceeded without our cross-examination”</i>, <i>“What am I likely to have to do in the next 10 days?”</i> Only what you ask is answered.</p>
+  <div id="akRec"></div>
+  <textarea id="akQ" rows="3" placeholder="Speak, or type your question here" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--line);border-radius:7px;font:inherit;background:var(--surface);color:inherit"></textarea>
+  <div id="akHist" style="margin:6px 0;display:flex;gap:5px;flex-wrap:wrap;align-items:center"></div>
+  <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px">
+    <span class="muted" style="font-size:13px">With</span><button class="btn sm" type="button" id="akEngG">✦ Gemini</button><button class="btn sm" type="button" id="akEngC">✳ Claude</button>
+    <label class="chk" style="margin:0 8px"><input type="checkbox" id="akDisp"> include disposed cases</label>
+    <span style="flex:1"></span>
+    <button class="btn" type="button" id="akClear" title="Scrap the question and speak afresh">↺ Ask afresh</button>
+    <button class="btn primary" type="button" id="akGo">Ask</button><button class="btn warn" type="button" id="akStop" hidden title="Stop the AI; change the question and ask again">■ Stop</button>
+  </div>
+  <div id="akOut" style="margin-top:12px"></div>
 </div></div>
 
 <div class="panel" id="xoPanel" hidden><div class="pc" role="dialog" aria-labelledby="xoTitle" style="width:min(860px,100%)">
@@ -2008,7 +2028,7 @@ function tapHint(mouse){clearTimeout(tapHintT);tapHintT=setTimeout(()=>{if(Date.
   toast(mouse?'Double-click on the worksheet to type there.':'Press and hold on the worksheet to type there. A quick tap is ignored.')},380)}
 
 /* ================= problem recorder: a short diary of recent actions, kept on this device only ================= */
-const APPV='2026-11-10e';
+const APPV='2026-11-10f';
 let crumbs=[];try{crumbs=JSON.parse(localStorage.getItem('xdesk:log')||'[]')}catch(e){crumbs=[]}
 function crumb(m){try{crumbs.push([Date.now(),String(m).slice(0,160)]);if(crumbs.length>90)crumbs=crumbs.slice(-90);localStorage.setItem('xdesk:log',JSON.stringify(crumbs))}catch(e){}}
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
@@ -2907,23 +2927,32 @@ async function vTranscribe(blob){
   return (await vGem([{inline_data:{mime_type:(blob.type||'audio/webm').split(';')[0],data:await vB64(blob)}},
     {text:'Type out exactly what is said in this recording (English, Hindi or Marathi mixed), with correct punctuation. Indian legal context: case numbers like O.A. 297/2026, ULP 106/2026; names are Indian (Marathi, Hindi, Christian, Parsi, Muslim) — spell them correctly, put [?] after any you are unsure of. Reply with the words only.'}])).trim()}
 /* a small recorder: a round microphone button that starts at once and stops on a second press */
+/* every microphone (Nov 2026): 🎙 start / finish · ⏸ pause and ▶ carry on from there · ↺ scrap it and speak afresh */
 function vRecorder(host,onDone,msg){
-  let rec=null,stream=null,chunks=[],tm=null,t0=0,cancelled=false;
-  host.innerHTML='<div style="display:flex;gap:12px;align-items:center;margin:6px 0"><button type="button" class="vmic" aria-label="Start or stop listening"><span></span></button><div style="display:flex;flex-direction:column"><b class="vlab">Starting the microphone…</b><span class="vtim muted" style="font-variant-numeric:tabular-nums"></span></div></div>';
-  const mic=host.querySelector('.vmic'),lab=host.querySelector('.vlab'),tim=host.querySelector('.vtim');
-  const tick=()=>{const s=Math.round((Date.now()-t0)/1000);tim.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+  let rec=null,stream=null,chunks=[],tm=null,t0=0,held=0,pausedAt=0,cancelled=false;
+  host.innerHTML='<div style="display:flex;gap:12px;align-items:center;margin:6px 0;flex-wrap:wrap"><button type="button" class="vmic" aria-label="Start, or finish speaking"><span></span></button>'+
+    '<div style="display:flex;flex-direction:column;min-width:0;flex:1"><b class="vlab">Starting the microphone…</b><span class="vtim muted" style="font-variant-numeric:tabular-nums"></span></div>'+
+    '<span class="vctl" hidden><button type="button" class="btn sm vpause" title="Pause; press again to carry on from where you stopped">⏸ Pause</button> <button type="button" class="btn sm vredo" title="Scrap what you have said and speak afresh">↺ Start again</button></span></div>';
+  const mic=host.querySelector('.vmic'),lab=host.querySelector('.vlab'),tim=host.querySelector('.vtim'),ctl=host.querySelector('.vctl'),pb=host.querySelector('.vpause'),rb=host.querySelector('.vredo');
+  const secs=()=>Math.round((((rec&&rec.state==='paused')?pausedAt:Date.now())-t0-held)/1000);
+  const tick=()=>{const s=Math.max(0,secs());tim.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+(rec&&rec.state==='paused'?' · paused':'')};
   async function start(){cancelled=false;
     try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}})}catch(e){lab.textContent='The microphone could not be used ('+(e.message||e.name)+'). You can type instead.';return}
     const type=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg'].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||'';
-    rec=new MediaRecorder(stream,type?{mimeType:type}:undefined);chunks=[];
+    rec=new MediaRecorder(stream,type?{mimeType:type}:undefined);chunks=[];held=0;
     rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
-    rec.onstop=()=>{clearInterval(tm);stream.getTracks().forEach(t=>t.stop());mic.classList.remove('on');if(cancelled)return;
+    rec.onstop=()=>{clearInterval(tm);stream.getTracks().forEach(t=>t.stop());mic.classList.remove('on');ctl.hidden=true;if(cancelled)return;
       const blob=new Blob(chunks,{type:(rec.mimeType||'audio/webm').split(';')[0]});if(blob.size<1500){lab.textContent='Nothing was heard. Press the microphone and speak.';return}
       lab.textContent='Got it.';onDone(blob)};
-    rec.start(1000);t0=Date.now();tick();tm=setInterval(tick,500);mic.classList.add('on');lab.textContent=msg||'Listening — press the microphone when you finish'}
-  function stop(c){cancelled=!!c;if(rec&&rec.state!=='inactive')rec.stop();else if(stream)stream.getTracks().forEach(t=>t.stop());clearInterval(tm);mic.classList.remove('on')}
-  mic.onclick=()=>{if(rec&&rec.state==='recording')stop(false);else start()};
-  return {start,stop,set:t=>{lab.textContent=t}}}
+    rec.start(1000);t0=Date.now();tick();tm=setInterval(tick,500);mic.classList.add('on');ctl.hidden=false;pb.textContent='⏸ Pause';lab.textContent=msg||'Listening — press the microphone when you finish'}
+  function stop(c){cancelled=!!c;if(rec&&rec.state!=='inactive')rec.stop();else if(stream)stream.getTracks().forEach(t=>t.stop());clearInterval(tm);mic.classList.remove('on');ctl.hidden=true}
+  function pause(){if(!rec)return;
+    if(rec.state==='recording'){rec.pause();pausedAt=Date.now();pb.textContent='▶ Carry on';mic.classList.remove('on');lab.textContent='Paused — press ▶ Carry on to go on from here, or the microphone to finish';tick()}
+    else if(rec.state==='paused'){held+=Date.now()-pausedAt;rec.resume();pb.textContent='⏸ Pause';mic.classList.add('on');lab.textContent=msg||'Listening — press the microphone when you finish'}}
+  function redo(){stop(true);lab.textContent='Scrapped. Speak afresh…';setTimeout(start,250)}
+  pb.onclick=pause;rb.onclick=redo;
+  mic.onclick=()=>{if(rec&&(rec.state==='recording'||rec.state==='paused'))stop(false);else start()};
+  return {start,stop,pause,redo,set:t=>{lab.textContent=t}}}
 
 /* ================= pin matters to a date by voice ================= */
 /* standing instructions (Nov 2026): rules kept on this device and followed on every pin request */
@@ -6203,6 +6232,106 @@ $('#xoSideChips').addEventListener('click',e=>{const b=e.target.closest('[data-s
 window.xoPaint=xoPaint;
 setInterval(xoLabel,1500);
 if(/[?&]xotest\b/.test(location.search))window.__xo={P:()=>P,bring:xoBring,paint:xoPaint};
+/* ================= 🤖 Ask (Nov 2026): reports on all your cases, as you ask =================
+   Your question (spoken or typed) and the cases of Charpe Suite — stage, next and previous dates, what
+   the court recorded on each date, which side we are for, notes and tasks — go to Gemini or Claude, which
+   answers only what was asked: a short answer, figures, and a list of the cases with the reason for each. */
+const AK={ac:null,rec:null,res:null};
+const akEng=()=>{try{return localStorage.getItem('xdesk:askEng')||'gemini'}catch(e){return 'gemini'}};
+const akNg=()=>{try{return JSON.parse(localStorage.getItem('xdesk:notesai')||'{}')||{}}catch(e){return {}}};
+const akClip=(t,n)=>{t=String(t||'').replace(/\s+/g,' ').trim();return t.length>n?t.slice(0,n-1)+'…':t};
+function akSide(c){const e=c.eco||{},P=String(e.pet||''),R=String(e.res||'');
+  if(/charpe/i.test(P))return 'petitioner/applicant/plaintiff side';if(/charpe/i.test(R))return 'respondent/defendant side';
+  const n=(c.notes||[]).map(x=>x.text).join(' ');const m=n.match(/(?:for|appear(?:ing)? for)\s+(the\s+)?(petitioner|applicant|plaintiff|respondent|defendant|non-applicant|complainant|accused|appellant|opponent)s?/i);
+  return m?m[2].toLowerCase()+' side':'not recorded'}
+function akRecords(w,withDisposed){
+  const iso=d=>String(d||'').slice(0,10),fd=d=>{const m=iso(d).match(/^(\d{4})-(\d\d)-(\d\d)$/);return m?m[3]+'/'+m[2]+'/'+m[1]:''};
+  const L=w.C.filter(c=>!c.del&&(withDisposed||c.st!=='disposed'));
+  const lines=L.map(c=>{const e=c.eco||{};
+    const hh=(e.hh||[]).slice().sort((a,b)=>String(a.bd||a.d).localeCompare(String(b.bd||b.d))).slice(-6)
+      .map(h=>fd(h.bd||h.d)+' '+akClip(h.p,30)+(h.biz?' — '+akClip(h.biz,130):'')+(h.d&&h.bd?' → '+fd(h.d):''));
+    const hs=(c.hist||[]).slice(-3).map(h=>(fd(h.pd)||fd(h.dt))+' '+akClip(h.ps,30)+' → '+fd(h.nd)+' '+akClip(h.ns,30)+(h.note?' ('+akClip(h.note,70)+')':''));
+    const nt=(c.notes||[]).slice(-2).map(n=>akClip(n.text,140));
+    return '#'+c.id+' | '+(c.cn||'—')+' | '+akClip(c.court,60)+' | '+akClip((c.pl||'')+' vs. '+(c.de||''),110)+' | we are for: '+akSide(c)+' | client: '+akClip(c.cl,40)+' | status: '+(c.st||'active')+
+      ' | stage now: '+akClip(e.stage||c.ns||'',40)+' | previous: '+fd(c.pd)+' '+akClip(c.ps,30)+' | next: '+fd(c.nd)+' '+akClip(c.ns,30)+
+      (hh.length?'\n  court record: '+hh.join(' ; '):'')+(hs.length?'\n  dates posted by us: '+hs.join(' ; '):'')+(nt.length?'\n  notes: '+nt.join(' ; '):'')});
+  const T=(w.T||[]).filter(t=>!t.del&&!t.done).map(t=>'- '+akClip(t.desc,120)+(t.due?' (due '+fd(t.due)+')':'')+(t.cid?' [case #'+t.cid+']':''));
+  return {n:L.length,text:lines.join('\n'),tasks:T.join('\n')}}
+const AK_SYS=`You prepare reports for Adv. Sanket R. Charpe (Nagpur) from his own case list in his case-management tool, given below. Use ONLY the data given; never invent a case, a date or a stage.
+Answer ONLY what he asks — no extra advice, no other reports.
+How to read the data: "stage now" and "next" show what the case is fixed for; "court record" lists, per date, the purpose and what the court recorded (e.g. "W.S. not filed", "proceed without W.S.", "No cross", "evidence closed", "proceed ex parte"); "we are for" tells our side. Abbreviations: W.S./WS = written statement; Say/Reply = reply; Evi./Evid. = evidence; X-exam/Cross = cross-examination; Exh. = exhibit; Arg. = arguments; N.A. = non-applicant.
+When he asks for cases where something is pending "from our end", count it only when it is our side's step (use "we are for"), and include the cases where the court has already proceeded without it (e.g. "proceed without W.S." against our side) — mark those separately in the reason.
+When he asks about the next N days, count from today's date given below.
+For a list, include EVERY matching case. For each, give the reason in a few words with the date and the words of the record that show it.
+Reply with ONLY one JSON object, no markdown:
+{"answer":"a short direct answer in plain English (a few lines)","stats":[{"label":"…","value":"…"}],"table":{"title":"…","columns":["Case","Court","Parties","Next date","Why"],"rows":[{"id":"the case id from #…","cells":["…","…","…","…","…"]}]}}
+Leave out "stats" or "table" when the question does not need them. Choose the columns that suit the question (keep "Why" when listing cases).`;
+async function akCall(eng,q,data,signal){
+  const today=new Date().toISOString().slice(0,10);
+  const user='Today is '+today+'.\n\nMY QUESTION: '+q+'\n\nMY CASES ('+data.n+'):\n'+data.text+(data.tasks?'\n\nMY PENDING TASKS:\n'+data.tasks:'');
+  if(eng==='claude'){const n=akNg();if(!n.claudeKey)throw new Error('Add your Claude API key in Settings › Notes by Gemini or Claude, or choose Gemini.');
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal,headers:{'content-type':'application/json','x-api-key':n.claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:n.claudeModel||'claude-sonnet-5-5',max_tokens:16000,system:AK_SYS,messages:[{role:'user',content:user}]})});
+    const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error('Claude: '+((j.error&&j.error.message)||'HTTP '+r.status));
+    return (j.content||[]).map(x=>x.text||'').join('')}
+  if(!vKey())throw new Error('Add your Gemini API key first (🎙 Dictate › ⚙ settings), or choose Claude.');
+  const model=String(akNg().gemModel||vCfg().docModel||vModel()).trim().replace(/^models\//,'');
+  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent?key='+encodeURIComponent(vKey()),{method:'POST',signal,headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({systemInstruction:{parts:[{text:AK_SYS}]},contents:[{role:'user',parts:[{text:user}]}],generationConfig:{temperature:.1,maxOutputTokens:32000,responseMimeType:'application/json'}})});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error('Gemini: '+((j.error&&j.error.message)||'HTTP '+r.status));
+  const c=j.candidates&&j.candidates[0];return c&&c.content?(c.content.parts||[]).map(x=>x.thought?'':(x.text||'')).join(''):''}
+function akParse(t){t=String(t||'').trim().replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'');const a=t.indexOf('{'),b=t.lastIndexOf('}');
+  try{return JSON.parse(a>=0?t.slice(a,b+1):t)}catch(e){return {answer:t}}}
+function akOpen(){
+  openPanel('askPanel');$('#akEngG').classList.toggle('primary',akEng()==='gemini');$('#akEngC').classList.toggle('primary',akEng()==='claude');
+  akRecent();
+  if(!AK.ac&&vKey()&&!AK.rec){AK.rec=vRecorder($('#akRec'),async blob=>{AK.rec.set('Typing what you said…');
+      try{const t=await vTranscribe(blob);const q=$('#akQ');q.value=(q.value.trim()?q.value.trim()+' ':'')+t;AK.rec.set('Done — check the question, speak again to add to it, then press Ask.')}catch(e){AK.rec.set(String(e.message||e))}},
+    'Listening — ask your question; press the microphone when you finish');AK.rec.start()}
+  else if(!vKey())$('#akRec').innerHTML='<p class="muted" style="font-size:12.5px;margin:4px 0">Add your Gemini key (🎙 Dictate › ⚙) to ask by voice; or type below.</p>';
+  setTimeout(()=>{try{$('#akQ').focus()}catch(e){}},60)}
+function akClose(){if(AK.rec){try{AK.rec.stop(true)}catch(e){}AK.rec=null}}
+function akRecent(){let a=[];try{a=JSON.parse(localStorage.getItem('xdesk:askHist')||'[]')}catch(e){}
+  $('#akHist').innerHTML=a.length?'<span class="muted" style="font-size:12px">Asked before:</span> '+a.slice(0,6).map((q,i)=>'<button type="button" class="btn sm" data-q="'+i+'" title="'+esc(q)+'">'+esc(akClip(q,42))+'</button>').join(' '):'';
+  $('#akHist').onclick=e=>{const b=e.target.closest('[data-q]');if(b)$('#akQ').value=a[+b.dataset.q]}}
+async function akAsk(){
+  const q=$('#akQ').value.trim();if(!q){toast('Speak or type your question first.');$('#akQ').focus();return}
+  if(AK.rec){try{AK.rec.stop(true)}catch(e){}AK.rec=null;$('#akRec').innerHTML='<button type="button" class="btn sm" id="akMicAgain">🎙 Speak again</button>';$('#akMicAgain').onclick=()=>{$('#akRec').innerHTML='';akOpen()}}
+  let w;try{w=await xoApi()}catch(e){toast(e.message);return}
+  const data=akRecords(w,$('#akDisp').checked);
+  if(!data.n){$('#akOut').innerHTML='<p>No cases are in Charpe Suite on this browser yet. Open Charpe Suite here once (signed in, Drive sync on).</p>';return}
+  try{let a=JSON.parse(localStorage.getItem('xdesk:askHist')||'[]');a=[q].concat(a.filter(x=>x!==q)).slice(0,12);localStorage.setItem('xdesk:askHist',JSON.stringify(a))}catch(e){}
+  const eng=akEng(),ac=new AbortController();AK.ac=ac;
+  $('#akGo').hidden=true;$('#akStop').hidden=false;
+  const t0=Date.now();const tick=setInterval(()=>{$('#akOut').innerHTML='<p class="muted">'+(eng==='claude'?'Claude':'Gemini')+' is reading your '+data.n+' cases… '+Math.round((Date.now()-t0)/1000)+' s</p>'},500);
+  try{const txt=await akCall(eng,q,data,ac.signal);AK.res=akParse(txt);AK.res.q=q;akShow()}
+  catch(e){$('#akOut').innerHTML=ac.signal.aborted?'<p class="muted">Stopped. Change the question if you like, and press Ask again.</p>':'<p style="color:var(--danger)">'+esc(String(e.message||e))+'</p>'}
+  finally{clearInterval(tick);AK.ac=null;$('#akGo').hidden=false;$('#akStop').hidden=true}}
+function akShow(){const r=AK.res;if(!r)return;const t=r.table&&Array.isArray(r.table.rows)&&r.table.rows.length?r.table:null;
+  const cols=t?(Array.isArray(t.columns)&&t.columns.length?t.columns:['Case','Why']):[];
+  $('#akOut').innerHTML='<div class="akans">'+esc(r.answer||'')+'</div>'+
+    (Array.isArray(r.stats)&&r.stats.length?'<div class="akstats">'+r.stats.map(s=>'<div><b>'+esc(s.value)+'</b><span>'+esc(s.label)+'</span></div>').join('')+'</div>':'')+
+    (t?'<h3 style="margin:12px 0 6px;font-size:15px">'+esc(t.title||'Cases')+' ('+t.rows.length+')</h3><div style="overflow:auto"><table class="xotab aktab"><thead><tr><th>#</th>'+cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+
+      t.rows.map((x,i)=>'<tr><td>'+(i+1)+'</td>'+cols.map((c,j)=>'<td>'+esc((x.cells||x)[j]==null?'':(x.cells||x)[j])+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>':'')+
+    '<div class="row" style="gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn sm" type="button" id="akCopy">⧉ Copy</button>'+(t?'<button class="btn sm" type="button" id="akCsv">⬇ Download (Excel / CSV)</button>':'')+'<button class="btn sm" type="button" id="akPrint">🖨 Print</button></div>';
+  const plain=()=>[r.q,'',r.answer||''].concat((r.stats||[]).map(s=>s.label+': '+s.value)).concat(t?['',t.title||'Cases'].concat(t.rows.map((x,i)=>(i+1)+'. '+(x.cells||x).join(' | '))):[]).join('\n');
+  $('#akCopy').onclick=()=>{navigator.clipboard.writeText(plain()).then(()=>toast('Copied.'),()=>toast('Could not copy.'))};
+  if(t)$('#akCsv').onclick=()=>{const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+    const csv='﻿'+[['No.'].concat(cols).map(q).join(',')].concat(t.rows.map((x,i)=>[i+1].concat((x.cells||x)).map(q).join(','))).join('\r\n');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=safeName(akClip(r.q,60))+'.csv';document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},3000)};
+  $('#akPrint').onclick=()=>{const wv=window.open('','_blank');if(!wv){toast('Allow pop-ups to print.');return}
+    wv.document.write('<!doctype html><meta charset="utf-8"><title>'+esc(r.q)+'</title><style>body{font:13px/1.45 Georgia,serif;margin:24px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:4px 6px;text-align:left;vertical-align:top}h1{font-size:17px}.s{display:flex;gap:18px;margin:10px 0}.s b{display:block;font-size:20px}</style><h1>'+esc(r.q)+'</h1><p style="white-space:pre-wrap">'+esc(r.answer||'')+'</p>'+
+      (r.stats&&r.stats.length?'<div class="s">'+r.stats.map(s=>'<div><b>'+esc(s.value)+'</b>'+esc(s.label)+'</div>').join('')+'</div>':'')+(t?'<h2 style="font-size:15px">'+esc(t.title||'Cases')+'</h2>'+$('#akOut .aktab').outerHTML:'')+'<p style="color:#777;font-size:11px">Prepared '+new Date().toLocaleString('en-IN')+' from Charpe Suite</p>');
+    wv.document.close();setTimeout(()=>wv.print(),300)};
+}
+$('#askBtn').onclick=()=>akOpen();
+$('#akGo').onclick=()=>akAsk();
+$('#akStop').onclick=()=>{if(AK.ac)try{AK.ac.abort()}catch(e){}};
+$('#akClear').onclick=()=>{$('#akQ').value='';if(AK.rec){try{AK.rec.redo()}catch(e){}}else{$('#akRec').innerHTML='';akOpen()}};
+$('#akEngG').onclick=()=>{try{localStorage.setItem('xdesk:askEng','gemini')}catch(e){}$('#akEngG').classList.add('primary');$('#akEngC').classList.remove('primary')};
+$('#akEngC').onclick=()=>{try{localStorage.setItem('xdesk:askEng','claude')}catch(e){}$('#akEngC').classList.add('primary');$('#akEngG').classList.remove('primary')};
+$('#akQ').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))akAsk()});
+$('#askPanel').addEventListener('click',e=>{if(e.target===$('#askPanel')||e.target.closest('[data-close]'))akClose()},true);
 })();
 </script>
 </body>
