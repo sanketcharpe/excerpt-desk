@@ -414,6 +414,16 @@ button,label.btn,input,select,textarea{font:inherit;color:inherit}
 .plist li.cur .n::after{content:"  · open";color:var(--muted);font-weight:400}
 .plist li input{flex:1 1 160px}
 .plist .empty{color:var(--muted);justify-content:center}
+.plist li.pinhead{background:color-mix(in srgb,var(--accent) 14%,var(--surface));font-weight:600;font-size:13px;padding:6px 12px}
+.plist li.pinhead.rest{background:var(--surface);color:var(--muted);font-weight:500}
+.plist li.pinned{background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+.plist li .pinsr{flex:none;min-width:34px;text-align:center;font:700 12px/1.6 var(--f-ui);border-radius:10px;padding:0 6px;background:var(--accent);color:#fff}
+.inlist{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:8px}
+.inlist li{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-top:1px solid var(--line)}
+.inlist li:first-child{border-top:0}
+.inlist li b{flex:none;min-width:92px}
+.inlist li textarea{flex:1;min-height:38px;font:13px/1.4 var(--f-ui);border:1px solid var(--line);border-radius:6px;padding:6px;box-sizing:border-box;background:var(--surface);color:inherit}
+.inlist .empty{color:var(--muted)}
 details.drive{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
 details.drive summary{cursor:pointer;font-weight:600}
 details.drive ol{margin:8px 0 0;padding-left:20px;line-height:1.55;color:var(--muted)}
@@ -626,6 +636,7 @@ html.paper ::selection{background:rgba(160,120,50,.28)}
       <button class="btn" id="claudeBtn">From Claude</button>
       <button class="btn" id="libBtn">Library</button>
       <button class="btn" id="paperBtn" aria-pressed="false" title="Paper mode: a warm, dim, paper-like screen for the PDFs and the worksheet, easier on the eyes">📄 Paper</button>
+      <button class="btn" id="instrBtn" title="Instructions: give the tool an order now (e.g. pin cases to a date), and keep standing rules it always follows">📋 Instructions</button>
       <button class="btn" id="setBtn">Settings</button>
     </div>
   </header>
@@ -829,6 +840,20 @@ html.paper ::selection{background:rgba(160,120,50,.28)}
   <div class="row" style="gap:8px;flex-wrap:wrap"><select id="dyAdd" style="flex:1;min-width:220px;height:34px"></select><button class="btn" id="dyAddBtn">+ Add to this day</button><button class="btn primary" id="dyVoiceBtn" title="Say the date and the matters, e.g. “For 12th November pin O.A. 297, Kshirsagar ULP and the Dhande suit”">🎙 Pin by voice</button></div>
   <div id="dyVoice" hidden style="border:1px solid var(--line);border-radius:8px;padding:8px 12px"></div>
   <div class="row end"><button class="btn warn" id="dyClear">Remove this day's list</button><button class="btn warn" id="dyClearPast" title="Remove the pins of every date before today">Clear past dates</button><button class="btn warn" id="dyClearAll" style="margin-right:auto" title="Remove every pinned case on every date">Clear all pinned cases</button><button class="btn" id="dyBoard" title="Read a cause list (PDF or text) and pin your matters from it">📥 Upload board</button><button class="btn" data-close>Close</button><button class="btn primary" id="dyShow">Show at the top</button></div>
+</div></div>
+
+<div class="panel" id="instrPanel" hidden><div class="pc" role="dialog" aria-labelledby="inTitle" style="width:min(760px,100%)">
+  <h2 id="inTitle">Instructions</h2>
+  <h3 style="margin:0">Give an instruction now</h3>
+  <p class="muted" style="margin:0;font-size:12.5px">Type or speak it, e.g. <i>“Pin O.A. 297/2026, the Kshirsagar ULP and the Dhande suit to 18th November, Sr. 4, 9 and 12.”</i> The day list opens with the matters found, for you to tick and pin.</p>
+  <div class="row" style="gap:8px;flex-wrap:wrap"><input type="text" id="inNow" style="flex:1;min-width:240px;height:34px" placeholder="Type an instruction, then press Do it" autocomplete="off"><button class="btn primary" id="inNowGo">Do it</button><button class="btn" id="inNowMic" title="Speak the instruction">🎙 Speak</button></div>
+  <div id="inNowRec" hidden></div>
+  <h3 style="margin:8px 0 0">Standing instructions</h3>
+  <p class="muted" style="margin:0;font-size:12.5px">Rules followed every time you pin by voice or give an instruction here, e.g. <i>“If I don't say a date, pin to the next working day.”</i> or <i>“‘Wardha matters’ means all MSRTC Wardha matters.”</i> Kept on this device.</p>
+  <ol class="inlist" id="inList"></ol>
+  <div class="row" style="gap:8px;flex-wrap:wrap"><textarea id="inNew" rows="2" style="flex:1;min-width:240px;font:13px/1.4 var(--f-ui);border:1px solid var(--line);border-radius:6px;padding:6px;box-sizing:border-box" placeholder="Type a new standing instruction"></textarea><button class="btn primary" id="inAdd">+ Add</button><button class="btn" id="inMic" title="Dictate a standing instruction">🎙 Dictate</button></div>
+  <div id="inRec" hidden></div>
+  <div class="row end"><button class="btn" data-close>Close</button></div>
 </div></div>
 
 <div class="panel" id="brdPanel" hidden><div class="pc" role="dialog" aria-labelledby="brTitle" style="width:min(900px,100%)">
@@ -2874,17 +2899,33 @@ function vRecorder(host,onDone,msg){
   return {start,stop,set:t=>{lab.textContent=t}}}
 
 /* ================= pin matters to a date by voice ================= */
+/* standing instructions (Nov 2026): rules kept on this device and followed on every pin request */
+const IKEY='xdesk:instr';
+const instrAll=()=>{try{const a=JSON.parse(localStorage.getItem(IKEY)||'[]');return Array.isArray(a)?a.filter(x=>typeof x==='string'&&x.trim()):[]}catch(e){return []}};
+const instrSave=a=>{try{localStorage.setItem(IKEY,JSON.stringify(a))}catch(e){toast('Could not save the instructions on this device.')}};
+const instrText=()=>{const a=instrAll();return a.length?'\nHis standing instructions — always follow them:\n'+a.map((x,i)=>'Instruction '+(i+1)+': '+x).join('\n')+'\n':''};
+/* ask Gemini which matters to pin; "input" is the recorded audio or the typed words */
+async function pinParse(input){
+  const names=(libNames&&libNames.length?libNames:await libStore.list().catch(()=>[])).slice(0,600);
+  const src=typeof input==='string'?{text:'His instruction (typed): '+input}:{inline_data:{mime_type:(input.type||'audio/webm').split(';')[0],data:await vB64(input)}};
+  const out=JSON.parse((await vGem([src,{text:
+    'The advocate is saying which of his matters to pin to a court date (a day list). Today is '+isoDay(new Date())+' ('+new Date().toLocaleDateString('en-IN',{weekday:'long'})+'). The date now open is '+(dyDate||'none')+'.\n'+instrText()+
+    'His matters (exact names):\n'+names.map((n,i)=>(i+1)+'. '+n).join('\n')+'\n\n'+
+    'For each case he mentions, find the matter in the list it refers to (by case number, party names or short names). Keep the serial number (Sr. No.) if he says one, and the stage if he says one.\n'+
+    'Return JSON: {"date":"YYYY-MM-DD if he says a date (or a standing instruction gives one), else null","said":"what he said, in words","items":[{"matter":"exact name from the list, or null if none fits","said":"how he referred to it","sr":"","st":""}]}'}],true)).replace(/^```(?:json)?|```$/g,''));
+  return {out,names}}
 async function pinByVoice(){
   const host=$('#dyVoice');host.hidden=false;
   const r=vRecorder(host,async blob=>{
     r.set('Matching what you said to your matters…');
-    try{
-      const names=(libNames||[]).slice(0,600);
-      const out=JSON.parse((await vGem([{inline_data:{mime_type:blob.type||'audio/webm',data:await vB64(blob)}},{text:
-        'The advocate is saying which of his matters to pin to a court date (a day list). Today is '+isoDay(new Date())+'. The date now open is '+dyDate+'.\n'+
-        'His matters (exact names):\n'+names.map((n,i)=>(i+1)+'. '+n).join('\n')+'\n\n'+
-        'For each case he mentions, find the matter in the list it refers to (by case number, party names or short names). Keep the serial number (Sr. No.) if he says one, and the stage if he says one.\n'+
-        'Return JSON: {"date":"YYYY-MM-DD if he says a date, else null","said":"what he said, in words","items":[{"matter":"exact name from the list, or null if none fits","said":"how he referred to it","sr":"","st":""}]}'}],true)).replace(/^```(?:json)?|```$/g,''));
+    try{const {out,names}=await pinParse(blob);pinConfirm(out,names)}catch(e){host.innerHTML='<div style="color:var(--danger)">'+esc(e.message||e)+'</div>'}
+  },'Listening — say the date and the matters, then press the microphone');
+  r.start();
+}
+/* show what was understood in the day list, ticked, for the advocate to pin */
+function pinConfirm(out,names){
+  const host=$('#dyVoice');host.hidden=false;
+  try{
       const want=(out.items||[]).map(x=>({...x,ok:!!(x.matter&&names.includes(x.matter))}));
       if(out.date&&/^\d{4}-\d{2}-\d{2}$/.test(out.date)&&out.date!==dyDate){const a=dayAll();if(a[dyDate]&&!a[dyDate].items.length&&!a[dyDate].t){delete a[dyDate];daySave(a)}dyDate=out.date;$('#dyDate').value=dyDate;const b=dayAll();$('#dyTitleIn').value=(b[dyDate]&&b[dyDate].t)||'';drawDay()}
       host.innerHTML='<div class="muted" style="font-size:12.5px;margin:4px 0">'+esc(out.said||'')+'</div><b>Pin to '+esc(dayFmt(dyDate))+':</b><ul style="list-style:none;padding:0;margin:6px 0">'+
@@ -2892,12 +2933,35 @@ async function pinByVoice(){
         '<div class="row"><button class="btn primary" id="dyVOk">Pin the ticked matters</button><button class="btn" id="dyVNo">Cancel</button></div>';
       host.querySelector('#dyVNo').onclick=()=>{host.hidden=true;host.innerHTML=''};
       host.querySelector('#dyVOk').onclick=()=>{const a=dayAll();a[dyDate]=a[dyDate]||{t:'',items:[]};let n=0;
-        host.querySelectorAll('input[data-i]:checked').forEach(c=>{const x=want[+c.dataset.i];if(a[dyDate].items.some(y=>y.m===x.matter))return;const g=dayGuess(x.matter);a[dyDate].items.push({m:x.matter,sr:String(x.sr||''),no:g.no,who:g.who,st:String(x.st||'')});n++});
-        daySave(a);drawDay();renderDayBar();host.hidden=true;host.innerHTML='';toast(n+' matter'+(n===1?'':'s')+' pinned to '+dayFmt(dyDate)+'.')};
-    }catch(e){host.innerHTML='<div style="color:var(--danger)">'+esc(e.message||e)+'</div>'}
-  },'Listening — say the date and the matters, then press the microphone');
-  r.start();
+        host.querySelectorAll('input[data-i]:checked').forEach(c=>{const x=want[+c.dataset.i];const had=a[dyDate].items.find(y=>y.m===x.matter);if(had){if(x.sr)had.sr=String(x.sr);if(x.st)had.st=String(x.st);n++;return}const g=dayGuess(x.matter);a[dyDate].items.push({m:x.matter,sr:String(x.sr||''),no:g.no,who:g.who,st:String(x.st||'')});n++});
+        daySave(a);drawDay();dayOn=dyDate;dayHidden=false;renderDayBar();if(!$('#libPanel').hidden)renderLibList();host.hidden=true;host.innerHTML='';toast(n+' matter'+(n===1?'':'s')+' pinned to '+dayFmt(dyDate)+'.')};
+  }catch(e){host.innerHTML='<div style="color:var(--danger)">'+esc(e.message||e)+'</div>'}
 }
+/* ---------- the Instructions panel ---------- */
+function drawInstr(){
+  const ol=$('#inList'),a=instrAll();ol.innerHTML='';
+  if(!a.length){const li=document.createElement('li');li.className='empty';li.textContent='No standing instructions yet.';ol.append(li);return}
+  a.forEach((t,i)=>{const li=document.createElement('li');
+    li.innerHTML='<b>Instruction '+(i+1)+'</b><textarea rows="2" aria-label="Instruction '+(i+1)+'"></textarea><button class="btn sq" title="Delete this instruction">×</button>';
+    const ta=li.querySelector('textarea');ta.value=t;ta.onkeydown=e=>e.stopPropagation();
+    ta.onchange=()=>{const b=instrAll();const v=ta.value.trim();if(v)b[i]=v;else b.splice(i,1);instrSave(b);drawInstr();toast('Instruction '+(i+1)+' saved.')};
+    li.querySelector('button').onclick=()=>{if(!confirm('Delete Instruction '+(i+1)+'?\n\n'+t))return;const b=instrAll();b.splice(i,1);instrSave(b);drawInstr()};
+    ol.append(li)})}
+function instrAdd(t){t=String(t||'').trim();if(!t)return;const a=instrAll();a.push(t);instrSave(a);drawInstr();toast('Saved as Instruction '+a.length+'.')}
+async function instrNow(input){
+  const rec=$('#inNowRec');rec.hidden=false;rec.innerHTML='<span class="muted">Matching your instruction to your matters…</span>';
+  try{const {out,names}=await pinParse(input);rec.hidden=true;rec.innerHTML='';$('#inNow').value='';
+    if(!dyDate||$('#dayPanel').hidden)openDay(out.date&&/^\d{4}-\d{2}-\d{2}$/.test(out.date)?out.date:(dayPick()&&dayPick()>=todayIso()?dayPick():null));
+    pinConfirm(out,names)}
+  catch(e){rec.innerHTML='<div style="color:var(--danger)">'+esc(e.message||e)+'</div>'}}
+$('#instrBtn').onclick=()=>{drawInstr();$('#inNowRec').hidden=true;$('#inRec').hidden=true;openPanel('instrPanel');setTimeout(()=>$('#inNow').focus(),60)};
+$('#inNow').onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')$('#inNowGo').click()};
+$('#inNew').onkeydown=e=>e.stopPropagation();
+$('#inNowGo').onclick=()=>{const t=$('#inNow').value.trim();if(!t){toast('Type the instruction first, or press Speak.');return}instrNow(t)};
+$('#inNowMic').onclick=()=>{const h=$('#inNowRec');h.hidden=false;const r=vRecorder(h,blob=>instrNow(blob),'Listening — say the instruction, then press the microphone');r.start()};
+$('#inAdd').onclick=()=>{const t=$('#inNew').value.trim();if(!t){toast('Type the instruction first, or press Dictate.');return}instrAdd(t);$('#inNew').value=''};
+$('#inMic').onclick=()=>{const h=$('#inRec');h.hidden=false;const r=vRecorder(h,async blob=>{r.set('Typing it…');
+  try{const t=await vTranscribe(blob);h.hidden=true;h.innerHTML='';$('#inNew').value=t;$('#inNew').focus();toast('Check the words, then press + Add.')}catch(e){h.innerHTML='<div style="color:var(--danger)">'+esc(e.message||e)+'</div>'}},'Listening — say the standing instruction, then press the microphone');r.start()};
 
 let DAYS={},PINS={},dayFlushT=null;
 function dayAll(){return JSON.parse(JSON.stringify(DAYS))}
@@ -2925,7 +2989,7 @@ function buildDays(){if(dayBuilding)return dayBuilding;dayBuilding=(async()=>{tr
   try{if(!localStorage.getItem('xdesk:days:moved')){const old=JSON.parse(localStorage.getItem(DKEY)||'{}');let any=false;
     Object.entries(old).forEach(([d,L])=>(L.items||[]).forEach(x=>{if(!names.includes(x.m))return;const T=DAYS[d]=DAYS[d]||{t:L.t||'',items:[]};if(!T.t&&L.t)T.t=L.t;if(!T.items.some(y=>y.m===x.m)){T.items.push(x);any=true}}));
     localStorage.setItem('xdesk:days:moved','1');if(any)await dayFlush()}}catch(e){}
-  renderDayBar();if(!$('#dayPanel').hidden&&dyDate&&!$('#dayPanel').contains(document.activeElement))drawDay()}finally{dayBuilding=null}})();return dayBuilding}
+  renderDayBar();if(!$('#libPanel').hidden)renderLibList();if(!$('#dayPanel').hidden&&dyDate&&!$('#dayPanel').contains(document.activeElement))drawDay()}finally{dayBuilding=null}})();return dayBuilding}
 const isoDay=d=>{const x=new Date(d.getTime()-d.getTimezoneOffset()*60000);return x.toISOString().slice(0,10)};
 const todayIso=()=>isoDay(new Date());
 function dayFmt(iso){try{const d=new Date(iso+'T00:00:00');return d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}catch(e){return iso}}
@@ -3374,9 +3438,17 @@ function renderLibList(){
   const rows=libNames.map(n=>{const files=(libFiles[n]||[]).filter(f=>!/\(annotated\)\.pdf$/i.test(f));
     const fileHits=q?files.filter(f=>f.toLowerCase().includes(q)):[];const nameHit=!q||n.toLowerCase().includes(q);return {n,fileHits,show:nameHit||fileHits.length}}).filter(r=>r.show);
   if(!rows.length){const li=document.createElement('li');li.className='empty';li.textContent=q?'No matter or PDF file name contains "'+q+'".':'No matters yet. Press New matter.';list.append(li);return}
-  rows.forEach(({n,fileHits})=>{const li=document.createElement('li');if(proj&&proj.store===libStore&&proj.name===n)li.className='cur';
+  /* Nov 2026: matters pinned to the day now shown (today, else the next pinned date) come first, in serial order */
+  const pd=dayHidden?(()=>{const a=dayAll(),t=todayIso();return Object.keys(a).filter(d=>a[d].items&&a[d].items.length&&d>=t).sort()[0]||null})():dayPick();
+  const PL=pd&&DAYS[pd]?daySort((DAYS[pd].items||[]).slice()):[],pmap=new Map(PL.map((x,i)=>[x.m,{x,i}]));
+  rows.sort((a,b)=>{const A=pmap.get(a.n),B=pmap.get(b.n);if(A&&B)return A.i-B.i;if(A)return -1;if(B)return 1;return 0});
+  const npin=rows.filter(r=>pmap.has(r.n)).length;
+  if(npin){const h=document.createElement('li');h.className='pinhead';h.textContent='📌 Pinned for '+dayFmt(pd)+(pd===todayIso()?' (today)':'')+(DAYS[pd].t?' · '+DAYS[pd].t:'')+' — '+npin+' matter'+(npin===1?'':'s');list.append(h)}
+  rows.forEach(({n,fileHits},ri)=>{if(npin&&ri===npin){const h=document.createElement('li');h.className='pinhead rest';h.textContent='All other matters';list.append(h)}
+    const li=document.createElement('li');if(proj&&proj.store===libStore&&proj.name===n)li.className='cur';const pp=pmap.get(n);if(pp)li.classList.add('pinned');
     const folderM=libStore===FolderStore,sy=libSync[n];
     li.innerHTML='<span class="n"></span>'+(folderM&&syncOn()?'<button class="btn" data-a="tosync" title="Copy this matter into this browser\'s storage, which syncs with Google Drive and the iPad">Move to synced storage</button>':'')+'<button class="btn" data-a="pin" title="Put this matter on a day list (with its serial number)">📌 Pin to a day</button><button class="btn" data-a="ren">Rename</button><button class="btn del" data-a="del" title="Delete this matter (asks twice)">Delete</button><button class="btn primary" data-a="open">Open</button>';li.querySelector('.n').innerHTML=q?markHit(n,q):esc(n);
+    if(pp){const s=document.createElement('span');s.className='pinsr';s.title='Pinned for '+dayFmt(pd)+(pp.x.st?' · '+pp.x.st:'');s.textContent=pp.x.sr?'Sr. '+pp.x.sr:'📌';li.prepend(s)}
     if(!folderM&&syncOn()){const sm=document.createElement('small');sm.className='sy';sm.textContent=!sy||(!sy.ok&&!sy.err)?'☁ not synced yet':sy.err?'☁ ⚠ not synced: '+sy.err:'☁ synced '+new Date(sy.ok).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});if(sy&&sy.err)sm.classList.add('bad');li.append(sm)}
     const ts=li.querySelector('[data-a=tosync]');if(ts)ts.onclick=()=>moveToSynced(n,ts);
     if(fileHits.length){const ul=document.createElement('ul');ul.className='files';fileHits.slice(0,6).forEach(f=>{const l=document.createElement('li');l.innerHTML='PDF: '+markHit(f,q);ul.append(l)});li.append(ul)}
