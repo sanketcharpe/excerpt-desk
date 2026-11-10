@@ -591,18 +591,21 @@ main.split.w3{grid-template-columns:minmax(0,var(--pdfw,33%)) 12px minmax(0,1fr)
 .pcx{position:sticky;top:-20px;align-self:flex-end;margin:-12px -10px -38px 0;z-index:3;width:34px;height:34px;flex:none;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:20px;line-height:1;cursor:pointer;display:grid;place-items:center}
 .pcx:hover{border-color:var(--muted);background:color-mix(in srgb,var(--ink) 6%,var(--surface))}
 
-/* Paper mode (Nov 2026): warm, dim, low-contrast, as close to paper as a screen gets */
+/* Paper mode (Nov 2026): e-ink grey — dim, flat, low contrast, no colour cast */
 html:root.paper{
-  --desk:#e4dccb; --gutter:#d9d0bc; --surface:#f1ead9; --ink:#3a3127; --muted:#7b6f5d;
-  --line:#d2c6ae; --dot:#cbbd9c; --accent:#7d5b2c; --accent-ink:#fbf6ea; --link:#8c6e3f; --danger:#a5452f;
-  --shadow:rgba(70,50,20,.13); color-scheme:light}
+  --desk:#d6d6d2; --gutter:#cdcdc9; --surface:#e2e2de; --ink:#353535; --muted:#6f6f6c;
+  --line:#c4c4bf; --dot:#bdbdb8; --accent:#4a4a48; --accent-ink:#ececea; --link:#4d5560; --danger:#7a3b33;
+  --shadow:rgba(0,0,0,.10); color-scheme:light}
 html.paper body{background:var(--desk)}
-html.paper .page{background:#f1ead9;box-shadow:0 1px 2px rgba(70,50,20,.12),0 10px 26px -14px rgba(70,50,20,.35)}
-html.paper .page canvas{filter:sepia(.38) brightness(.93) contrast(.9)}
-html.paper .dxpage{background:#f3ecdc;color:#2f281f}
-html.paper body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:900;opacity:.07;mix-blend-mode:multiply;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .27 0 0 0 0 .15 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-html.paper ::selection{background:rgba(160,120,50,.28)}
+html.paper .page{background:#dfdfdb;box-shadow:0 1px 2px rgba(0,0,0,.08),0 8px 22px -14px rgba(0,0,0,.25)}
+html.paper .page canvas{filter:grayscale(1) brightness(.875) contrast(.86)}
+html.paper .dxpage{background:#e0e0dc;color:#303030}
+html.paper img{filter:grayscale(.6) brightness(.92)}
+html.paper body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:900;opacity:.05;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .3 0 0 0 0 .3 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+html.paper ::selection{background:rgba(60,60,60,.2)}
+html.paper .rcvc,html.paper .dxtb,html.paper .dxtb select,html.paper .pdgrid .pt,html.paper .card .shot img{background:var(--surface)!important;color:var(--ink)}
+html.paper .rcvbox{background:rgba(60,60,58,.35)}
 #paperBtn.on{background:color-mix(in srgb,var(--accent) 16%,var(--surface));border-color:var(--accent)}
 
 /* PDF size and compression prompt (Nov 2026) */
@@ -1982,7 +1985,7 @@ function tapHint(mouse){clearTimeout(tapHintT);tapHintT=setTimeout(()=>{if(Date.
   toast(mouse?'Double-click on the worksheet to type there.':'Press and hold on the worksheet to type there. A quick tap is ignored.')},380)}
 
 /* ================= problem recorder: a short diary of recent actions, kept on this device only ================= */
-const APPV='2026-11-10c';
+const APPV='2026-11-10d';
 let crumbs=[];try{crumbs=JSON.parse(localStorage.getItem('xdesk:log')||'[]')}catch(e){crumbs=[]}
 function crumb(m){try{crumbs.push([Date.now(),String(m).slice(0,160)]);if(crumbs.length>90)crumbs=crumbs.slice(-90);localStorage.setItem('xdesk:log',JSON.stringify(crumbs))}catch(e){}}
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
