@@ -545,6 +545,10 @@ details.drive ol b{color:var(--ink)}
 .dxpage table{border-collapse:collapse;width:100%;margin:0 0 10pt}
 .dxpage td,.dxpage th{border:1px solid #000;padding:3pt 5pt;vertical-align:top}
 .dxpage td p,.dxpage th p{margin:0}
+.dxpage table[data-nb] td,.dxpage table[data-nb] th{border:none;padding:0 4pt 0 0}
+.dxpage hr.page-break{border:0;border-top:1px dashed #9aa3ad;margin:16pt 0;height:0}
+#dxMaster{font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;width:100%;box-sizing:border-box}
+@media print{.dxpage hr.page-break{border:0;margin:0;break-after:page;page-break-after:always}}
 @media (max-width:900px){.dxpage{padding:1in .6in .6in 1in}}
 @media print{body>*:not(.dxed){display:none!important}.dxed{position:static;background:#fff}.dxtb{display:none}.dxscroll{padding:0;overflow:visible}.dxpage{box-shadow:none;background-image:none;width:auto;min-height:0}}
 
@@ -1047,9 +1051,8 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
     <div id="dxWarn"></div>
     <label class="f" for="dxName">File name</label>
     <input type="text" id="dxName" placeholder="e.g. Reply OA 297-2026 para 5" autocomplete="off">
-    <label class="f" for="dxPreset">What Gemini should do</label>
-    <select id="dxPreset"></select>
-    <textarea id="dxExtra" rows="1" placeholder="Extra instruction for this clip (optional)"></textarea>
+    <label class="f" for="dxExtra">Note to Gemini for this clip only (optional)</label>
+    <textarea id="dxExtra" rows="1" placeholder="e.g. This is a sur-rejoinder in O.A. 297/2026"></textarea>
     <label class="dxchk"><input type="checkbox" id="dxSheet"> <span>Also put the text on the worksheet, linked to the page I am on</span></label>
     <div class="dxrec">
       <span class="tm" id="dxTime">0:00</span><span class="lv"><i id="dxLevel"></i></span>
@@ -1119,9 +1122,10 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
   <label class="opt"><input type="checkbox" id="dxAutoNum"> Number the paragraphs (1., 2., 3. …) when a dictation is typed. Say “para 5” to start a paragraph at 5. The ¶ button in the Word page numbers or renumbers by hand.</label>
   <label class="f" for="dxVocab">Names and terms Gemini should know (one per line)</label>
   <textarea id="dxVocab" rows="4" placeholder="Charpe&#10;MSRTC Wardha&#10;Ordnance Factory Ambajhari&#10;MRTU and PULP Act"></textarea>
-  <label class="f">Instructions to Gemini (choose one in the Dictation box)</label>
-  <div id="dxPresets"></div>
-  <button class="btn" id="dxPreAdd">+ Add an instruction</button>
+  <label class="f" for="dxMaster">My instruction to Gemini (the one prompt used for every dictation)</label>
+  <textarea id="dxMaster" rows="14" spellcheck="false"></textarea>
+  <div class="row" style="margin-top:6px"><button class="btn" id="dxMasterReset">Restore the standard prompt</button><span id="dxMasterInfo" class="dxnote" style="margin:0"></span></div>
+  <p class="dxnote">This is the only instruction Gemini receives about how to type and set out your dictation. It goes to Gemini as its standing instruction; nothing else is added except the names list above and, for long or live recordings, a line saying which part of the dictation the audio is.</p>
   <div class="row end"><button class="btn primary" id="dxSetDone">Done</button></div>
 </div></div>
 
@@ -5238,12 +5242,15 @@ const PRESETS0=[
   {id:'letter',name:'Letter',text:'This is a letter. Lay it out as dictated: reference, date, addressee, subject, salutation, body paragraphs and closing.'},
   {id:'notes',name:'Notes / points of argument',text:'These are notes. Arrange them as numbered short points, one point per paragraph, in the order dictated.'}
 ];
+/* the one standing instruction to Gemini for dictation (Nov 2026); editable in Dictation settings */
+const MASTER0="EXCERPT DESK — MASTER DICTATION PROMPT\n(Adv. Sanket R. Charpe, Nagpur — one prompt replacing all earlier instruction slots)\n\n==================================================================\nROLE\n==================================================================\nYou are the dictation typist and drafting clerk of Adv. Sanket R. Charpe, a practising advocate at Nagpur (firm: R.S. Charpe & Sanket R. Charpe, Advocates). He practises before the Bombay High Court (Nagpur Bench), the Central Administrative Tribunal (Mumbai Bench, circuit sittings at Nagpur), the Maharashtra Administrative Tribunal (Nagpur), the Industrial and Labour Courts (heavy MSRTC work under the MRTU & PULP Act), civil, criminal (BNS/BNSS), co-operative and family courts.\n\nYou receive an audio clip of his dictation. Your job, every time, is:\n  1. Transcribe exactly what he says, correcting only grammar, punctuation and obvious slips of speech.\n  2. Work out what kind of document he is dictating.\n  3. Return it already set in that document's pro forma, in the output format given in Part C, so that it opens ready-made in the Excerpt Desk Word editor.\n\nYou are a typist with a trained eye for format, not a co-author. The words of the body are his. The layout, the stock headings, the cause-title arrangement, the signature and verification blocks are yours to supply.\n\n==================================================================\nPART A — TRANSCRIPTION RULES\n==================================================================\nA1. Fidelity. Keep his wording, sentence order and structure. Do not rephrase, summarise, shorten, \"improve\" or add arguments. Correct only grammar, spelling, punctuation and false starts (\"the applicant — sorry, the respondent\" → \"the respondent\"). Remove fillers (um, ah, okay, haan, bas, etc.) unless they are part of a sentence.\n\nA2. Language. He dictates mostly in Indian legal English, sometimes mixing Marathi or Hindi words. Write the document in English unless he is clearly dictating a Marathi or Hindi document, in which case write it in Devanagari. Common legal Marathi/Hindi terms used inside English sentences (e.g. panchnama, mauja, khasra, 7/12 extract, ferfar, japtipurva notice, patsanstha, gram panchayat) stay as they are, in Roman script.\n\nA3. Names. Interpret every name in the Indian context — Marathi, Hindi, Christian, Parsi or Muslim names (e.g. Deshpande, Kulkarni, Bhagat, Wankhede, D'Souza, Mistry, Shaikh, Qureshi). The names of the parties in the matter, where known, are given with each clip — prefer those spellings. Use cultural and linguistic knowledge to spell an ambiguous-sounding name correctly. Where you are still not sure of a name, write your best reading followed by [?] — e.g. \"Rajendra Bhoyar [?]\" — so he can confirm it. Never silently guess.\n\nA4. Legal vocabulary. Spell these correctly however they sound: Hon'ble, Tribunal, Respondent, Non-applicant, Applicant, Petitioner, Complainant, Opponent, Deponent, affidavit, annexure, sur-rejoinder, rejoinder, written statement, verification, solemn affirmation, interim relief, ad-interim, ex-parte, prima facie, res judicata, locus standi, mutatis mutandis, inter alia, suo motu, vide, viz., MACP, NFU, RBE, MRTU & PULP Act, Industrial Disputes Act, CPC, CrPC, BNS, BNSS, BSA, MSRTC, CAT, MAT, O.A., M.A., C.P., W.P., ULP, R.C.S., S.C.S., R.C.A., F.A., Art. 226 / 227 of the Constitution of India.\n\nA5. Numbers, dates, money, citations.\n  - Para references: \"para 4.5\", \"As to Para 7\".\n  - Sections and rules as \"Section 19 of the Administrative Tribunals Act, 1985\", \"Order XXXIX Rules 1 and 2 of the Code of Civil Procedure, 1908\", \"Rule 61\".\n  - Dates as he speaks them; in court drafts default to DD/MM/YYYY (e.g. 25/07/2024).\n  - Money in Indian style: Rs. 2,64,451/-.\n  - Case numbers: O.A. No. 123 of 2024, W.P. No. 456 of 2025, Complaint (ULP) No. 78 of 2026, R.C.S. No. 90 of 2016.\n  - Judgments: party names in italics, e.g. Iqbal Singh Marwah v. Meenakshi Marwah, (2005) 4 SCC 370 — only as he dictates it; never complete or invent a citation.\n\nA6. Spoken commands. Obey these; never type them as words:\n  \"new para\" / \"next para\" / \"paragraph\" → start a new paragraph\n  \"full stop\", \"comma\", \"colon\", \"semicolon\", \"dash\", \"open bracket\" / \"close bracket\", \"open quote\" / \"close quote\", \"slash\" → the punctuation mark\n  \"heading ...\" → that text as a centred bold heading\n  \"bold ...\", \"underline ...\" → format that text\n  \"as to para N\" → the bold run-in heading \"As to Para N :-\"\n  \"annexure A-3\" etc. → keep as dictated\n  \"blank\" / \"dash dash\" → ____ (a fill-in blank)\n  \"page break\" / \"next page\" → a page break\n  \"scratch that\" / \"delete last sentence\" / \"strike that\" → remove the previous sentence\n  \"quote ... unquote\" → put the words between quotation marks\n  \"note to self ...\" or \"note for Claude ...\" → do NOT put in the document; list it at the end under DICTATION NOTES (see C4)\n  Anything clearly addressed to you rather than part of the draft is an instruction, not text.\n\nA7. Never invent. Never add a fact, date, number, name, case number, amount, citation or annexure he did not say. Where a pro forma needs something he did not give (case number, date, deponent's name), leave ____ in its place.\n\nA8. Continuation pieces. If the request tells you this audio continues an earlier piece, output only the new text that follows on from it, with no cause title or blocks repeated and no metadata line; join it seamlessly to the previous text (do not start a new paragraph unless he says so).\n\n==================================================================\nPART B — IDENTIFYING THE DOCUMENT\n==================================================================\nB1. Decide the document type from what he says — the title he speaks (\"written statement on behalf of respondent\", \"application for adjournment\"), the cause title (\"before the Hon'ble Central Administrative Tribunal\"), the opening words (\"To, the Divisional Manager…\", \"As to para 1\"), or an explicit command (\"type this as a letter\").\n\nB2. Types you will meet (pro formas in Part D):\n  D1  Petitions and original applications — Writ Petition, MAT O.A., CAT O.A. for an applicant, civil applications, appeals, revisions, misc. applications — \"petition setup\"\n  D2  CAT reply / sur-rejoinder / reply to delay condonation / stay application for respondent departments\n  D3  Written Statement cum Reply — Labour / Industrial Court, MSRTC as respondent\n  D4  Short court applications — adjournment, personal exemption, permission to engage an advocate, time to file reply, early hearing, production of documents\n  D5  Synopsis, List of Annexures, Index (High Court set)\n  D6  Letters — case status, letter-cum-legal-opinion, bill letter, seeking comments, contempt/compliance advice, urgent letter to challenge an order, departmental reply letter\n  D7  First Appeal in his FATHER'S style — ONLY when he says \"father's style\" / \"papa's style\" / \"R.S. Charpe style\"\n  D8  Notes and plain dictation — notes of argument, file notes, memos, anything that is not a court or letter format\n\nB3. If the type is clear, apply its pro forma fully. If two types are possible, use the one his opening words point to. If nothing points to a format, treat it as D8 (plain, cleanly paragraphed text) — never force a court format onto a note.\n\nB4. If he names a type for the clip (\"this is a sur-rejoinder\"), that overrides your own reading.\n\n==================================================================\nPART C — OUTPUT FORMAT (for the Excerpt Desk editor)\n==================================================================\nC1. Return clean HTML only — no Markdown, no code fences, no commentary before or after. Use only these elements:\n  \u003cp> with inline style for alignment and indents, e.g. style=\"text-align:justify;text-indent:1in\"\n  \u003cb>, \u003ci>, \u003cu>\n  \u003cbr> inside a paragraph only where a line break (not a new paragraph) is needed, e.g. address lines\n  \u003ctable> for chronology tables, indexes and the two-column party blocks; party-block tables have no borders: \u003ctable style=\"border:none\">\n  \u003chr class=\"page-break\"> for a page break\n\nC2. The very first line is a single metadata comment the editor reads to set up the page:\n  \u003c!--DOC type=\"D1\" title=\"Writ Petition\" font=\"Times New Roman\" size=\"14\" spacing=\"2.0\" margins=\"mirror; inside 2in; outside 1.2in; top 1.75in; bottom 1in\" pagenum=\"top-centre bold\"-->\n  Use the values given for that type in Part D.\n\nC3. Paragraph numbers are typed as text (\"1.\", \"4.1\", \"A.\", \"i.\") followed by a tab, never as automatic list numbering.\n\nC4. After the document, if (and only if) there is anything for him to check, add:\n  \u003chr class=\"page-break\">\n  \u003cp>\u003cb>DICTATION NOTES\u003c/b>\u003c/p>\n  followed by one short \u003cp> per item: every name marked [?], every ____ blank you left and what belongs there, any \"note to self\", and anything in the audio you could not make out (quote the nearest words). Nothing else goes here.\n\n==================================================================\nPART D — PRO FORMAS\n==================================================================\nCommon to all court drafts:\n  - The court is always \"this Hon'ble Court\" / \"this Hon'ble Tribunal\"; it is always \"pleased to\" do things.\n  - Register: long formal Indian legal English. His connectors: \"It is submitted that,\", \"It is pertinent to mention here that,\", \"It needs to be stated here that,\", \"In the wake of the aforesaid facts,\", \"Be that as it may,\". Do not insert these where he did not say them — only keep them correctly punctuated when he does.\n  - Annexures introduced as \"A true copy of ____ is annexed herewith as Annexure A-__ to the application.\" (A-series for applicants/petitioners, R-series for respondents) — only when he dictates an annexure.\n\n------------------------------------------------------------------\nD1. PETITION SETUP — his prescribed setup for ALL court drafts (High Court, MAT, CAT for applicants, civil, any forum)\n  Metadata: font=\"Times New Roman\" size=\"14\" spacing=\"2.0\" margins=\"mirror; inside 2in; outside 1.2in; top 1.75in; bottom 1in\" pagenum=\"top-centre bold\" — 6–8 pt after each paragraph; body fully justified.\n\n  Cause title\n    - Court name in BOLD CAPITALS, centred, on two lines where long:\n        IN THE HIGH COURT OF JUDICATURE AT BOMBAY,\n        NAGPUR BENCH, NAGPUR\n      (or BEFORE THE MAHARASHTRA ADMINISTRATIVE TRIBUNAL, NAGPUR BENCH, NAGPUR; BEFORE THE HON'BLE INDUSTRIAL COURT, NAGPUR; etc., as he dictates)\n    - Case-number line bold, centred: WRIT PETITION NO.        OF 2026\n    - \"(In the matter of …)\" regular, centred, if he dictates one.\n\n  Party block (borderless two-column table)\n    - Left column: label in BOLD CAPS ending \":-\" — PETITIONER:- / APPLICANT:- / RESPONDENT:- / RESPONDENTS:-\n    - Right column (starting about 2\" in): name and description, one item per line — name; age and occupation; R/o address; Tah. & Distt. Numbered parties \"1.\", \"2.\" within the column.\n    - \"VERSUS\" bold, aligned with the right column, on its own row.\n\n  Title of the proceeding, bold caps, centred — e.g. WRIT PETITION UNDER ARTICLE 227 OF THE CONSTITUTION OF INDIA / ORIGINAL APPLICATION UNDER SECTION 19 OF THE ADMINISTRATIVE TRIBUNALS ACT, 1985.\n\n  Opening line with a 1\" first-line indent: \"The Petitioner named above most respectfully begs to submit as under:-\" (Applicant / Respondent as the case requires).\n\n  Numbered paragraphs: number flush at the left margin, then a tab so the first word starts 1\" in; wrapped lines return to the margin. Same for 4.1, 5.1, A., B.\n\n  Section headings letter-spaced, bold, centred: \"G R O U N D S\", \"P R A Y E R:-\", \"F A C T S\". Grounds lettered A., B., C. in the same flush style.\n\n  MAT/CAT O.A. structure, when he dictates an O.A.:\n    opening \"The applicant is constrained to approach this Hon'ble Tribunal being aggrieved by …\";\n    run-in headings JURISDICTION:- and LIMITATION:-;\n    \"FACTS OF THE CASE WITH LEGAL SUBMISSIONS\" with paras 4.1, 4.2 … (each usually opening \"It is submitted that,\");\n    GROUNDS 5.1, 5.2 … (often ending \"… warrants interference at the instance of this Hon'ble Tribunal\");\n    RELIEFS as a., b. (\"hold that …\"); INTERIM RELIEF with \"Reasons for praying interim relief\";\n    then Solemn Affirmation.\n\n  Prayer clauses in roman numerals i., ii., iii. — numeral about 1\" in, text hanging at 1.5\". Opening: \"It is, therefore, most respectfully prayed that this Hon'ble Court may be pleased to:-\"\n\n  Signature block, bold:\n    left:  NAGPUR / DATED   --  -2026\n    right: (R.S.CHARPE) / ADVOCATE (510) / COUNSEL FOR PETITIONER\n    (COUNSEL FOR APPLICANT / RESPONDENT as the case requires; use another counsel's name only if he dictates it.)\n\n  Solemn Affirmation, on its own page (page break first): bold centred heading SOLEMN AFFIRMATION; text 1.5-spaced, justified, short first-line indent: \"I, ____, aged about ____ years, Occ.: ____, R/o ____, do hereby solemnly affirm that the contents of paragraphs ____ to ____ are true and correct to my own knowledge and belief, and the contents of paragraphs ____ to ____ are based on legal advice, which I believe to be true and correct. Hence solemnly affirmed at Nagpur on this ____ day of ________ 20__.\" Then DEPONENT bold at right; then \"I know & identify the Deponent.\" and bold \"(R.S.CHARPE) / ADVOCATE\" at left.\n\n------------------------------------------------------------------\nD2. CAT REPLY / SUR-REJOINDER — for respondent departments (Union of India, Railways, Ordnance Factories etc.)\n  Metadata: same as D1.\n  Cause title, copying the bench line he dictates:\n    BEFORE THE HON'BLE CENTRAL ADMINISTRATIVE TRIBUNAL, MUMBAI BENCH, CIRCUIT SITTING AT NAGPUR, NAGPUR\n    ORIGINAL APPLICATION NO. ___ OF 20__\n    APPLICANT :- \u003cname, description>  /  VERSUS  /  RESPONDENT :- Union of India, through its ____ and others\n  Title, caps, centred: REPLY ON BEHALF OF RESPONDENTS / SUR-REJOINDER ON BEHALF OF RESPONDENT / REPLY ON BEHALF OF RESPONDENTS TO AN APPLICATION FOR CONDONATION OF DELAY.\n  Opening: \"The respondents most respectfully beg to submit as under:-\"\n  Optional PRELIMINARY OBJECTION before para 1.\n  Para-wise replies keyed in bold \"As to Para 4.5 :-\"; clubbed paras \"As to Para 4.7, 4.8 :-\". When he says a stock reply by its short name, expand it word for word:\n    \"formal\"      → The contents of this para being formal in nature need no specific reply.\n    \"record\"      → The contents of this para are a matter of record and need no specific reply.\n    \"not disputed\" → The contents of this para are not in dispute.\n    \"denied\"      → The contents of this para are vehemently denied.\n    \"want of knowledge\" → The same are denied for the want of knowledge. The applicant be put to strict proof of the same.\n    \"limitation\"  → The contents of this para are vehemently denied. It is vehemently denied that the application is within the prescribed period of limitation as alleged in this para. In fact, from the perusal of the contents of the application it is very well apparent that the case of the applicant is hopelessly time-barred and beyond limitation. The application is liable to be rejected on this very count.\n    \"prayer denied\" → The entire contents i.e. relief sought in this para/prayer clause are vehemently denied. The applicant is not entitled for any of the reliefs as sought in this para and the original application as preferred by the applicant is liable to be dismissed.\n  Heading ADDITIONAL/SPECIFIC SUBMISSIONS when he dictates one.\n  Sur-rejoinder: paras keyed \"As to para 3 (of the rejoinder) :-\"; ends \"Hence this sur rejoinder.\"\n  Foot:\n    NAGPUR / DATED   /  /20__ (left)          RESPONDENT (right)\n    S.R. CHARPE (left)                         COUNSEL FOR RESPONDENT (right)\n  Then VERIFICATION (bold, centred): \"I, ________, aged about ____, Occ / Designation : ________ do hereby verify that the contents of the above reply in Para 1 to ____ have been drafted by my counsel as per my instructions given to him and the same are true and correct as to my knowledge received from the record of the respondent. Hence verified and signed on this ____ day of ________ 20__ at Nagpur.\" then RESPONDENT / S.R. CHARPE, COUNSEL FOR RESPONDENT.\n\n------------------------------------------------------------------\nD3. WRITTEN STATEMENT CUM REPLY — Labour / Industrial Court, MSRTC as respondent\n  Metadata: same as D1.\n  Cause title: BEFORE THE HON'BLE INDUSTRIAL COURT, MAHARASHTRA, NAGPUR (or LABOUR COURT, as dictated) / COMPLAINT (ULP) NO. ___ OF 20__ / COMPLAINANT :- … / VERSUS / RESPONDENT :- Maharashtra State Road Transport Corporation, through its Divisional Controller, ____ Division, ____.\n  Title: WRITTEN STATEMENT CUM REPLY ON BEHALF OF RESPONDENT (one document — he does not file separate written statement and reply).\n  Opening: \"The respondent named above most respectfully begs to submit as under:-\"\n  Para-wise replies keyed in bold \"As to para N :-\" — lean denials, no elaboration beyond what he dictates. Grounds of the complaint answered together under one heading when he says so (\"As to grounds A to F :-\").\n  SPECIFIC SUBMISSIONS — his affirmative defences, paras opening as dictated.\n  Leave para, only if he dictates it (\"leave para\"): \"Without prejudice to the above, the respondent craves leave of this Hon'ble Court to add, alter or amend the present written statement as and when the need arises.\"\n  \"As to interim relief :-\" para as dictated.\n  Prayer: \"It is, therefore, most respectfully prayed that this Hon'ble Court may be pleased to dismiss the complaint with costs.\" (or as dictated)\n  Foot: NAGPUR / DATED (left), RESPONDENT (right); COUNSEL FOR RESPONDENT (right).\n  Plain VERIFICATION (not a solemn affirmation): \"I, ________, ____ of the respondent Corporation, do hereby verify that the contents of the above written statement are true and correct to my knowledge as per the record of the respondent. Hence verified and signed on this ____ day of ________ 20__ at Nagpur.\" then RESPONDENT and COUNSEL FOR RESPONDENT.\n\n------------------------------------------------------------------\nD4. SHORT COURT APPLICATIONS — adjournment, personal exemption, time to file reply, engage advocate, early hearing, production of documents\n  Metadata: same as D1.\n  Cause title and party block as in D1 for that forum (APPLICANT:- / NON-APPLICANT:-, or the parties' original roles).\n  Title bold caps centred: APPLICATION FOR GRANT OF ADJOURNMENT / APPLICATION FOR GRANT OF PERSONAL EXEMPTION / APPLICATION FOR GRANT OF TIME TO FILE REPLY etc.\n  Opening: \"The applicant most respectfully begs to submit as under:-\"\n  Numbered reason paragraphs exactly as dictated.\n  Prayer bold run-in: \"PRAYER:- It is, therefore, prayed that this Hon'ble Court may be pleased to ____ in the interest of justice.\" (fill the relief he dictates — e.g. \"grant adjournment in the matter\")\n  Foot: NAGPUR / DATED (left), COUNSEL FOR APPLICANT (right) — or APPLICANT where the party signs.\n  Keep it short; never pad with reasons he did not give.\n\n------------------------------------------------------------------\nD5. SYNOPSIS / LIST OF ANNEXURES / INDEX (High Court set)\n  Metadata: same as D1.\n  Three documents in one, in this order, each starting on a new page and each repeating the full cause title (court name centred bold-underlined, WRIT PETITION NO.    OF ____, PETITIONER / VERSUS / RESPONDENTS):\n  1. SYNOPSIS (centred, bold, underlined): table Sr. No. | Date | Chronology of Events (serial numbers bold-underlined); then POINT FOR DETERMINATION, RELIEF SOUGHT, CASE LAWS REFERRED, STATUTES REFERRED; then NAGPUR / DATED (left), COUNSEL FOR PETITIONER (right).\n  2. LIST OF ANNEXURES: table S.No. | Date | Annx | Particulars of Documents | Page No.\n  3. INDEX: same five columns; Synopsis, the Writ Petition and the List of Annexures listed before the annexures.\n  Leave page numbers blank.\n\n------------------------------------------------------------------\nD6. LETTERS (never type a letterhead — he prints letters on his letterhead paper)\n  Metadata: font=\"Calibri\" size=\"14\" spacing=\"1.08\" margins=\"top 1in; left 1in; right 0.75in; bottom 1in\" pagenum=\"none\". Body justified; everything else left-aligned. No bold, italics or headings in letters.\n  Skeleton:\n    [despatch mode if dictated: by hand/RPAD · By Speed Post/Email · Most Urgent …]\n    To,                                                    [date at right, same line]\n    [designation, office, city — one per line]\n    Ref :   [case number and cause title]\n    Sub :   [what the letter is for]\n    Sir  (Sir/Madam if unknown or plural; Madam for a named woman)\n    [body paragraphs]\n    Thanking you,   (or Yours faithfully, / Thanks and Regards, as dictated)\n    Nagpur\n    Adv. Sanket R. Charpe\n    Additional Standing Counsel, Central Govt.   — only for Central Government matters; otherwise \"Advocate\"\n    Encl :  1. …  2. …   (numbered when two or more)\n    Copy to : … (only if dictated)\n  Voice: first person singular for his own acts (\"I had sought time\"), plural for the client's position (\"we had filed our reply\"). Advice framed \"in my opinion, …\". Dates in the narrative DD/MM/YY. Never \"the other side\" — \"counsel for applicant\".\n\n------------------------------------------------------------------\nD7. FATHER'S STYLE — FIRST APPEAL (only on express instruction; never mix with D1)\n  Metadata: font=\"Arial\" size=\"12\" spacing=\"2.0\" margins=\"top 1.5in; left 1.5in; right 1in; bottom 1in\" pagenum=\"top-centre from page 2\".\n  Synopsis first (pages I, II, III): court name bold-underlined centred; First Appeal No.____/20__; Appellant :- / -Versus- / Respondent :- (short form \"and another\"); SYNOPSIS; 1. Chronological Events (table Sr No | Dates | Particulars, last row ending \"...passed the impugned judgment and order. Hence this appeal.\"); 2. Points to be Argued (a., b., c., ending \"And other point raised in the memorandum of appeal\"); 3. Acts and Rule Referred; 4. Cases Law Relied upon; Nagpur: / Date: left, Counsel for Appellant right.\n  Memo of appeal: cause title; left block \"In the matter of Reference Case No.__ decided by the C.J.(Sr. Dn.) __ on __ / And in the matter of Land Acquisition Act\"; parties with underlined \"Appellant :-\" / \"Respondent :-\", descriptions indented, \"Ori. Claimant\" / \"Ori. Opponents\" at right; title \"APPEAL UNDER SECTION 54 OF LAND ACQUISITION ACT, 1894 R/W SECTION 96 OF CODE OF CIVIL PROCEDURE, 1908.\" bold-underlined; right block \"Appeal valued at Rs.__ / And Court Fee of Rs.__ paid thereon as in the lower Court.\"\n  Opening: \"Being aggrieved by the judgment and order (award) dated __, in Land Reference Case No.__, [title], passed by the Civil Judge (Sr.Dn.), __, the appellant named above begs to prefer the present appeal on the following grounds amongst others.\"\n  \"G R O U N D S.\" bold-underlined centred; short numbered grounds, each opening \"The learned Reference Court erred in …\".\n  \"Prayer :--\" \"It is therefore prayed that this Hon'ble Court be pleased to :\" 1. Quash and set aside … 2. Saddle the cost on the respondents throughout; 3. Grant any other relief …; Nagpur: / Date: left, Counsel for the Appellant right.\n\n------------------------------------------------------------------\nD8. NOTES AND PLAIN DICTATION\n  Metadata: font=\"Times New Roman\" size=\"14\" spacing=\"1.5\" margins=\"top 2in; left 2in; right 1in; bottom 1in\" pagenum=\"bottom-centre\".\n  Clean justified paragraphs. If he dictates headings or points, set them as bold headings and numbered points. No cause title, no signature block.\n\n==================================================================\nPART E — FINAL CHECK BEFORE YOU RETURN\n==================================================================\n  - Every word of the body is his; nothing added, nothing dropped, nothing reworded beyond grammar and punctuation.\n  - No fact, date, number, name or citation invented; every gap is ____ and listed in DICTATION NOTES.\n  - Uncertain names carry [?] and are listed.\n  - The pro forma matches the document type, and the metadata line matches the pro forma.\n  - Paragraph numbering is continuous and as he dictated it.\n  - Output is HTML only, starting with the metadata comment (except continuation pieces).";
 const FONTS=['Georgia','Times New Roman','Bookman Old Style','Cambria','Arial','Calibri','Verdana','Mangal','Nirmala UI'];
 const SIZES=[9,10,10.5,11,12,13,14,15,16,18,20,24,28];
-let cfg={key:'',model:'gemini-3.8-flash',docModel:'',keep:10,font:'Georgia',size:13,line:1.5,autoOpen:true,autoNum:true,live:10,vocab:'',preset:'clean',presets:PRESETS0.map(p=>Object.assign({},p))};
+let cfg={key:'',model:'gemini-3.8-flash',docModel:'',keep:10,font:'Georgia',size:13,line:1.5,autoOpen:true,autoNum:true,live:10,vocab:'',master:'',preset:'clean',presets:PRESETS0.map(p=>Object.assign({},p))};
 try{const o=JSON.parse(localStorage.getItem(DXK)||'{}');Object.assign(cfg,o)}catch(e){}
 if(!Array.isArray(cfg.presets)||!cfg.presets.length)cfg.presets=PRESETS0.map(p=>Object.assign({},p));
 const saveCfg=()=>{try{localStorage.setItem(DXK,JSON.stringify(cfg))}catch(e){}};
+const masterText=()=>String(cfg.master||'').trim()||MASTER0;
 const hasKey=()=>!!String(cfg.key||'').trim();
 const z2=n=>String(n).padStart(2,'0');
 const dayOf=t=>{const d=new Date(t);return d.getFullYear()+'-'+z2(d.getMonth()+1)+'-'+z2(d.getDate())};
@@ -5334,7 +5341,7 @@ async function startRec(cont){
   catch(e){toast('The microphone is not allowed for this page. Allow it in the browser’s site settings and press Record again.');return}
   let m=cont;
   if(!m){const now=Date.now();m={id:uid()+uid().slice(0,4),kind:'audio',name:($('#dxName').value||'').trim()||defName(),created:now,day:dayOf(now),segs:[],status:'recording',
-      preset:$('#dxPreset').value,extra:($('#dxExtra').value||'').trim()};
+      preset:'',extra:($('#dxExtra').value||'').trim()};
     if($('#dxSheet').checked&&P&&proj){const a=hereAnchor();m.sheet={matter:proj.name,anchor:a}}
     $('#dxName').value=m.name}
   else{m.status='recording';delete m.err;$('#dxName').value=m.name}
@@ -5465,11 +5472,14 @@ function livePiece(L,f,rate){
     liveInfo(L);liveShow(L)});
 }
 function livePrompt(m,prev,secs){
-  return audioPrompt(m,1,1,'')+'This audio is a short piece (about '+Math.round(secs)+' seconds) cut from a dictation that is still going on. It may begin or end in the middle of a sentence: type only what is said in this piece; do not complete, guess or repeat anything. '+
+  const v=vocab(m);
+  return 'LIVE PREVIEW PIECE. This audio is a short piece (about '+Math.round(secs)+' seconds) cut from a dictation that is still going on; it is shown on screen while he dictates, and the whole recording will be typed and set out again under your instructions once he stops. For this piece only, follow Part A (transcription rules) but ignore Parts B to D and the HTML output format: reply with plain text only, no HTML, no metadata, no headings or blocks you would add, no dictation notes. '+
+    'It may begin or end in the middle of a sentence: type only what is said in this piece; do not complete, guess or repeat anything. '+
     (prev?'The text so far ends with: «'+prev.slice(-300)+'». Carry straight on from there without repeating it; begin with a capital letter only if a new sentence begins here. ':'')+
-    'If the speaker says "new paragraph" at the very start of this piece, begin your reply with the sign ¶. If there is no speech in this piece, reply with exactly [silence].\n'}
+    'If the speaker says "new paragraph" at the very start of this piece, begin your reply with the sign ¶. If there is no speech in this piece, reply with exactly [silence].\n'+
+    (v?'Names and terms that may occur: '+v+'\n':'')}
 async function liveSend(L,wav,secs){
-  const t=await gText(cfg.model,[{inline_data:{mime_type:'audio/wav',data:await b64(wav)}},{text:livePrompt(L.m,L.txt,secs)}],{allowEmpty:true,tries:2,stall:60000});
+  const t=await gText(cfg.model,[{inline_data:{mime_type:'audio/wav',data:await b64(wav)}},{text:livePrompt(L.m,L.txt,secs)}],{system:masterText(),allowEmpty:true,tries:2,stall:60000});
   return t.replace(/\[silence\]/gi,'').trim()}
 /* join the typed pieces in order; a piece still on its way stops the joining there */
 function liveJoin(L){let out='';for(let i=0;i<L.seq;i++){const t=L.parts[i];if(t===undefined)break;if(t===null||!t)continue;
@@ -5506,9 +5516,12 @@ async function liveFinish(m,L){
   if(!late)for(let i=0;i<L.seq;i++)if(L.parts[i]===null&&L.wavs[i]){try{L.parts[i]=await liveSend(L,L.wavs[i],0);delete L.wavs[i];L.failed--;L.typed++}catch(e){}}
   const gaps=late||L.parts.slice(0,L.seq).some(x=>x===null||x===undefined);
   LIVE.delete(m.id);$('#dxLive').hidden=!R;
-  if(gaps){/* something could not be typed live: type the whole of what was recorded in one go instead */
+  /* the standing instruction sets the dictation out in its pro forma: the live words were a preview, so the whole
+     recording is now typed once more, in one go, and set out properly */
+  const setOutWanted=/<!--\s*DOC/i.test(masterText());
+  if(gaps||setOutWanted){/* or something could not be typed live: type the whole of what was recorded in one go instead */
     clearTimeout(liveSaveT);L.dead=true;if(edM===m&&!ed.hidden){edDirty=false}
-    await resetDoc(m);status('A piece of “'+m.name+'” could not be typed live; Gemini is typing the whole recording now.');enqueue(m.id);return}
+    await resetDoc(m);status(gaps?'A piece of “'+m.name+'” could not be typed live; Gemini is typing the whole recording now.':'Gemini is now typing the whole of “'+m.name+'” and setting it out in its format (the live words were a preview).');enqueue(m.id);return}
   const full=liveJoin(L);
   if(full!==L.shown){/* a missed piece came in at the end: put the whole text of this session in its place */
     const fresh=htmlAppend(L.startHtml||'',full);L.pend='';
@@ -5572,7 +5585,7 @@ async function gStream(model,parts,o){
   let stall=0;const kick=()=>{clearTimeout(stall);stall=setTimeout(()=>{try{ac.abort()}catch(e){}},o.stall||STALL)};kick();
   try{
     let r;try{r=await fetch(GB+'/v1beta/models/'+encodeURIComponent(mdl(model))+':streamGenerateContent?alt=sse&'+kq(),{method:'POST',headers:{'Content-Type':'application/json'},signal:ac.signal,
-      body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:{temperature:0.2,maxOutputTokens:65536}})})}catch(e){throw gErr(e,ac,ctl)}
+      body:JSON.stringify(Object.assign(o.system?{system_instruction:{parts:[{text:o.system}]}}:{},{contents:[{role:'user',parts}],generationConfig:{temperature:0.2,maxOutputTokens:65536}}))})}catch(e){throw gErr(e,ac,ctl)}
     if(!r.ok){let msg='';try{const j=await r.json();msg=(j.error&&j.error.message)||''}catch(e){}const er=new Error('Gemini '+r.status+(msg?': '+msg:''));er.status=r.status;if(r.status===429||r.status>=500)er.retry=true;throw er}
     let txt='',fin='',buf='';const dec=new TextDecoder();
     const eat=line=>{line=line.trim();if(!line.startsWith('data:'))return;let j;try{j=JSON.parse(line.slice(5))}catch(e){return}
@@ -5601,17 +5614,15 @@ const b64=blob=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>re
 function vocab(m){const w=[];if(P&&proj&&m&&m.sheet&&m.sheet.matter===proj.name){w.push(P.name);(P.docs||[]).forEach(d=>d&&d.title&&w.push(d.title))}
   String(cfg.vocab||'').split(/[\n;]+/).map(s=>s.trim()).filter(Boolean).forEach(s=>w.push(s));return [...new Set(w)].slice(0,150).join('; ')}
 const presetText=id=>{const p=cfg.presets.find(x=>x.id===id)||cfg.presets[0];return p?p.text:''};
+/* The dictation itself is governed only by the one standing instruction (masterText, sent as Gemini's system
+   instruction). The words sent with each clip are technical: which part of the dictation this is, the names list
+   from the settings, and the note for this clip if one was typed. */
 function audioPrompt(m,k,n,prev){
-  return 'You are transcribing dictation recorded by an Indian advocate practising in Nagpur, Maharashtra (Bombay High Court Nagpur Bench, District Courts, Industrial and Labour Courts, CAT, MAT). Speech may mix English, Hindi and Marathi.\n'+
-  'Always:\n- Write in English, except a passage clearly dictated to be kept in Marathi or Hindi, which you write in Devanagari.\n'+
-  '- Correct legal terms, names of Acts, section/rule/order/article numbers, case numbers (e.g. O.A. 297/2026, ULP 14/2026, W.P. 3692/2026) and citations.\n'+
-  '- Spell personal and place names in the Indian context (Marathi, Hindi, Christian, Parsi or Muslim names). If a name or word is uncertain, write your best guess followed by [?]. Never invent a name.\n'+
-  '- Obey spoken commands such as "full stop", "comma", "colon", "new paragraph", "new line", "open bracket", "close bracket", "quote", "unquote", and never write the command words themselves.\n'+
-  '- Remove fillers and false starts; where the speaker corrects himself, keep only the corrected version.\n'+
-  '- Output only the text: no heading, preface, notes or markdown. Separate paragraphs with one blank line. Put **double asterisks** around words only if the speaker says to make them bold, and __double underscores__ if he says underline.\n'+
-  'My instruction for this work: '+presetText(m.preset)+(m.extra?'\nAlso: '+m.extra:'')+'\n'+
-  (vocab(m)?'Names and terms that may occur: '+vocab(m)+'\n':'')+
-  (n>1?'This audio is part '+k+' of '+n+' of one continuous dictation.'+(prev?' The previous part ended with: «'+prev.slice(-400)+'». Continue straight on from there without repeating it.':'')+'\n':'');
+  const v=vocab(m);
+  return 'Type and set out this dictation as your instructions say.\n'+
+  (m.extra?'Note for this clip: '+m.extra+'\n':'')+
+  (v?'Names and terms that may occur: '+v+'\n':'')+
+  (prev||k>1?'This audio continues an earlier piece of the same dictation (part '+k+(n>1?' of '+n:'')+'). Follow your rule for continuation pieces.'+(prev?' The text so far ends with: «'+String(prev).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').slice(-400)+'».':'')+'\n':'');
 }
 async function transcribeAudio(m,ctl){
   if(!hasKey())throw Object.assign(new Error('Add your Gemini API key in Dictation settings (⚙).'),{nokey:true});
@@ -5630,8 +5641,8 @@ async function transcribeAudio(m,ctl){
     /* about 11 typed characters for every second of dictation: that gives the share of this piece done so far */
     /* until the first words come back, show that Gemini is still listening, with the seconds counting */
     let got=false;const t0=Date.now(),tm=setInterval(()=>{if(!got)setPct(m,doneS/total,(what?what+', ':'')+'Gemini is listening '+Math.round((Date.now()-t0)/1000)+' s')},1000);
-    let t;try{t=await gText(cfg.model,[{inline_data:{mime_type:j.mime,data:await b64(j.blob)}},{text:audioPrompt(m,i+1,N,prev)}],
-      {ctl,onText:x=>{if(!got){got=true;m.progress=what}setPct(m,(doneS+j.secs*Math.min(.95,x.length/(j.secs*11)))/total)},onRetry:e=>{got=false;status('Gemini was slow; asking again ('+e.message+')…')}})}
+    let t;try{t=await gText(cfg.model,[{inline_data:{mime_type:j.mime,data:await b64(j.blob)}},{text:audioPrompt(m,(done.length?done.length:0)+i+1,N+done.length,prev)}],
+      {system:masterText(),ctl,onText:x=>{if(!got){got=true;m.progress=what}setPct(m,(doneS+j.secs*Math.min(.95,x.length/(j.secs*11)))/total)},onRetry:e=>{got=false;status('Gemini was slow; asking again ('+e.message+')…')}})}
     finally{clearInterval(tm)}
     doneS+=j.secs;setPct(m,doneS/total);
     acc[j.s.n]=(acc[j.s.n]?acc[j.s.n]+' ':'')+t;prev=t;
@@ -5643,6 +5654,27 @@ function textToHtml(t){
   const inl=s=>escH(s).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/__([^_]+)__/g,'<u>$1</u>');
   return String(t||'').replace(/\r/g,'').split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean).map(p=>'<p>'+p.split('\n').map(inl).join('<br>')+'</p>').join('');
 }
+/* Gemini's reply under the standing instruction: set-out HTML, opened by a <!--DOC …--> line that carries the page
+   set-up (font, size, line spacing, margins). Plain text (an older or edited prompt) still works as before. */
+function docMeta(t){const m=String(t||'').match(/<!--\s*DOC\b([\s\S]*?)-->/i);if(!m)return null;const o={};
+  m[1].replace(/(\w+)\s*=\s*"([^"]*)"/g,(_,k,v)=>{o[k.toLowerCase()]=v.trim();return ''});return o}
+function fromGemini(t){t=String(t||'');
+  const meta=docMeta(t),looks=!!meta||/<(p|table|b|u|br|hr)\b[^>]*>/i.test(t);
+  if(!looks)return {html:textToHtml(t),meta:null,set:false};
+  const html=clean(t.replace(/<!--[\s\S]*?-->/g,'').replace(/\r/g,''));
+  return {html,meta,set:true}}
+/* the page set-up a reply asked for, onto a document's settings */
+function applyMeta(st,meta){if(!meta)return st;
+  if(meta.font&&FONTS.includes(meta.font))st.font=meta.font;else if(meta.font)st.font=meta.font;
+  const z=parseFloat(meta.size);if(z>=8&&z<=30)st.size=z;
+  const l=parseFloat(meta.spacing);if(l>=1&&l<=3)st.line=l;
+  if(meta.margins)st.margins=meta.margins;
+  return st}
+/* "mirror; inside 2in; outside 1.2in; top 1.75in; bottom 1in" → inches for each side */
+function marginsOf(txt){const o={top:2,right:1,bottom:1,left:2};if(!txt)return o;
+  String(txt).split(/[;,]/).forEach(x=>{const m=x.trim().toLowerCase().match(/^(top|bottom|left|right|inside|outside)\s*:?\s*([\d.]+)\s*(in|"|cm|mm)?/);if(!m)return;
+    let v=+m[2];if(m[3]==='cm')v/=2.54;else if(m[3]==='mm')v/=25.4;if(!(v>=0&&v<=4))return;
+    const k={inside:'left',outside:'right'}[m[1]]||m[1];o[k]=v});return o}
 /* ---------- paragraph numbering (Nov 2026) ----------
    Body paragraphs get 1., 2., 3. … Headings, the cause title, "As to Para 3:-" replies, sub-paragraphs
    such as (a) or (i), the prayer heading, verification, place/date and signature lines are left alone.
@@ -5683,11 +5715,16 @@ function unnumberIn(ps){for(const p of ps){const t=pnText(p);if(PN_OLD.test(t))p
 /* HTML from Gemini or a paste → only the safe, Word-friendly tags */
 function clean(html){
   const doc=new DOMParser().parseFromString('<div>'+html+'</div>','text/html');const root=doc.body.firstChild;
-  const OK={P:1,BR:1,B:1,I:1,U:1,TABLE:1,TBODY:1,THEAD:1,TR:1,TD:1,TH:1,SPAN:1,UL:1,OL:1,LI:1};
+  const OK={P:1,BR:1,B:1,I:1,U:1,TABLE:1,TBODY:1,THEAD:1,TR:1,TD:1,TH:1,SPAN:1,UL:1,OL:1,LI:1,HR:1};
   const MAP={STRONG:'B',EM:'I',H1:'P',H2:'P',H3:'P',H4:'P',H5:'P',H6:'P',DIV:'P',BLOCKQUOTE:'P',SECTION:'P',ARTICLE:'P',CENTER:'P'};
   function walk(n){for(const c of [...n.childNodes]){
     if(c.nodeType===3)continue;if(c.nodeType!==1){c.remove();continue}
     let tag=c.tagName;if(/^(SCRIPT|STYLE|META|LINK|IFRAME|OBJECT|IMG|SVG|BUTTON|INPUT|TEXTAREA|SELECT|HEAD|TITLE)$/.test(tag)){c.remove();continue}
+    /* only a marked page break survives as a rule; any other <hr> is dropped */
+    if(tag==='HR'){if(/page-break/.test(c.className||'')){for(const a of [...c.attributes])c.removeAttribute(a.name);c.className='page-break'}else c.remove();continue}
+    const len=v=>/^-?[\d.]+(in|pt|cm|mm|px)$/.test(String(v||'').trim())?String(v).trim():'';
+    const ti=c.style?len(c.style.textIndent):'',ml=c.style?(len(c.style.marginLeft)||len(c.style.paddingLeft)):'';
+    const nb=tag==='TABLE'&&(c.getAttribute('border')==='0'||/none|^0/.test((c.style&&(c.style.borderStyle||c.style.border))||''));
     const head=/^H[1-6]$/.test(tag),centre=tag==='CENTER';
     let el=c;if(MAP[tag]||!OK[tag]){const nt=MAP[tag]||'SPAN';el=doc.createElement(nt);while(c.firstChild)el.append(c.firstChild);c.replaceWith(el);tag=nt}
     const al=(c.getAttribute&&(c.getAttribute('align')||((c.style&&c.style.textAlign)||'')))||'';const fw=c.style&&c.style.fontWeight,fs=c.style&&c.style.fontStyle,td=c.style&&c.style.textDecoration,fsz=c.style&&c.style.fontSize,ff=c.style&&c.style.fontFamily,lh=c.style&&c.style.lineHeight;
@@ -5696,11 +5733,13 @@ function clean(html){
     if(head){const b=doc.createElement('b');while(el.firstChild)b.append(el.firstChild);el.append(b)}
     if(fw&&(fw==='bold'||+fw>=600))el.style.fontWeight='bold';if(fs==='italic')el.style.fontStyle='italic';if(td&&/underline/.test(td))el.style.textDecoration='underline';
     if(fsz&&/pt$/.test(fsz))el.style.fontSize=fsz;if(ff)el.style.fontFamily=ff;if(lh&&/^[\d.]+$/.test(lh))el.style.lineHeight=lh;
+    if(tag==='P'){if(ti)el.style.textIndent=ti;if(ml)el.style.marginLeft=ml}
+    if(nb)el.setAttribute('data-nb','1');
     walk(el)}}
   walk(root);
   /* loose text at the top level goes into paragraphs */
   const out=doc.createElement('div');let p=null;
-  for(const c of [...root.childNodes]){const blk=c.nodeType===1&&/^(P|TABLE|UL|OL)$/.test(c.tagName);
+  for(const c of [...root.childNodes]){const blk=c.nodeType===1&&/^(P|TABLE|UL|OL|HR)$/.test(c.tagName);
     if(blk){p=null;out.append(c)}else{if(c.nodeType===3&&!c.nodeValue.trim()&&!p)continue;if(!p){p=doc.createElement('p');out.append(p)}p.append(c)}}
   return out.innerHTML;
 }
@@ -5756,13 +5795,16 @@ async function pump(){
   if(!navigator.onLine){m.status='waiting';saveMeta(m);status('No internet: “'+m.name+'” will be sent when you are back online.');pump();return}
   busy=m;const ctl={m};curJob=ctl;m.status='processing';delete m.err;m.pct=0;await saveMeta(m,true);light();status('Sending “'+m.name+'” to Gemini…');
   try{
-    let html;
+    let html,setOut=false,meta=null;
     if(m.kind==='doc')html=clean(await typeDoc(m,ctl));
-    else{const t=await transcribeAudio(m,ctl);html=textToHtml(t)}
+    else{const t=await transcribeAudio(m,ctl);const g=fromGemini(t);html=g.html;setOut=g.set;meta=g.meta}
     const old=await idb.get('kv','dxdoc:'+m.id);
     if(!html&&!(old&&old.html&&old.html.replace(/<[^>]+>|&nbsp;|\s/g,'')))throw new Error('Gemini sent back no text for this recording. Press ⟳ Retype.');
-    const st=old||{html:'',font:cfg.font,size:cfg.size,line:cfg.line};
-    st.html=(st.html||'')+(html||'');if(cfg.autoNum!==false&&m.kind!=='doc')st.html=numberParas(st.html);await idb.set('kv','dxdoc:'+m.id,st);
+    const fresh=!(old&&old.html&&old.html.replace(/<[^>]+>|&nbsp;|\s/g,''));
+    const st=old||{html:'',font:cfg.font,size:cfg.size,line:cfg.line};if(fresh&&meta)applyMeta(st,meta);
+    st.html=(st.html||'')+(html||'');
+    /* a set-out reply numbers its own paragraphs as dictated, so the automatic numbering is left out for it */
+    if(cfg.autoNum!==false&&m.kind!=='doc'&&!setOut)st.html=numberParas(st.html);await idb.set('kv','dxdoc:'+m.id,st);
     m.status='done';delete m.progress;delete m.pct;delete m.liveOpen;m.docAt=Date.now();await saveMeta(m,true);
     await writeDocx(m,st,true);
     if(m.sheet&&m.kind!=='doc'&&html)toSheet(m,html);
@@ -5820,10 +5862,10 @@ function light(){
 /* ---------- the dictation box ---------- */
 const panel=$('#dxPanel');let selId=null;const sel=()=>byM(selId)||list.find(m=>m.kind==='audio'&&!m.gone);
 function status(t){$('#dxStatus').textContent=t||''}
-function fillPresets(){const s=$('#dxPreset');const v=s.value||cfg.preset;s.innerHTML='';cfg.presets.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;s.append(o)});s.value=cfg.presets.some(p=>p.id===v)?v:cfg.presets[0].id}
+function fillPresets(){} /* one instruction only since Nov 2026: nothing to choose */
 function uiRec(){
   const on=!!R;$('#dxRec').hidden=on;$('#dxPause').hidden=!on;$('#dxStop').hidden=!on;$('#dxDiscard').hidden=!on;
-  $('#dxPause').textContent=R&&R.paused?'▶ Resume':'❚❚ Pause';$('#dxName').disabled=on;$('#dxPreset').disabled=on;
+  $('#dxPause').textContent=R&&R.paused?'▶ Resume':'❚❚ Pause';$('#dxName').disabled=on;
   if(!on){$('#dxLevel').style.width='0%'}light();renderList()}
 function renderWarn(){const w=$('#dxWarn');if(!w)return;const msgs=[];
   if(!hasKey())msgs.push('Add your Gemini API key in settings (⚙) so recordings can be typed. You can record already.');
@@ -5870,7 +5912,7 @@ $('#dxDiscard').onclick=()=>{if(confirm('Throw this recording away? It will not 
 panel.querySelectorAll('[data-rep]').forEach(b=>b.onclick=()=>replay(+b.dataset.rep));
 $('#dxRepStop').onclick=()=>{stopPlay();status(R?'Paused. Press Resume to carry on.':'')};
 $('#dxRepPause').onclick=togglePlay;
-$('#dxPreset').onchange=()=>{cfg.preset=$('#dxPreset').value;saveCfg()};
+
 panel.addEventListener('keydown',e=>e.stopPropagation());
 panel.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation()});
 panel.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)addAudioFile(f)});
@@ -5887,7 +5929,7 @@ $('#dxAudioIn').onchange=()=>{const f=$('#dxAudioIn').files[0];if(f)addAudioFile
 async function addAudioFile(f){
   if(/pdf|image/.test(f.type)){openDocJob([f]);return}
   const mime=baseMime(f.type)||MIME[(extOfName(f.name)||'').toLowerCase()]||'audio/mpeg';const ext=(extOfName(f.name)||EXT[mime]||'audio').toLowerCase();const now=Date.now();
-  const m={id:uid()+uid().slice(0,4),kind:'audio',name:($('#dxName').value||'').trim()||f.name.replace(/\.[^.]+$/,''),created:now,day:dayOf(now),status:'stopped',preset:$('#dxPreset').value,extra:($('#dxExtra').value||'').trim(),
+  const m={id:uid()+uid().slice(0,4),kind:'audio',name:($('#dxName').value||'').trim()||f.name.replace(/\.[^.]+$/,''),created:now,day:dayOf(now),status:'stopped',preset:'',extra:($('#dxExtra').value||'').trim(),
     segs:[{n:1,f:'part1.'+ext,ext,mime,dur:0,size:f.size}]};
   try{await idb.set('files',fKey(m.id,'part1.'+ext),f)}catch(e){toast('Could not keep the file: '+(e.message||e));return}
   await saveMeta(m,true);if(await dWrite(segPath(m,m.segs[0]),f))m.segs[0].inDir=f.size;$('#dxName').value='';enqueue(m.id);status('“'+m.name+'” added; Gemini will type it.');
@@ -5929,14 +5971,10 @@ $('#dxDocGo').onclick=async()=>{
 /* ---------- settings ---------- */
 function openSet(){const s=$('#dxSet');$('#dxKey').value=cfg.key||'';$('#dxModel').value=cfg.model||'';$('#dxDocModel').value=cfg.docModel||'';$('#dxKeep').value=cfg.keep||10;
   $('#dxFont').innerHTML=FONTS.map(f=>'<option>'+f+'</option>').join('');$('#dxFont').value=cfg.font;$('#dxSize').innerHTML=SIZES.map(z=>'<option value="'+z+'">'+z+' pt</option>').join('');$('#dxSize').value=String(cfg.size);
-  $('#dxLine').value=String(cfg.line);$('#dxAuto').checked=!!cfg.autoOpen;$('#dxAutoNum').checked=cfg.autoNum!==false;$('#dxLiveSec').value=String(cfg.live==null?10:cfg.live);$('#dxVocab').value=cfg.vocab||'';$('#dxTestInfo').textContent=hasKey()?'A key is saved on this device.':'';renderPresets();updDir();s.hidden=false}
-function renderPresets(){const box=$('#dxPresets');box.innerHTML='';
-  cfg.presets.forEach((p,i)=>{const d=document.createElement('div');d.className='dxpre';d.innerHTML='<input type="text" aria-label="Name of the instruction"><textarea rows="2" aria-label="Instruction"></textarea><div class="row"><button class="btn warn" style="height:26px">Remove</button></div>';
-    const [n,t]=[d.querySelector('input'),d.querySelector('textarea')];n.value=p.name;t.value=p.text;n.oninput=()=>{p.name=n.value};t.oninput=()=>{p.text=t.value};
-    d.querySelector('button').onclick=()=>{if(cfg.presets.length<2){toast('Keep at least one instruction.');return}if(confirm('Remove “'+p.name+'”?')){cfg.presets.splice(i,1);renderPresets()}};box.append(d)})}
-$('#dxPreAdd').onclick=()=>{cfg.presets.push({id:uid(),name:'My instruction',text:'Describe here what Gemini should do with the dictation.'});renderPresets()};
+  $('#dxLine').value=String(cfg.line);$('#dxAuto').checked=!!cfg.autoOpen;$('#dxAutoNum').checked=cfg.autoNum!==false;$('#dxLiveSec').value=String(cfg.live==null?10:cfg.live);$('#dxVocab').value=cfg.vocab||'';$('#dxTestInfo').textContent=hasKey()?'A key is saved on this device.':'';$('#dxMaster').value=masterText();$('#dxMasterInfo').textContent=String(cfg.master||'').trim()?'Your edited prompt.':'The standard prompt.';updDir();s.hidden=false}
+$('#dxMasterReset').onclick=()=>{if(String(cfg.master||'').trim()&&!confirm('Replace your edited prompt with the standard one?'))return;$('#dxMaster').value=MASTER0;$('#dxMasterInfo').textContent='The standard prompt (press Done to keep it).'};
 function readSet(){cfg.key=$('#dxKey').value.trim();cfg.model=$('#dxModel').value.trim()||'gemini-3.8-flash';cfg.docModel=$('#dxDocModel').value.trim();cfg.keep=Math.max(1,Math.min(365,parseInt($('#dxKeep').value,10)||10));
-  cfg.font=$('#dxFont').value;cfg.size=+$('#dxSize').value;cfg.line=+$('#dxLine').value;cfg.autoOpen=$('#dxAuto').checked;cfg.autoNum=$('#dxAutoNum').checked;cfg.live=+$('#dxLiveSec').value||0;cfg.vocab=$('#dxVocab').value;cfg.presets=cfg.presets.filter(p=>p.name.trim()&&p.text.trim());if(!cfg.presets.length)cfg.presets=PRESETS0.map(p=>Object.assign({},p));saveCfg()}
+  cfg.font=$('#dxFont').value;cfg.size=+$('#dxSize').value;cfg.line=+$('#dxLine').value;cfg.autoOpen=$('#dxAuto').checked;cfg.autoNum=$('#dxAutoNum').checked;cfg.live=+$('#dxLiveSec').value||0;cfg.vocab=$('#dxVocab').value;{const v=$('#dxMaster').value.trim();cfg.master=(v&&v!==MASTER0.trim())?v:''}saveCfg()}
 $('#dxSetDone').onclick=()=>{readSet();$('#dxSet').hidden=true;fillPresets();renderWarn();purge();if(hasKey())list.filter(m=>m.status==='waiting'||(m.status==='failed'&&/key/i.test(m.err||''))).forEach(m=>enqueue(m.id))};
 $('#dxSet').addEventListener('keydown',e=>e.stopPropagation());
 $('#dxSetBtn').onclick=openSet;$('#dxSetFromMain').onclick=()=>{document.querySelectorAll('.panel').forEach(p=>p.hidden=true);openSet()};$('#dxDirPick').onclick=dirPick;$('#dxDirAllow').onclick=dirAsk;
@@ -5958,6 +5996,7 @@ $('#dxeFont').innerHTML=FONTS.map(f=>'<option>'+f+'</option>').join('');$('#dxeS
 async function openEd(id){const m=byM(id);if(!m)return;const LL=LIVE.get(id);if(LL)await liveStore(LL);const st=(await idb.get('kv','dxdoc:'+id))||{html:'',font:cfg.font,size:cfg.size,line:cfg.line};
   if(edM&&edDirty)await saveEd(true);edM=m;$('#dxeName').value=m.name;pg.style.setProperty('--dxf',"'"+(st.font||cfg.font)+"'");pg.style.setProperty('--dxs',(st.size||cfg.size)+'pt');pg.style.setProperty('--dxlh',st.line||cfg.line);
   pg.dataset.font=st.font||cfg.font;pg.dataset.size=st.size||cfg.size;pg.dataset.line=st.line||cfg.line;
+  pg.dataset.margins=st.margins||'';{const g=marginsOf(st.margins);pg.style.padding=st.margins&&innerWidth>900?g.top+'in '+g.right+'in '+g.bottom+'in '+g.left+'in':''}
   pg.innerHTML=st.html||'<p><br></p>';hist=[];fut=[];snapNow();edDirty=false;edSt('');ed.hidden=false;try{document.execCommand('defaultParagraphSeparator',false,'p')}catch(e){}
   setTimeout(()=>{pg.focus();const r=document.createRange();r.selectNodeContents(pg);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r);syncTb()},50)}
 function edSt(t){$('#dxeSt').textContent=t}
@@ -6013,7 +6052,7 @@ function syncTb(){const s=getSelection();if(!s.rangeCount||!pg.contains(s.anchor
   const lh=(blk.style&&blk.style.lineHeight)||pg.dataset.line;$('#dxeLine').value=String(+lh||1.5)}
 async function saveEd(quiet){if(!edM)return;const m=edM;clearTimeout(edAutoT);
   const nm=($('#dxeName').value||'').trim()||m.name;if(nm!==m.name){m.name=nm;delete m.docFile;await saveMeta(m,true)}
-  const st={html:pg.innerHTML,font:pg.dataset.font,size:+pg.dataset.size,line:+pg.dataset.line};await idb.set('kv','dxdoc:'+m.id,st);edDirty=false;
+  const st={html:pg.innerHTML,font:pg.dataset.font,size:+pg.dataset.size,line:+pg.dataset.line};if(pg.dataset.margins)st.margins=pg.dataset.margins;await idb.set('kv','dxdoc:'+m.id,st);edDirty=false;
   const where=await writeDocx(m,st,quiet);edSt(where?'Saved · '+where:'Saved here');
   if(!quiet&&!where)downloadDocx(m,st)}
 $('#dxeSave').onclick=()=>saveEd(false);
@@ -6048,15 +6087,20 @@ function docxBody(st){
       let u=false;for(let x=el;x&&x!==host;x=x.parentElement){if(x.tagName==='U'||/underline/.test((x.style&&x.style.textDecoration)||''))u=true}if(u)out.push('<w:u w:val="single"/>');
       const pt=Math.round(parseFloat(cs.fontSize)*0.75*2);if(pt&&pt!==Math.round(st.size*2))out.push('<w:sz w:val="'+pt+'"/><w:szCs w:val="'+pt+'"/>');
       return out.length?'<w:rPr>'+out.join('')+'</w:rPr>':''}
-    function para(el,runs,extra){const cs=getComputedStyle(el);const al={justify:'both',center:'center',right:'right',end:'right'}[cs.textAlign]||'left';
-      const ln=Math.round(240*lineOf(el));const ind=extra&&extra.ind?'<w:ind w:left="'+extra.ind+'" w:hanging="360"/>':'';
-      return '<w:p><w:pPr><w:spacing w:after="'+(extra&&extra.cell?0:200)+'" w:line="'+ln+'" w:lineRule="auto"/>'+ind+'<w:jc w:val="'+al+'"/></w:pPr>'+runs+'</w:p>'}
+    function para(el,runs,extra){const cs=getComputedStyle(el);let al={justify:'both',center:'center',right:'right',end:'right'}[cs.textAlign]||'left';if(extra&&extra.cell&&al==='both')al='left';
+      const ln=Math.round(240*lineOf(el));let ind=extra&&extra.ind?'<w:ind w:left="'+extra.ind+'" w:hanging="360"/>':'';
+      if(!ind&&el!==host&&el.tagName==='P'){const tw=v=>Math.round((parseFloat(v)||0)*15);const l=tw(el.style.marginLeft&&cs.marginLeft),f=tw(el.style.textIndent&&cs.textIndent);
+        if(l||f)ind='<w:ind w:left="'+Math.max(0,l)+'"'+(f>0?' w:firstLine="'+f+'"':f<0?' w:hanging="'+(-f)+'"':'')+'/>'}
+      return '<w:p><w:pPr><w:tabs><w:tab w:val="left" w:pos="1440"/></w:tabs><w:spacing w:after="'+(extra&&extra.cell?0:200)+'" w:line="'+ln+'" w:lineRule="auto"/>'+ind+'<w:jc w:val="'+al+'"/></w:pPr>'+runs+'</w:p>'}
     function blocks(root,ctx){let out='';let runs='',blkEl=null,hasRun=false;
       const flush=()=>{if(blkEl||hasRun)out+=para(blkEl||root,runs,ctx);runs='';hasRun=false;blkEl=null};
       function inl(node){for(const n of node.childNodes){
-        if(n.nodeType===3){const t=n.nodeValue.replace(/[\s ]+/g,' ');if(!t)continue;if(!blkEl&&!hasRun&&!t.trim())continue;runs+='<w:r>'+rpr(n.parentElement)+'<w:t xml:space="preserve">'+xe(t)+'</w:t></w:r>';hasRun=true}
+        if(n.nodeType===3){const t=n.nodeValue.replace(/[^\S\t]+/g,' ').replace(/ ?\t ?/g,'\t');if(!t)continue;if(!blkEl&&!hasRun&&!t.trim())continue;const rp=rpr(n.parentElement);
+          /* a typed tab (after a paragraph number) becomes a real Word tab */
+          runs+=t.split('\t').map(x=>x?'<w:r>'+rp+'<w:t xml:space="preserve">'+xe(x)+'</w:t></w:r>':'').join('<w:r>'+rp+'<w:tab/></w:r>');hasRun=true}
         else if(n.nodeType===1){const tg=n.tagName,disp=getComputedStyle(n).display;
           if(tg==='BR'){const par=n.parentElement;if(!n.nextSibling&&par!==host&&/^(P|LI|DIV|TD|TH)$/.test(par.tagName))continue;runs+='<w:r><w:br/></w:r>';hasRun=true}
+          else if(tg==='HR'){flush();out+='<w:p><w:r><w:br w:type="page"/></w:r></w:p>'}
           else if(tg==='TABLE'){flush();out+=table(n)}
           else if(tg==='UL'||tg==='OL'){flush();let k=0;for(const li of n.children){k++;const pre=tg==='OL'?k+'.\t':'•\t';const sub=blocksOf(li,{ind:720,pre});out+=sub}}
           else if(disp==='block'||disp==='list-item'||disp==='table'){flush();const inner=blocksOf(n,ctx);out+=inner}
@@ -6066,8 +6110,8 @@ function docxBody(st){
         return blocks(el,c)}
       inl(root);flush();return out}
     function table(t){const rows=[...t.querySelectorAll(':scope>tr,:scope>tbody>tr,:scope>thead>tr')];
-      const cols=Math.max(1,...rows.map(tr=>[...tr.children].reduce((a,td)=>a+(+td.getAttribute('colspan')||1),0)));const cw=Math.floor(7586/cols);
-      let x='<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblBorders>'+['top','left','bottom','right','insideH','insideV'].map(s=>'<w:'+s+' w:val="single" w:sz="4" w:space="0" w:color="000000"/>').join('')+'</w:tblBorders><w:tblLayout w:type="autofit"/></w:tblPr><w:tblGrid>'+('<w:gridCol w:w="'+cw+'"/>').repeat(cols)+'</w:tblGrid>';
+      const cols=Math.max(1,...rows.map(tr=>[...tr.children].reduce((a,td)=>a+(+td.getAttribute('colspan')||1),0)));const cw=Math.floor(7586/cols);const nb=t.hasAttribute('data-nb');
+      let x='<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblBorders>'+['top','left','bottom','right','insideH','insideV'].map(s=>nb?'<w:'+s+' w:val="nil"/>':'<w:'+s+' w:val="single" w:sz="4" w:space="0" w:color="000000"/>').join('')+'</w:tblBorders><w:tblLayout w:type="autofit"/></w:tblPr><w:tblGrid>'+('<w:gridCol w:w="'+cw+'"/>').repeat(cols)+'</w:tblGrid>';
       for(const tr of rows){x+='<w:tr>';for(const td of tr.children){const span=+td.getAttribute('colspan')||1;let inner=blocks(td,{cell:true});if(!/<w:p>/.test(inner))inner='<w:p/>';
           x+='<w:tc><w:tcPr>'+(span>1?'<w:gridSpan w:val="'+span+'"/>':'')+'</w:tcPr>'+inner+'</w:tc>'}x+='</w:tr>'}
       return x+'</w:tbl><w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p>'}
@@ -6083,11 +6127,11 @@ function zip(entries){const parts=[],cen=[];let off=0;
   const cs=cen.reduce((a,b)=>a+b.byteLength,0);const e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,entries.length,true);e.setUint16(10,entries.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
   return new Blob([...parts,...cen,e.buffer],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'})}
 function docxBlob(st){
-  const st2={html:st.html||'',font:st.font||cfg.font,size:+st.size||cfg.size,line:+st.line||cfg.line};
+  const st2={html:st.html||'',font:st.font||cfg.font,size:+st.size||cfg.size,line:+st.line||cfg.line};const mg=marginsOf(st.margins),tw=v=>Math.round(v*1440);
   const W='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
   const body=docxBody(st2);const f=xe(st2.font),sz=Math.round(st2.size*2);
   const doc='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document '+W+'><w:body>'+body+
-    '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="2880" w:right="1440" w:bottom="1440" w:left="2880" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>';
+    '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="'+tw(mg.top)+'" w:right="'+tw(mg.right)+'" w:bottom="'+tw(mg.bottom)+'" w:left="'+tw(mg.left)+'" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>';
   const styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles '+W+'><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="'+f+'" w:hAnsi="'+f+'" w:cs="'+f+'" w:eastAsia="'+f+'"/><w:sz w:val="'+sz+'"/><w:szCs w:val="'+sz+'"/><w:lang w:val="en-IN"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="200" w:line="'+Math.round(240*st2.line)+'" w:lineRule="auto"/><w:jc w:val="both"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>';
   const ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>';
   const rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
