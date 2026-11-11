@@ -6367,5 +6367,36 @@ $('#akQ').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'&
 $('#askPanel').addEventListener('click',e=>{if(e.target===$('#askPanel')||e.target.closest('[data-close]'))akClose()},true);
 })();
 </script>
+<script>
+/* Inside the Android app (Nov 2026): an app view ignores downloads, window.print() and pop-ups.
+   Downloads go to the phone's save-and-share sheet, printing to Android's printer (or Save as PDF),
+   and a report opened "in a new window" for printing is shown over the page and printed from there.
+   In a browser none of this runs. */
+(function(){
+  var B=window.AndroidBridge;if(!B||typeof B.saveFile!=='function')return;
+  function send(name,blob){blob.arrayBuffer().then(function(buf){var u=new Uint8Array(buf),s='',CH=0x8000;for(var i=0;i<u.length;i+=CH)s+=String.fromCharCode.apply(null,u.subarray(i,i+CH));B.saveFile(name||'file',blob.type||'application/octet-stream',btoa(s))}).catch(function(){try{B.toast('Could not save '+name)}catch(e){}})}
+  var click=HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click=function(){
+    var h=this.getAttribute('href')||'';
+    if(this.hasAttribute('download')&&/^(blob:|data:)/.test(h)){var n=this.getAttribute('download')||'file';fetch(h).then(function(r){return r.blob()}).then(function(b){send(n,b)});return}
+    return click.apply(this,arguments)};
+  document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[download]');if(!a)return;var h=a.getAttribute('href')||'';if(!/^(blob:|data:)/.test(h))return;e.preventDefault();a.click()},true);
+  window.print=function(){try{B.print(document.title||'Excerpt Desk')}catch(e){}};
+  /* window.open('') + document.write + print(): shown over the page instead */
+  var open=window.open;
+  window.open=function(u){
+    if(u&&u!=='about:blank'){if(/^blob:/.test(u)){fetch(u).then(function(r){return r.blob()}).then(function(b){send(/pdf/.test(b.type)?'Document.pdf':'file',b)});return null}return open.apply(window,arguments)}
+    var html='',sheet=null,title='';
+    function show(){if(sheet)return;sheet=document.createElement('div');sheet.id='appSheet';
+      var st=document.createElement('style');st.textContent='#appSheet{position:fixed;inset:0;z-index:2147483000;background:#fff;color:#000;overflow:auto;padding:14px}#appSheet .appbar{position:sticky;top:0;display:flex;gap:8px;justify-content:flex-end;background:#fff;padding-bottom:8px}#appSheet .appbar button{padding:9px 16px;border:0;border-radius:7px;background:#1668e3;color:#fff;font-size:15px}#appSheet .appbar button+button{background:#5b6475}@media print{body>*:not(#appSheet){display:none!important}#appSheet{position:static;overflow:visible;padding:0}#appSheet .appbar{display:none}}';
+      var m=/<title>([\s\S]*?)<\/title>/i.exec(html);title=m?m[1]:'Report';
+      sheet.innerHTML='<div class="appbar"><button type="button" data-p>Print / Save PDF</button><button type="button" data-x>Close</button></div><div class="appbody"></div>';
+      sheet.querySelector('.appbody').innerHTML=html.replace(/<!doctype[^>]*>|<\/?(html|head|body)[^>]*>|<meta[^>]*>|<title>[\s\S]*?<\/title>/gi,'');
+      sheet.appendChild(st);document.body.appendChild(sheet);
+      sheet.querySelector('[data-x]').onclick=function(){sheet.remove();sheet=null;html=''};
+      sheet.querySelector('[data-p]').onclick=function(){B.print(title)}}
+    return{document:{write:function(t){html+=t},writeln:function(t){html+=t+'\n'},open:function(){},close:function(){show()}},print:function(){show();B.print(title)},close:function(){if(sheet){sheet.remove();sheet=null}},focus:function(){}}};
+})();
+</script>
 </body>
 </html>
