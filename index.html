@@ -62,7 +62,7 @@ button,label.btn,input,select,textarea{font:inherit;color:inherit}
 .tabs button{border:0;background:transparent;height:32px;padding:0 14px;cursor:pointer;font-weight:500}
 .tabs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 #penBtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.penmark{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid currentColor;position:relative}
+.penmark{display:inline-block;width:13px;height:13px;border-radius:50%;border:2px solid currentColor;position:relative;margin-top:3px}
 .penmark::after{content:"";position:absolute;left:9px;top:-5px;width:9px;height:2px;background:currentColor;transform:rotate(-40deg);transform-origin:left}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
 .seg button{border:0;border-left:1px solid var(--line);background:transparent;height:30px;min-width:30px;padding:0 9px;cursor:pointer;font-weight:600;font-variant-numeric:tabular-nums}
@@ -452,6 +452,50 @@ details.drive ol b{color:var(--ink)}
 .xsub{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
 .xsub label{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--ink)}
 
+/* top bar: one compact row. Secondary buttons sit under "More" except on wide screens; labels give way to icons when space is short */
+.bar{flex-wrap:nowrap;gap:8px;padding:6px 10px;position:relative;z-index:60;min-height:48px}
+.bar .brand{font-size:17px}
+.bar .projbtn{flex:1 1 120px;min-width:60px}
+.bar .grp.tb-main{flex-wrap:nowrap;gap:5px;flex:none}
+.bar .btn.tb,.tbmore .btn{height:34px;padding:0 10px;border-radius:9px;gap:5px}
+.bar .ico{font-size:15px;line-height:1;display:inline-block;min-width:1em;text-align:center}
+.tbseg{display:inline-flex}.tbseg .btn{border-radius:0}.tbseg .btn:first-child{border-radius:9px 0 0 9px}.tbseg .btn:last-child{border-radius:0 9px 9px 0;border-left:0}
+#syncBtn{max-width:150px;overflow:hidden;text-overflow:ellipsis}
+#moreBtn[aria-expanded="true"]{background:color-mix(in srgb,var(--accent) 14%,var(--surface));border-color:var(--accent)}
+.tbmore{display:none;position:absolute;right:8px;top:calc(100% + 4px);z-index:70;flex-direction:column;gap:2px;padding:6px;min-width:200px;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18)}
+.tbmore.open{display:flex}
+.tbmore .btn{justify-content:flex-start;border-color:transparent;background:transparent;height:40px;font-size:15px;width:100%}
+.tbmore .btn:hover,.tbmore .btn:focus-visible{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.tbmore .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tbmore .btn.on,.tbmore .btn[aria-pressed="true"]{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.tbmore .ico{width:22px}
+@media (min-width:1900px){
+  #moreBtn{display:none}
+  .tbmore{display:flex!important;position:static;flex-direction:row;padding:0;min-width:0;border:0;box-shadow:none;background:transparent;gap:5px}
+  .tbmore .btn{height:34px;font-size:inherit;width:auto;border-color:var(--line);background:var(--surface)}
+  .tbmore .btn.primary{background:var(--accent);border-color:var(--accent)}
+}
+@media (max-width:1250px){.bar .brand{display:none}}
+@media (max-width:1100px){.bar .btn.tb .bt{display:none}.bar .btn.tb{width:38px;padding:0;justify-content:center}.bar #syncBtn{width:auto;padding:0 8px;max-width:110px}}
+@media (max-width:700px){.bar{gap:5px;padding:5px 6px}.bar .btn.tb{width:34px}.dxbtn .dxt{display:none}}
+/* PDF tools: when the PDF pane is narrow (tablets, or a narrow split), icons only and tighter rows; nothing is hidden */
+.docwrap{container-type:inline-size;container-name:docpane}
+@container docpane (max-width:1150px){
+  .dtools{padding:5px 8px;gap:4px 5px;flex-direction:row;flex-wrap:wrap;align-items:center}
+  .dtools>.drow{display:contents}
+  .dtools .btn{height:31px;padding:0 10px;border-radius:8px}
+}
+@container docpane (max-width:900px){
+  .dtools .pnav input{width:42px;height:30px}
+  .drow{gap:4px 5px}
+  .drow .dtabs{flex:1 1 140px;min-width:110px}
+  .dtools .btn{height:30px;padding:0 9px;font-size:13px;border-radius:8px}
+  .dtools .btn.sq{width:30px;padding:0}
+  .dtools .seg button{height:28px;min-width:28px}
+  .dtools .bt,.dtools .lbl{display:none}
+  .dtools .zoomv{font-size:12px}
+}
 @media (max-width:700px){
   .split{grid-template-columns:minmax(0,1fr)}
   .splitter{display:none}
@@ -649,22 +693,25 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
       <button id="tabDoc" aria-pressed="true">PDF</button>
       <button id="tabDesk" aria-pressed="false">Worksheet</button>
     </div>
-    <div class="grp">
+    <div class="grp tb-main">
       <button class="dxbtn" id="dxBtn" title="Dictation (Gemini)" aria-label="Dictation"><span class="dxl" aria-hidden="true"></span><span>🎙</span><span class="dxt" id="dxBtnT">Dictate</span></button>
-      <button class="btn" id="penBtn" aria-pressed="false" title="Drag from the PDF to the worksheet (or between notes) to link. Shortcut: L"><span class="penmark" aria-hidden="true"></span>Link pen</button>
-      <button class="btn" id="drawBtn" aria-pressed="false" title="Write, draw or highlight by hand with Apple Pencil (or the mouse) on the PDF or the worksheet. Shortcut: D">✎ Draw</button>
-      <span class="grp"><button class="btn" id="undoBtn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button><button class="btn" id="redoBtn" title="Redo (Ctrl+Y)" disabled>↷ Redo</button></span>
-      <button class="btn" id="saveBtn" title="Save now (Ctrl+S)">Save</button>
-      <button class="btn" id="syncBtn" hidden title="Sync with Google Drive now">☁ Sync</button>
-      <button class="btn primary" id="newBtn">New</button>
-      <button class="btn" id="exportBtn">Export</button>
-      <button class="btn" id="claudeBtn">From Claude</button>
-      <button class="btn" id="libBtn">Library</button>
-      <button class="btn" id="paperBtn" aria-pressed="false" title="Paper mode: a warm, dim, paper-like screen for the PDFs and the worksheet, easier on the eyes">📄 Paper</button>
-      <button class="btn" id="toneBtn" aria-pressed="false" title="Screen colour: turn the colours down, warm them and dim the screen to look more like paper">🎨 Colour</button>
-      <button class="btn" id="askBtn" title="Ask about all your cases — e.g. in how many cases is our written statement pending? Answer as text, figures and a list">🤖 Ask</button>
-      <button class="btn" id="instrBtn" title="Instructions: give the tool an order now (e.g. pin cases to a date), and keep standing rules it always follows">📋 Instructions</button>
-      <button class="btn" id="setBtn">Settings</button>
+      <button class="btn tb" id="penBtn" aria-pressed="false" title="Link pen: drag from the PDF to the worksheet (or between notes) to link. Shortcut: L" aria-label="Link pen"><span class="penmark" aria-hidden="true"></span><span class="bt">Link pen</span></button>
+      <button class="btn tb" id="drawBtn" aria-pressed="false" title="Draw: write, draw or highlight by hand with Apple Pencil (or the mouse) on the PDF or the worksheet. Shortcut: D" aria-label="Draw"><span class="ico" aria-hidden="true">✎</span><span class="bt">Draw</span></button>
+      <span class="tbseg"><button class="btn tb" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><span class="ico" aria-hidden="true">↶</span><span class="bt">Undo</span></button><button class="btn tb" id="redoBtn" title="Redo (Ctrl+Y)" aria-label="Redo" disabled><span class="ico" aria-hidden="true">↷</span><span class="bt">Redo</span></button></span>
+      <button class="btn tb" id="saveBtn" title="Save now (Ctrl+S)" aria-label="Save"><span class="ico" aria-hidden="true">✓</span><span class="bt">Save</span></button>
+      <button class="btn tb" id="syncBtn" hidden title="Sync with Google Drive now">☁ Sync</button>
+      <button class="btn tb" id="libBtn" title="Library: your matters" aria-label="Library"><span class="ico" aria-hidden="true">▤</span><span class="bt">Library</span></button>
+      <button class="btn tb" id="moreBtn" aria-haspopup="true" aria-expanded="false" title="More: New, Export, From Claude, Ask, Instructions, Paper, Colour, Settings" aria-label="More"><span class="ico" aria-hidden="true">☰</span><span class="bt">More</span></button>
+      <div class="tbmore" id="tbMore" role="menu" aria-label="More">
+        <button class="btn primary" id="newBtn"><span class="ico" aria-hidden="true">＋</span><span class="bt">New</span></button>
+        <button class="btn" id="exportBtn"><span class="ico" aria-hidden="true">⤴</span><span class="bt">Export</span></button>
+        <button class="btn" id="claudeBtn"><span class="ico" aria-hidden="true">✦</span><span class="bt">From Claude</span></button>
+        <button class="btn" id="askBtn" title="Ask about all your cases — e.g. in how many cases is our written statement pending? Answer as text, figures and a list"><span class="ico" aria-hidden="true">🤖</span><span class="bt">Ask</span></button>
+        <button class="btn" id="instrBtn" title="Instructions: give the tool an order now (e.g. pin cases to a date), and keep standing rules it always follows"><span class="ico" aria-hidden="true">📋</span><span class="bt">Instructions</span></button>
+        <button class="btn" id="paperBtn" aria-pressed="false" title="Paper mode: a warm, dim, paper-like screen for the PDFs and the worksheet, easier on the eyes"><span class="ico" aria-hidden="true">📄</span><span class="bt">Paper</span></button>
+        <button class="btn" id="toneBtn" aria-pressed="false" title="Screen colour: turn the colours down, warm them and dim the screen to look more like paper"><span class="ico" aria-hidden="true">🎨</span><span class="bt">Colour</span></button>
+        <button class="btn" id="setBtn"><span class="ico" aria-hidden="true">⚙</span><span class="bt">Settings</span></button>
+      </div>
     </div>
   </header>
 
@@ -674,16 +721,16 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
       <div class="dtools">
         <div class="drow">
           <div class="dtabs" id="dtabs" role="tablist" aria-label="PDFs in this matter"></div>
-          <button class="btn" id="addBtn" aria-haspopup="menu">+ Add PDF</button>
-          <button class="btn" id="ngBtn" title="Generate notes from this PDF with Gemini or Claude: your default notes, or notes as you instruct">✨ Notes</button>
-          <button class="btn" id="xoBtn" title="For whom you appear, and the orders of this case from Charpe Suite">⚖ Case</button>
-          <button class="btn" id="cmbBtn" title="Join this matter's PDFs (OA, reply, rejoinder…) into one PDF, in the order you choose">⧉ Combine</button>
+          <button class="btn" id="addBtn" aria-haspopup="menu" title="Add PDF">＋<span class="bt"> Add PDF</span></button>
+          <button class="btn" id="ngBtn" title="Generate notes from this PDF with Gemini or Claude: your default notes, or notes as you instruct">✨<span class="bt"> Notes</span></button>
+          <button class="btn" id="xoBtn" title="For whom you appear, and the orders of this case from Charpe Suite">⚖<span class="bt"> Case</span></button>
+          <button class="btn" id="cmbBtn" title="Join this matter's PDFs (OA, reply, rejoinder…) into one PDF, in the order you choose">⧉<span class="bt"> Combine</span></button>
           <input class="sr" type="file" id="pdfIn" multiple accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
           <input class="sr" type="file" id="appendIn" multiple accept="application/pdf,.pdf">
         </div>
         <div class="drow">
           <span class="grp" title="Return to pages you opened earlier (links, bookmarks, typed page numbers, other PDFs)">
-            <button class="btn" id="backBtn" disabled>◂ Back</button><button class="btn" id="fwdBtn" disabled>Forward ▸</button>
+            <button class="btn" id="backBtn" disabled title="Back">◂<span class="bt"> Back</span></button><button class="btn" id="fwdBtn" disabled title="Forward"><span class="bt">Forward </span>▸</button>
           </span>
           <div class="pnav">
             <button class="btn sq" id="prevBtn" title="Previous page (page before this one)">‹</button>
@@ -692,12 +739,12 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
             <button class="btn sq" id="nextBtn" title="Next page (page after this one)">›</button>
           </div>
           <span class="grp hide-sm"><button class="btn sq" id="zOut" aria-label="Zoom out">−</button><span class="zoomv" id="zVal">100%</span><button class="btn sq" id="zIn" aria-label="Zoom in">+</button></span>
-          <button class="btn" id="srchBtn" title="Search the PDFs by words (Ctrl+F). Scanned PDFs can be made searchable here with one click (OCR).">🔍 Search</button>
-          <button class="btn" id="rotBtn" aria-haspopup="true" title="Rotate pages">⟳ Rotate</button>
-          <button class="btn" id="pdelBtn" aria-haspopup="menu" title="Delete the page on screen, or choose several pages to delete">🗑 Pages</button>
+          <button class="btn" id="srchBtn" title="Search the PDFs by words (Ctrl+F). Scanned PDFs can be made searchable here with one click (OCR).">🔍<span class="bt"> Search</span></button>
+          <button class="btn" id="rotBtn" aria-haspopup="true" title="Rotate pages">⟳<span class="bt"> Rotate</span></button>
+          <button class="btn" id="pdelBtn" aria-haspopup="menu" title="Delete the page on screen, or choose several pages to delete">🗑<span class="bt"> Pages</span></button>
           <span class="grp"><span class="lbl">Views</span><span class="seg" id="viewSeg" role="group" aria-label="Number of views"><button data-v="1" aria-pressed="true" title="One view">1</button><button data-v="2" aria-pressed="false" title="Two views">2</button><button data-v="3" aria-pressed="false" title="Three views">3</button></span><button class="btn sq" id="dirBtn" hidden title="Side by side or stacked">⇆</button></span>
-          <button class="btn" id="cropBtn" title="Draw a box on the page; that area goes onto the worksheet as a linked picture">✂ Crop</button>
-          <button class="btn" id="spotBtn" title="Click a spot on the page, then click on the worksheet to type a linked note">Link a spot</button>
+          <button class="btn" id="cropBtn" title="Draw a box on the page; that area goes onto the worksheet as a linked picture">✂<span class="bt"> Crop</span></button>
+          <button class="btn" id="spotBtn" title="Link a spot: click a spot on the page, then click on the worksheet to type a linked note">⌖<span class="bt"> Link a spot</span></button>
         </div>
       </div>
       <div class="dbody">
@@ -1179,6 +1226,10 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script>
+/* Gemini 3 and later are meant to run at their default temperature (1.0): Google warns that a lower one can make them
+   loop or answer worse. Older models keep the low temperature the tool always used. */
+function gCfg(model,c){c=Object.assign({},c);const v=/gemini-(\d+)/i.exec(String(model||''));if(v&&+v[1]>=3)delete c.temperature;return c}
+
 (function(){
 'use strict';
 const $=s=>document.querySelector(s);
@@ -2956,7 +3007,7 @@ const vModel=()=>String(vCfg().model||'gemini-3.8-flash').trim().replace(/^model
 const vB64=blob=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=()=>rej(r.error);r.readAsDataURL(blob)});
 async function vGem(parts,json){
   if(!vKey())throw new Error('Add your Gemini API key first (🎙 Dictate › ⚙ settings).');
-  const body={contents:[{role:'user',parts}],generationConfig:{temperature:.2,maxOutputTokens:8192}};if(json)body.generationConfig.responseMimeType='application/json';
+  const body={contents:[{role:'user',parts}],generationConfig:gCfg(vModel(),{temperature:.2,maxOutputTokens:8192})};if(json)body.generationConfig.responseMimeType='application/json';
   const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(vModel())+':generateContent?key='+encodeURIComponent(vKey()),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error('Gemini: '+((j.error&&j.error.message)||'HTTP '+r.status));
   const c=j.candidates&&j.candidates[0],t=c&&c.content&&(c.content.parts||[]).map(x=>x.thought?'':(x.text||'')).join('');
@@ -5095,7 +5146,7 @@ function ngProg(msg,pct){const j=NG.job;if(!j)return;if(msg)$('#ngRunMsg').textC
 const b64buf=buf=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]||'');r.onerror=()=>rej(r.error);r.readAsDataURL(new Blob([buf]))});
 /* read a server-sent-events stream, calling eat(json) for each event */
 async function sseRead(r,job,eat){
-  let stall=0;const kick=()=>{clearTimeout(stall);stall=setTimeout(()=>{try{job.ac.abort()}catch(e){}},240000)};kick();
+  let stall=0,first=true;const kick=()=>{clearTimeout(stall);stall=setTimeout(()=>{job.stalled=true;try{job.ac.abort()}catch(e){}},first?600000:240000);first=false};kick();
   const rd=r.body.getReader(),dec=new TextDecoder();let buf='';
   try{for(;;){const {done,value}=await rd.read();if(done)break;kick();buf+=dec.decode(value,{stream:true});let i;
       while((i=buf.indexOf('\n'))>=0){const line=buf.slice(0,i).trim();buf=buf.slice(i+1);if(line.startsWith('data:')){try{eat(JSON.parse(line.slice(5)))}catch(e){}}}}
@@ -5109,13 +5160,21 @@ async function ngGemini(job,files,total,task){
     if(total<=18e6)parts.push({inline_data:{mime_type:'application/pdf',data:await b64buf(f.buf)}});
     else{ngProg('Sending '+f.doc.title+' to Gemini…',1);parts.push({file_data:{mime_type:'application/pdf',file_uri:await gemUpload(job,f)}})}}
   parts.push({text:task});
-  ngProg('Gemini is reading and writing the notes…',2);
-  job.ac=new AbortController();
-  const r=await fetch(GBN+'/v1beta/models/'+encodeURIComponent(gemModel())+':streamGenerateContent?alt=sse&key='+encodeURIComponent(gemKey()),{method:'POST',signal:job.ac.signal,headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({systemInstruction:{parts:[{text:RULES}]},contents:[{role:'user',parts}],generationConfig:{temperature:0.2,maxOutputTokens:65536,responseMimeType:'application/json'}})});
-  await okOrThrow(r,'Gemini');let txt='',fin='';
-  await sseRead(r,job,j=>{const c=j.candidates&&j.candidates[0];if(c){const t=((c.content&&c.content.parts)||[]).map(p=>p.thought?'':(p.text||'')).join('');if(t){txt+=t;job.chars=txt.length;ngProg('Gemini is writing the notes…')}if(c.finishReason)fin=c.finishReason}});
+  ngProg('Gemini is reading the PDF and thinking (Gemini Pro can take a few minutes before it starts writing)…',2);
+  let model=gemModel();const FAST='gemini-3.8-flash';
+  const call=m=>{job.ac=new AbortController();return fetch(GBN+'/v1beta/models/'+encodeURIComponent(m)+':streamGenerateContent?alt=sse&key='+encodeURIComponent(gemKey()),{method:'POST',signal:job.ac.signal,headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({systemInstruction:{parts:[{text:RULES}]},contents:[{role:'user',parts}],generationConfig:gCfg(m,{temperature:0.2,maxOutputTokens:65536,responseMimeType:'application/json'})})})};
+  let r=await call(model);
+  /* the chosen model is not offered to this key (a preview withdrawn, or a typing slip): carry on with Flash */
+  if((r.status===404||r.status===400)&&model!==FAST){let m='';try{m=(await r.clone().json()).error.message||''}catch(e){}
+    if(r.status===404||/model/i.test(m)){toast('Gemini model “'+model+'” is not available; using '+FAST+'.');model=FAST;r=await call(model)}}
+  await okOrThrow(r,'Gemini');let txt='',fin='',block='';
+  try{await sseRead(r,job,j=>{if(j.promptFeedback&&j.promptFeedback.blockReason)block=j.promptFeedback.blockReason;
+    const c=j.candidates&&j.candidates[0];if(c){const t=((c.content&&c.content.parts)||[]).map(p=>p.thought?'':(p.text||'')).join('');if(t){txt+=t;job.chars=txt.length;ngProg('Gemini is writing the notes…')}if(c.finishReason)fin=c.finishReason}})}
+  catch(e){if(job.stalled&&!job.cancel)throw new Error('Gemini did not answer for too long. Try again, or choose “This file only”.');throw e}
+  if(job.stalled&&!job.cancel&&!txt.trim())throw new Error('Gemini did not answer for too long. Try again, or choose “This file only”.');
   if(fin==='MAX_TOKENS')throw new Error('The notes were too long for one reply. Choose “This file only”, or use Customise and ask for fewer sheets.');
+  if(!txt.trim())throw new Error(block?'Gemini refused to read this PDF ('+block+').':fin&&fin!=='STOP'?'Gemini stopped without writing the notes ('+fin+'). Try again.':'Gemini sent back nothing. Try again.');
   return txt}
 async function gemUpload(job,f){
   const k=encodeURIComponent(gemKey()),n=f.buf.byteLength;
@@ -5253,6 +5312,9 @@ if(!Array.isArray(cfg.presets)||!cfg.presets.length)cfg.presets=PRESETS0.map(p=>
 /* Nov 2026: dictation moves to Gemini Pro (fewer mistakes); live preview pieces stay on Flash for speed */
 if((cfg.modelV||0)<2){if(!cfg.model||/^gemini-3\.8-(flash|pro)$/.test(String(cfg.model).trim()))cfg.model='gemini-3.1-pro-preview';cfg.modelV=2;try{localStorage.setItem(DXK,JSON.stringify(cfg))}catch(e){}}
 const FAST='gemini-3.8-flash';
+/* an older copy of the standard prompt pasted into Settings (it asked for "dictation notes"): the updated standard takes over */
+if(cfg.master&&/DICTATION NOTES<\/b>|under DICTATION NOTES/.test(cfg.master)){cfg.master='';try{localStorage.setItem(DXK,JSON.stringify(cfg))}catch(e){}
+  setTimeout(()=>{try{toast('Your dictation prompt in Settings was an older copy that asked Gemini for dictation notes; the updated standard prompt is used now.')}catch(e){}},2500)}
 const saveCfg=()=>{try{localStorage.setItem(DXK,JSON.stringify(cfg))}catch(e){}};
 const masterText=()=>String(cfg.master||'').trim()||MASTER0;
 const hasKey=()=>!!String(cfg.key||'').trim();
@@ -5571,7 +5633,7 @@ async function gFetch(url,opt){let r;try{r=await fetch(url,opt)}catch(e){const e
 async function gGen(model,parts,tries){
   for(let t=0;;t++){try{
     const r=await gFetch(GB+'/v1beta/models/'+encodeURIComponent(mdl(model))+':generateContent?'+kq(),{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:{temperature:0.2,maxOutputTokens:65536}})});
+      body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:gCfg(mdl(model),{temperature:0.2,maxOutputTokens:65536})})});
     const j=await r.json();const c=j.candidates&&j.candidates[0];
     const txt=c&&c.content&&(c.content.parts||[]).map(p=>p.thought?'':(p.text||'')).join('').trim();
     if(!txt){const er=new Error('Gemini returned no text'+(c&&c.finishReason?' ('+c.finishReason+')':(j.promptFeedback&&j.promptFeedback.blockReason?' ('+j.promptFeedback.blockReason+')':''))+'.');throw er}
@@ -5589,7 +5651,7 @@ async function gStream(model,parts,o){
   let stall=0;const kick=()=>{clearTimeout(stall);stall=setTimeout(()=>{try{ac.abort()}catch(e){}},o.stall||STALL)};kick();
   try{
     let r;try{r=await fetch(GB+'/v1beta/models/'+encodeURIComponent(mdl(model))+':streamGenerateContent?alt=sse&'+kq(),{method:'POST',headers:{'Content-Type':'application/json'},signal:ac.signal,
-      body:JSON.stringify(Object.assign(o.system?{system_instruction:{parts:[{text:o.system}]}}:{},{contents:[{role:'user',parts}],generationConfig:{temperature:0.2,maxOutputTokens:65536}}))})}catch(e){throw gErr(e,ac,ctl)}
+      body:JSON.stringify(Object.assign(o.system?{system_instruction:{parts:[{text:o.system}]}}:{},{contents:[{role:'user',parts}],generationConfig:gCfg(mdl(model),{temperature:0.2,maxOutputTokens:65536})}))})}catch(e){throw gErr(e,ac,ctl)}
     if(!r.ok){let msg='';try{const j=await r.json();msg=(j.error&&j.error.message)||''}catch(e){}const er=new Error('Gemini '+r.status+(msg?': '+msg:''));er.status=r.status;if(r.status===429||r.status>=500)er.retry=true;throw er}
     let txt='',fin='',buf='';const dec=new TextDecoder();
     const eat=line=>{line=line.trim();if(!line.startsWith('data:'))return;let j;try{j=JSON.parse(line.slice(5))}catch(e){return}
@@ -5668,9 +5730,9 @@ function textToHtml(t){
    set-up (font, size, line spacing, margins). Plain text (an older or edited prompt) still works as before. */
 function docMeta(t){const m=String(t||'').match(/<!--\s*DOC\b([\s\S]*?)-->/i);if(!m)return null;const o={};
   m[1].replace(/(\w+)\s*=\s*"([^"]*)"/g,(_,k,v)=>{o[k.toLowerCase()]=v.trim();return ''});return o}
-function fromGemini(t){t=String(t||'');
+function fromGemini(t){t=String(t||'').replace(/^\s*```[a-z]*\s*/i,'').replace(/\s*```\s*$/,'');
   const meta=docMeta(t),looks=!!meta||/<(p|table|b|u|br|hr)\b[^>]*>/i.test(t);
-  if(!looks)return {html:textToHtml(t),meta:null,set:false};
+  if(!looks)return {html:noNotes(textToHtml(t)),meta:null,set:false};
   return {html:tidySetOut(clean(t.replace(/<!--[\s\S]*?-->/g,'').replace(/\r/g,''))),meta,set:true}}
 function tidySetOut(html){const d=document.createElement('div');d.innerHTML=noNotes(html);
   /* whitespace from Gemini's markup is not text: one space, but a tab stays a tab */
@@ -6030,7 +6092,8 @@ async function openEd(id){const m=byM(id);if(!m)return;const LL=LIVE.get(id);if(
   if(edM&&edDirty)await saveEd(true);edM=m;$('#dxeName').value=m.name;pg.style.setProperty('--dxf',"'"+(st.font||cfg.font)+"'");pg.style.setProperty('--dxs',(st.size||cfg.size)+'pt');pg.style.setProperty('--dxlh',st.line||cfg.line);
   pg.dataset.font=st.font||cfg.font;pg.dataset.size=st.size||cfg.size;pg.dataset.line=st.line||cfg.line;
   pg.dataset.margins=st.margins||'';{const g=marginsOf(st.margins);pg.style.padding=st.margins&&innerWidth>900?g.top+'in '+g.right+'in '+g.bottom+'in '+g.left+'in':''}
-  pg.innerHTML=st.html||'<p><br></p>';hist=[];fut=[];snapNow();edDirty=false;edSt('');ed.hidden=false;try{document.execCommand('defaultParagraphSeparator',false,'p')}catch(e){}
+  const cleaned=noNotes(st.html||'');const hadNotes=cleaned!==(st.html||'');
+  pg.innerHTML=cleaned||'<p><br></p>';hist=[];fut=[];snapNow();edDirty=false;edSt('');ed.hidden=false;if(hadNotes){edDirty=true;setTimeout(()=>saveEd(true),300)}try{document.execCommand('defaultParagraphSeparator',false,'p')}catch(e){}
   setTimeout(()=>{pg.focus();const r=document.createRange();r.selectNodeContents(pg);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r);syncTb()},50)}
 function edSt(t){$('#dxeSt').textContent=t}
 /* undo / redo with the caret kept in place */
@@ -6166,10 +6229,16 @@ function zip(entries){const parts=[],cen=[];let off=0;
   const cs=cen.reduce((a,b)=>a+b.byteLength,0);const e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,entries.length,true);e.setUint16(10,entries.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
   return new Blob([...parts,...cen,e.buffer],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'})}
 /* the DICTATION NOTES page is for checking in the editor; it is left out of the Word file */
-function noNotes(html){const d=document.createElement('div');d.innerHTML=html;
-  const n=[...d.querySelectorAll(':scope>p')].find(p=>/^\s*DICTATION NOTES\s*$/i.test(p.textContent));if(!n)return html;
+function noNotes(html){if(!html||!/notes?|to (check|confirm|verify)/i.test(html))return html;
+  const d=document.createElement('div');d.innerHTML=html;
+  const head=el=>{const t=(el.textContent||'').replace(/[\s\u00a0]+/g,' ').trim().replace(/[\s:\-–—.]+$/,'');
+    return t.length<70&&(/^(dictation|transcription|typist'?s?|transcriber'?s?|typing)\s+notes?\b/i.test(t)||/^notes?\s+(for|to)\s+(checking|check|review|confirmation|confirm|the advocate|counsel|you|sanket)\b/i.test(t)||
+      /^(points?|items?|matters?|things?)\s+(for\s+you\s+)?to\s+(check|confirm|verify)\b/i.test(t)||/^(notes?|remarks?)\s*\((for|to)\s+(check|confirm)/i.test(t))};
+  /* the heading may sit at the top level or inside a wrapper; cut it and everything after it */
+  let n=[...d.querySelectorAll('p,h1,h2,h3,h4,h5,h6,div,b,strong,u')].find(head);if(!n)return html;
+  while(n.parentNode&&n.parentNode!==d)n=n.parentNode;
   let x=n;while(x){const nx=x.nextSibling;x.remove();x=nx}
-  for(let y=d.lastChild;y;){const pv=y.previousSibling;if(y.nodeType===1&&(y.tagName==='HR'||!y.textContent.trim()))y.remove();else if(y.nodeType!==3||y.nodeValue.trim())break;else y.remove();y=pv}
+  for(let y=d.lastChild;y;){const pv=y.previousSibling;if(y.nodeType===1&&(y.tagName==='HR'||(!y.textContent.trim()&&!y.querySelector('img,table'))))y.remove();else if(y.nodeType!==3||y.nodeValue.trim())break;else y.remove();y=pv}
   return d.innerHTML}
 function docxBlob(st){
   const mg=marginsOf(st.margins),tw=v=>Math.round(v*1440);
@@ -6237,7 +6306,7 @@ const xoMeta=()=>{if(!P)return {};P.meta=P.meta||{};return P.meta};
 const xoDmy=d=>{const m=String(d||'').match(/^(\d{4})-(\d\d)-(\d\d)/);return m?m[3]+'.'+m[2]+'.'+m[1]:String(d||'')};
 const xoKey=(cid,key)=>cid+'|'+key;
 const xoDocs=()=>P?P.docs.filter(d=>d.ord&&d.ord.k):[];
-function xoLabel(){const b=$('#xoBtn');if(!b)return;const s=P&&P.meta&&P.meta.side;const sh=!s?'':/^petition/i.test(s)?'Petitioner side':/^respond/i.test(s)?'Respondent side':(s.length>16?s.slice(0,15)+'…':s);b.textContent='⚖ Case'+(sh?' · '+sh:'');b.title='For whom you appear, and the orders of this case from Charpe Suite'+(s?' — you appear for '+s:'')}
+function xoLabel(){const b=$('#xoBtn');if(!b)return;const s=P&&P.meta&&P.meta.side;const sh=!s?'':/^petition/i.test(s)?'Petitioner side':/^respond/i.test(s)?'Respondent side':(s.length>16?s.slice(0,15)+'…':s);b.innerHTML='⚖<span class="bt"> Case'+(sh?' · '+sh.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])):'')+'</span>';b.title='For whom you appear, and the orders of this case from Charpe Suite'+(s?' — you appear for '+s:'')}
 /* orders first by date, after the other papers */
 function xoSort(){const o=xoDocs().slice().sort((a,b)=>String(a.ord.d).localeCompare(String(b.ord.d)));if(!o.length)return;const set=new Set(o);P.docs=P.docs.filter(d=>!set.has(d)).concat(o)}
 
@@ -6400,7 +6469,7 @@ async function akCall(eng,q,data,signal){
   if(!vKey())throw new Error('Add your Gemini API key first (🎙 Dictate › ⚙ settings), or choose Claude.');
   const model=String(akNg().gemModel||vCfg().docModel||vModel()).trim().replace(/^models\//,'');
   const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent?key='+encodeURIComponent(vKey()),{method:'POST',signal,headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({systemInstruction:{parts:[{text:AK_SYS}]},contents:[{role:'user',parts:[{text:user}]}],generationConfig:{temperature:.1,maxOutputTokens:32000,responseMimeType:'application/json'}})});
+    body:JSON.stringify({systemInstruction:{parts:[{text:AK_SYS}]},contents:[{role:'user',parts:[{text:user}]}],generationConfig:gCfg(model,{temperature:.1,maxOutputTokens:32000,responseMimeType:'application/json'})})});
   const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error('Gemini: '+((j.error&&j.error.message)||'HTTP '+r.status));
   const c=j.candidates&&j.candidates[0];return c&&c.content?(c.content.parts||[]).map(x=>x.thought?'':(x.text||'')).join(''):''}
 function akParse(t){t=String(t||'').trim().replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'');const a=t.indexOf('{'),b=t.lastIndexOf('}');
@@ -6486,6 +6555,17 @@ $('#askPanel').addEventListener('click',e=>{if(e.target===$('#askPanel')||e.targ
       sheet.querySelector('[data-x]').onclick=function(){sheet.remove();sheet=null;html=''};
       sheet.querySelector('[data-p]').onclick=function(){B.print(title)}}
     return{document:{write:function(t){html+=t},writeln:function(t){html+=t+'\n'},open:function(){},close:function(){show()}},print:function(){show();B.print(title)},close:function(){if(sheet){sheet.remove();sheet=null}},focus:function(){}}};
+})();
+</script>
+<script>
+/* top bar "More" menu: opens under the button; closes on a choice, a tap elsewhere, or Esc */
+(function(){const b=document.getElementById('moreBtn'),m=document.getElementById('tbMore');if(!b||!m)return;
+  const wide=()=>matchMedia('(min-width:1900px)').matches;
+  const set=o=>{m.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false')};
+  b.addEventListener('click',e=>{e.stopPropagation();set(!m.classList.contains('open'))});
+  m.addEventListener('click',e=>{if(!wide()&&e.target.closest('button'))setTimeout(()=>set(false),0)});
+  document.addEventListener('pointerdown',e=>{if(m.classList.contains('open')&&!m.contains(e.target)&&!b.contains(e.target))set(false)},true);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&m.classList.contains('open')){set(false);b.focus()}});
 })();
 </script>
 </body>
