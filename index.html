@@ -452,6 +452,8 @@ details.drive ol b{color:var(--ink)}
 .xsub{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
 .xsub label{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--ink)}
 
+.gmrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.gmrow select{flex:1 1 220px;min-width:0;height:34px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:inherit;padding:0 6px;font:inherit}
+.gmrow+input{margin-top:6px}.gmfetch{height:34px}
 /* top bar: one compact row. Secondary buttons sit under "More" except on wide screens; labels give way to icons when space is short */
 .bar{flex-wrap:nowrap;gap:8px;padding:6px 10px;position:relative;z-index:60;min-height:48px}
 .bar .brand{font-size:17px}
@@ -1229,6 +1231,39 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
 /* Gemini 3 and later are meant to run at their default temperature (1.0): Google warns that a lower one can make them
    loop or answer worse. Older models keep the low temperature the tool always used. */
 function gCfg(model,c){c=Object.assign({},c);const v=/gemini-(\d+)/i.exec(String(model||''));if(v&&+v[1]>=3)delete c.temperature;return c}
+
+/* Gemini model choice: a list beside each model box (the box stays for typing any other name).
+   "↻ My models" asks Google which models this key can use, and remembers the list on this device. */
+const GM_BASE=[
+  ['gemini-3.1-pro-preview','Gemini 3.1 Pro — most accurate, costs more'],
+  ['gemini-3.8-flash','Gemini 3.8 Flash — fast, low cost'],
+  ['gemini-3.6-flash','Gemini 3.6 Flash — previous Flash'],
+  ['gemini-2.5-pro','Gemini 2.5 Pro — older'],
+  ['gemini-2.5-flash','Gemini 2.5 Flash — older']];
+function gmList(){let l=[];try{l=JSON.parse(localStorage.getItem('xdesk:gmodels')||'[]')}catch(e){}
+  const seen=new Set(),out=[];[...GM_BASE,...l].forEach(([id,n])=>{if(!seen.has(id)){seen.add(id);out.push([id,n||id])}});return out}
+function gmPick(input,blank){if(!input||input.dataset.gm)return ()=>{};input.dataset.gm='1';
+  const sel=document.createElement('select');sel.className='gmsel';sel.setAttribute('aria-label',(input.labels&&input.labels[0]?input.labels[0].textContent:'Gemini model'));
+  const row=document.createElement('div');row.className='gmrow';input.parentNode.insertBefore(row,input);row.append(sel);
+  const fb=document.createElement('button');fb.type='button';fb.className='btn gmfetch';fb.textContent='↻ My models';fb.title='Ask Google which Gemini models your API key can use';row.append(fb);
+  row.after(input);input.placeholder='Type a model name';
+  const fill=()=>{const v=input.value.trim();const l=gmList();
+    sel.innerHTML=(blank?'<option value="">'+blank+'</option>':'')+l.map(([id,n])=>'<option value="'+id+'">'+n.replace(/[<&]/g,'')+(n.includes(id)||GM_BASE.some(x=>x[0]===id)?'':' ('+id+')')+'</option>').join('')+'<option value="__other">Other — type the name below</option>';
+    const known=v===''?!!blank:l.some(([id])=>id===v);sel.value=known?v:'__other';input.hidden=known};
+  sel.addEventListener('change',()=>{if(sel.value==='__other'){input.hidden=false;input.value='';input.focus();return}
+    input.hidden=true;input.value=sel.value;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}))});
+  fb.addEventListener('click',async()=>{let key='';try{key=String(JSON.parse(localStorage.getItem('xdesk:dict')||'{}').key||'').trim()}catch(e){}
+    if(!key){alert('Add your Gemini API key in Dictation settings first.');return}
+    fb.disabled=true;fb.textContent='Asking Google…';
+    try{let all=[],tok='';for(let i=0;i<5;i++){const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key='+encodeURIComponent(key)+(tok?'&pageToken='+encodeURIComponent(tok):''));
+        const j=await r.json();if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));all=all.concat(j.models||[]);tok=j.nextPageToken;if(!tok)break}
+      const l=all.filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')&&/^models\/gemini-/.test(m.name)&&!/embedding|image|tts|live|audio|robotics|computer-use/i.test(m.name))
+        .map(m=>[m.name.replace(/^models\//,''),(m.displayName||m.name.replace(/^models\//,''))]).sort((a,b)=>b[0].localeCompare(a[0],undefined,{numeric:true}));
+      try{localStorage.setItem('xdesk:gmodels',JSON.stringify(l))}catch(e){}
+      document.querySelectorAll('select.gmsel').forEach(x=>x.dispatchEvent(new Event('gm-refill')));fb.textContent='✓ '+l.length+' models';setTimeout(()=>{fb.textContent='↻ My models'},3000)}
+    catch(e){fb.textContent='↻ My models';alert('Google did not give the list: '+e.message)}
+    finally{fb.disabled=false}});
+  sel.addEventListener('gm-refill',fill);fill();return fill}
 
 (function(){
 'use strict';
@@ -4983,7 +5018,8 @@ const sk=$('#ngClaudeKey'),sm=$('#ngClaudeModel'),sg=$('#ngGemModel'),sdm=$('#ng
 sds.placeholder='Leave blank to use the standard style (cause title, "As to Para X:-" replies with lean denials, Specific Submissions, prayer, plain Verification).';
 sdm.value=ngc.draftModel||'';sds.value=ngc.draftStyle||'';
 sdm.addEventListener('change',()=>{ngc.draftModel=sdm.value.trim();ngSave()});sds.addEventListener('change',()=>{ngc.draftStyle=sds.value.trim();ngSave()});sds.addEventListener('keydown',e=>e.stopPropagation());
-function ngFill(){sk.value=ngc.claudeKey||'';sm.value=ngc.claudeModel||'';sg.value=ngc.gemModel||'';$('#ngKeyInfo').textContent=ngc.claudeKey?'A Claude key is saved on this device.':'No Claude key yet.'}
+const gmSyncNg=gmPick(sg,'Same as the dictation model');
+function ngFill(){sk.value=ngc.claudeKey||'';sm.value=ngc.claudeModel||'';sg.value=ngc.gemModel||'';gmSyncNg();$('#ngKeyInfo').textContent=ngc.claudeKey?'A Claude key is saved on this device.':'No Claude key yet.'}
 ngFill();
 [sk,sm,sg].forEach(x=>x.addEventListener('change',()=>{ngc.claudeKey=sk.value.trim();ngc.claudeModel=sm.value.trim()||'claude-sonnet-5-5';ngc.gemModel=sg.value.trim();ngSave();ngFill()}));
 $('#ngClaudeTest').onclick=async()=>{ngc.claudeKey=sk.value.trim();ngc.claudeModel=sm.value.trim()||'claude-sonnet-5-5';ngSave();const i=$('#ngKeyInfo');
@@ -6064,9 +6100,10 @@ $('#dxDocGo').onclick=async()=>{
 };
 
 /* ---------- settings ---------- */
-function openSet(){const s=$('#dxSet');$('#dxKey').value=cfg.key||'';$('#dxModel').value=cfg.model||'';$('#dxDocModel').value=cfg.docModel||'';$('#dxKeep').value=cfg.keep||10;
+function openSet(){const s=$('#dxSet');$('#dxKey').value=cfg.key||'';$('#dxModel').value=cfg.model||'';$('#dxDocModel').value=cfg.docModel||'';gmSyncDx();$('#dxKeep').value=cfg.keep||10;
   $('#dxFont').innerHTML=FONTS.map(f=>'<option>'+f+'</option>').join('');$('#dxFont').value=cfg.font;$('#dxSize').innerHTML=SIZES.map(z=>'<option value="'+z+'">'+z+' pt</option>').join('');$('#dxSize').value=String(cfg.size);
   $('#dxLine').value=String(cfg.line);$('#dxAuto').checked=!!cfg.autoOpen;$('#dxAutoNum').checked=cfg.autoNum!==false;$('#dxLiveSec').value=String(cfg.live==null?10:cfg.live);$('#dxVocab').value=cfg.vocab||'';$('#dxTestInfo').textContent=hasKey()?'A key is saved on this device.':'';$('#dxMaster').value=masterText();$('#dxMasterInfo').textContent=String(cfg.master||'').trim()?'Your edited prompt.':'The standard prompt.';updDir();s.hidden=false}
+const gmSyncDx=(()=>{const a=gmPick($('#dxModel')),b=gmPick($('#dxDocModel'),'Same as the dictation model');return ()=>{a();b()}})();
 $('#dxMasterReset').onclick=()=>{if(String(cfg.master||'').trim()&&!confirm('Replace your edited prompt with the standard one?'))return;$('#dxMaster').value=MASTER0;$('#dxMasterInfo').textContent='The standard prompt (press Done to keep it).'};
 function readSet(){cfg.key=$('#dxKey').value.trim();cfg.model=$('#dxModel').value.trim()||'gemini-3.1-pro-preview';cfg.docModel=$('#dxDocModel').value.trim();cfg.keep=Math.max(1,Math.min(365,parseInt($('#dxKeep').value,10)||10));
   cfg.font=$('#dxFont').value;cfg.size=+$('#dxSize').value;cfg.line=+$('#dxLine').value;cfg.autoOpen=$('#dxAuto').checked;cfg.autoNum=$('#dxAutoNum').checked;cfg.live=+$('#dxLiveSec').value||0;cfg.vocab=$('#dxVocab').value;{const v=$('#dxMaster').value.trim();cfg.master=(v&&v!==MASTER0.trim())?v:''}saveCfg()}
