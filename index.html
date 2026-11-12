@@ -454,6 +454,22 @@ details.drive ol b{color:var(--ink)}
 
 .gmrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.gmrow select{flex:1 1 220px;min-width:0;height:34px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:inherit;padding:0 6px;font:inherit}
 .gmrow+input{margin-top:6px}.gmfetch{height:34px}
+.gbchip{position:relative;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:inherit;font:600 12.5px/1 system-ui,Segoe UI,Arial,sans-serif;cursor:pointer;white-space:nowrap;font-variant-numeric:tabular-nums}
+.gbchip .d{width:9px;height:9px;border-radius:50%;background:#1fae4b;flex:none}
+.gbchip.unset .d{background:#b8bec6}.gbchip.unset .v{color:var(--muted)}
+.gbchip.low{border-color:#f08a00;color:#9a5600}.gbchip.low .d{background:#f08a00;animation:gbpulse 1.4s ease-in-out infinite}
+.gbchip.dead{border-color:var(--danger);color:var(--danger);background:color-mix(in srgb,var(--danger) 8%,var(--surface))}.gbchip.dead .d{background:var(--danger);animation:gbpulse 1s ease-in-out infinite}
+.gbchip .f{position:absolute;left:50%;top:100%;transform:translate(-50%,0);font-size:11px;color:#9a5600;opacity:0;pointer-events:none}
+.gbchip.blink{animation:gbflash 1.8s ease-out}.gbchip.blink .f{animation:gbfly 1.8s ease-out}
+@keyframes gbpulse{50%{opacity:.25}}
+@keyframes gbflash{0%,30%{background:color-mix(in srgb,#f08a00 22%,var(--surface))}100%{background:var(--surface)}}
+@keyframes gbfly{0%{opacity:0;transform:translate(-50%,-4px)}15%{opacity:1;transform:translate(-50%,2px)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,8px)}}
+@media (prefers-reduced-motion:reduce){.gbchip .d,.gbchip.blink,.gbchip.blink .f{animation:none!important}}
+.gbpop{position:fixed;z-index:90;width:min(380px,calc(100vw - 16px));max-height:80vh;overflow:auto;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 36px rgba(0,0,0,.2);padding:12px 14px;font-size:13.5px}
+.gbpop label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}.gbpop .gbn{margin:6px 0;color:var(--muted);line-height:1.45}.gbpop .gbn b{color:var(--ink)}
+.gbr{display:flex;gap:6px;align-items:center;margin-top:6px}.gbr input,.gbr select{height:32px;border:1px solid var(--line);border-radius:7px;padding:0 8px;background:var(--surface);color:inherit;font:inherit;min-width:0}.gbr #gbAmt{flex:1}
+.gbt{width:100%;border-collapse:collapse;margin-top:6px;font-size:12px}.gbt td,.gbt th{padding:2px 4px;text-align:left}.gbt input{width:54px;height:26px;border:1px solid var(--line);border-radius:5px;padding:0 4px;background:var(--surface);color:inherit;font:inherit}
+@media (max-width:1100px){.gbchip{padding:0 8px}}
 /* top bar: one compact row. Secondary buttons sit under "More" except on wide screens; labels give way to icons when space is short */
 .bar{flex-wrap:nowrap;gap:8px;padding:6px 10px;position:relative;z-index:60;min-height:48px}
 .bar .brand{font-size:17px}
@@ -696,6 +712,7 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
       <button id="tabDesk" aria-pressed="false">Worksheet</button>
     </div>
     <div class="grp tb-main">
+      <button class="gbchip unset" id="gbChip" type="button" title="Gemini balance"><span class="d" aria-hidden="true"></span><span class="v">Balance</span><span class="f" aria-hidden="true"></span></button>
       <button class="dxbtn" id="dxBtn" title="Dictation (Gemini)" aria-label="Dictation"><span class="dxl" aria-hidden="true"></span><span>🎙</span><span class="dxt" id="dxBtnT">Dictate</span></button>
       <button class="btn tb" id="penBtn" aria-pressed="false" title="Link pen: drag from the PDF to the worksheet (or between notes) to link. Shortcut: L" aria-label="Link pen"><span class="penmark" aria-hidden="true"></span><span class="bt">Link pen</span></button>
       <button class="btn tb" id="drawBtn" aria-pressed="false" title="Draw: write, draw or highlight by hand with Apple Pencil (or the mouse) on the PDF or the worksheet. Shortcut: D" aria-label="Draw"><span class="ico" aria-hidden="true">✎</span><span class="bt">Draw</span></button>
@@ -1231,6 +1248,69 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
 /* Gemini 3 and later are meant to run at their default temperature (1.0): Google warns that a lower one can make them
    loop or answer worse. Older models keep the low temperature the tool always used. */
 function gCfg(model,c){c=Object.assign({},c);const v=/gemini-(\d+)/i.exec(String(model||''));if(v&&+v[1]>=3)delete c.temperature;return c}
+
+/* ===== Gemini balance (estimate) =====
+   Google gives no way to read the prepaid balance from here; it shows only in AI Studio. So the tool keeps a running
+   estimate on this device: the balance you enter, less the cost of each Gemini reply worked out from the token counts
+   Google sends back with it, at the rates below (editable). A "credits depleted" answer from Google turns it red. */
+const GB_K='xdesk:gbal';
+const GB_RATES0={/* US$ per 1M tokens: text/PDF in, audio in, out (thinking counts as out); Pro costs more above 200k tokens */
+  'gemini-3.1-pro':{i:2,a:2,o:12,i2:4,o2:18},'gemini-3.8-flash':{i:.75,a:1.5,o:3.75},'gemini-3.6-flash':{i:.75,a:1.5,o:3.75},
+  'gemini-3-flash':{i:.75,a:1.5,o:3.75},'gemini-2.5-pro':{i:1.25,a:1.25,o:10,i2:2.5,o2:15},'gemini-2.5-flash':{i:.3,a:1,o:2.5}};
+function gbGet(){let g={};try{g=JSON.parse(localStorage.getItem(GB_K)||'{}')}catch(e){}return Object.assign({cur:'INR',fx:88,start:null,at:0,spent:0,rates:{},dead:false,lastCost:0},g)}
+function gbPut(g){try{localStorage.setItem(GB_K,JSON.stringify(g))}catch(e){}gbPaint()}
+function gbRate(model){const g=gbGet(),m=String(model||'').replace(/^models\//,'');const all=Object.assign({},GB_RATES0,g.rates||{});
+  let k=Object.keys(all).sort((a,b)=>b.length-a.length).find(k=>m.startsWith(k));return all[k]||all['gemini-3.1-pro']}
+function gbCost(model,u){if(!u)return 0;const r=gbRate(model);const pin=+u.promptTokenCount||0;
+  let aud=0;(u.promptTokensDetails||[]).forEach(d=>{if(/AUDIO/i.test(d.modality||''))aud+=+d.tokenCount||0});
+  const big=pin>200000&&r.i2,ri=big?r.i2:r.i,ro=big?(r.o2||r.o):r.o;
+  const out=(+u.candidatesTokenCount||0)+(+u.thoughtsTokenCount||0);
+  return ((pin-aud)*ri+aud*(r.a||ri)+out*ro)/1e6}
+function gbAdd(usd){if(!(usd>0))return;const g=gbGet();g.spent=(+g.spent||0)+usd;g.lastCost=usd;g.dead=false;gbPut(g);gbBlink()}
+const gbMoney=(usd,g)=>{g=g||gbGet();const v=g.cur==='INR'?usd*(+g.fx||88):usd;return (g.cur==='INR'?'₹':'$')+(Math.abs(v)<10?v.toFixed(2):Math.round(v).toLocaleString('en-IN'))};
+function gbLeft(g){g=g||gbGet();if(g.start==null)return null;return (g.cur==='INR'?g.start/(+g.fx||88):g.start)-(+g.spent||0)}
+/* every Gemini call goes through fetch: read the token counts from a copy of the reply */
+(function(){const F=window.fetch.bind(window);
+  window.fetch=async function(u,o){const r=await F(u,o);
+    try{const url=String(u&&u.url||u);const m=url.match(/generativelanguage\.googleapis\.com\/v1beta\/models\/([^:?]+):(stream)?[gG]enerateContent/);
+      if(m){const model=decodeURIComponent(m[1]);
+        if(r.status===402||r.status===429){r.clone().text().then(t=>{if(/prepay|credits? (are )?depleted|billing/i.test(t)){const g=gbGet();g.dead=true;gbPut(g)}}).catch(()=>{})}
+        else if(r.ok){const c=r.clone();
+          if(m[2]){(async()=>{const rd=c.body.getReader(),dec=new TextDecoder();let buf='',last=null;
+              for(;;){const {done,value}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;
+                while((i=buf.indexOf('\n'))>=0){const line=buf.slice(0,i).trim();buf=buf.slice(i+1);if(line.startsWith('data:')&&line.includes('usageMetadata')){try{last=JSON.parse(line.slice(5)).usageMetadata||last}catch(e){}}}}
+              if(buf.includes('usageMetadata'))try{last=JSON.parse(buf.trim().replace(/^data:/,'')).usageMetadata||last}catch(e){}
+              gbAdd(gbCost(model,last))})().catch(()=>{})}
+          else c.json().then(j=>gbAdd(gbCost(model,j&&j.usageMetadata))).catch(()=>{})}}}catch(e){}
+    return r}})();
+function gbPaint(){const b=document.getElementById('gbChip');if(!b)return;const g=gbGet(),left=gbLeft(g);
+  b.classList.remove('low','dead','unset');
+  if(g.dead){b.classList.add('dead');b.querySelector('.v').textContent='Credits over';b.title='Google says the Gemini prepaid credits are used up. Add credits in AI Studio, then set the balance here.';return}
+  if(left==null){b.classList.add('unset');b.querySelector('.v').textContent='Balance';b.title='Gemini balance: tap to enter the prepaid balance shown in AI Studio';return}
+  const startUsd=g.cur==='INR'?g.start/(+g.fx||88):g.start;
+  if(left<=Math.max(startUsd*.15,g.cur==='INR'?100/(+g.fx||88):1))b.classList.add('low');
+  b.querySelector('.v').textContent='≈ '+gbMoney(Math.max(0,left),g);
+  b.title='Gemini balance, estimated on this device: '+gbMoney(Math.max(0,left),g)+' left of '+gbMoney(startUsd,g)+' entered '+new Date(g.at).toLocaleDateString('en-IN')+'. Tap for details.'}
+function gbBlink(){const b=document.getElementById('gbChip');if(!b)return;const g=gbGet();
+  const f=b.querySelector('.f');f.textContent='−'+gbMoney(g.lastCost||0,g);b.classList.remove('blink');void b.offsetWidth;b.classList.add('blink')}
+function gbOpen(){const g=gbGet();let d=document.getElementById('gbPop');if(d){d.remove();return}
+  d=document.createElement('div');d.id='gbPop';d.className='gbpop';const left=gbLeft(g);
+  const rows=Object.keys(GB_RATES0).map(k=>{const r=Object.assign({},GB_RATES0[k],(g.rates||{})[k]||{});return '<tr data-k="'+k+'"><td>'+k+'</td><td><input data-f="i" value="'+r.i+'"></td><td><input data-f="a" value="'+r.a+'"></td><td><input data-f="o" value="'+r.o+'"></td></tr>'}).join('');
+  d.innerHTML='<b>Gemini prepaid balance</b><p class="gbn">'+(g.dead?'<span style="color:var(--danger)">Google says the credits are used up.</span> ':'')+(left==null?'Not set yet.':'About <b>'+gbMoney(Math.max(0,left),g)+'</b> left (estimate on this device; spent '+gbMoney(g.spent||0,g)+' since you entered '+gbMoney(g.cur==='INR'?g.start/(+g.fx||88):g.start,g)+' on '+new Date(g.at).toLocaleDateString('en-IN')+').')+'</p>'+
+    '<label>Balance now, as shown in AI Studio</label><div class="gbr"><select id="gbCur"><option value="INR">₹</option><option value="USD">$</option></select><input id="gbAmt" inputmode="decimal" placeholder="e.g. 850"><button class="btn primary" id="gbSet">Set</button></div>'+
+    '<div class="gbr" id="gbFxRow"><label style="margin:0">US$ 1 = ₹</label><input id="gbFx" inputmode="decimal" value="'+(g.fx||88)+'" style="width:70px"></div>'+
+    '<p class="gbn">Google does not let the tool read the real balance, so this is worked out from what each reply used. Each device keeps its own count, so set it again here after checking AI Studio now and then. <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Open AI Studio ↗</a></p>'+
+    '<details><summary>Rates used (US$ per 1 million tokens)</summary><table class="gbt"><tr><th>Model</th><th>In</th><th>Audio</th><th>Out</th></tr>'+rows+'</table><p class="gbn">Out includes Gemini\'s thinking. Pro costs more on very long inputs. Correct these if Google\'s prices change.</p></details>'+
+    '<div class="gbr" style="justify-content:flex-end"><button class="btn" id="gbClose">Close</button></div>';
+  document.body.append(d);const bb=document.getElementById('gbChip').getBoundingClientRect();d.style.top=(bb.bottom+6)+'px';d.style.left=Math.max(8,Math.min(innerWidth-d.offsetWidth-8,bb.left))+'px';
+  const cur=d.querySelector('#gbCur');cur.value=g.cur;const fxr=d.querySelector('#gbFxRow');const sync=()=>{fxr.hidden=cur.value!=='INR'};sync();cur.onchange=sync;
+  d.querySelector('#gbSet').onclick=()=>{const v=parseFloat(String(d.querySelector('#gbAmt').value).replace(/[,₹$\s]/g,''));if(!(v>=0)){d.querySelector('#gbAmt').focus();return}
+    const n=gbGet();n.cur=cur.value;n.fx=parseFloat(d.querySelector('#gbFx').value)||88;n.start=v;n.at=Date.now();n.spent=0;n.dead=false;gbPut(n);d.remove();gbOpen()};
+  d.querySelector('#gbFx').onchange=e=>{const n=gbGet();n.fx=parseFloat(e.target.value)||88;gbPut(n)};
+  d.querySelectorAll('.gbt input').forEach(x=>x.onchange=()=>{const n=gbGet();n.rates=n.rates||{};const k=x.closest('tr').dataset.k;n.rates[k]=Object.assign({},GB_RATES0[k],n.rates[k]||{});const v=parseFloat(x.value);if(v>=0)n.rates[k][x.dataset.f]=v;gbPut(n)});
+  d.querySelector('#gbClose').onclick=()=>d.remove();
+  setTimeout(()=>document.addEventListener('pointerdown',function h(e){if(!d.contains(e.target)&&e.target.id!=='gbChip'&&!e.target.closest('#gbChip')){d.remove();document.removeEventListener('pointerdown',h,true)}},true),0)}
+window.addEventListener('storage',e=>{if(e.key===GB_K)gbPaint()});
 
 /* Gemini model choice: a list beside each model box (the box stays for typing any other name).
    "↻ My models" asks Google which models this key can use, and remembers the list on this device. */
@@ -6595,6 +6675,7 @@ $('#askPanel').addEventListener('click',e=>{if(e.target===$('#askPanel')||e.targ
 })();
 </script>
 <script>
+document.getElementById('gbChip').addEventListener('click',e=>{e.stopPropagation();gbOpen()});gbPaint();
 /* top bar "More" menu: opens under the button; closes on a choice, a tap elsewhere, or Esc */
 (function(){const b=document.getElementById('moreBtn'),m=document.getElementById('tbMore');if(!b||!m)return;
   const wide=()=>matchMedia('(min-width:1900px)').matches;
