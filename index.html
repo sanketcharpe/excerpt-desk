@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Excerpt Desk</title>
 <meta name="theme-color" content="#2c49c9">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -706,6 +706,24 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
 .cz-list li .mb{font-variant-numeric:tabular-nums;font-weight:600}
 .cz-bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}.cz-bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
 </style>
+<script>
+/* Keep the app fitted to the screen on iPad/tablets: Safari can leave the page zoomed in
+   or shifted after a text box is tapped, the keyboard closes or the device is rotated. */
+(function(){
+  function fit(){
+    if(window.scrollX||window.scrollY)window.scrollTo(0,0);
+    var se=document.scrollingElement;if(se&&(se.scrollTop||se.scrollLeft)){se.scrollTop=0;se.scrollLeft=0}
+    if(document.body&&(document.body.scrollTop||document.body.scrollLeft)){document.body.scrollTop=0;document.body.scrollLeft=0}
+  }
+  var t;function later(){clearTimeout(t);t=setTimeout(function(){fit();window.dispatchEvent(new Event('resize'))},350)}
+  window.addEventListener('orientationchange',later);
+  window.addEventListener('pageshow',later);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)later()});
+  document.addEventListener('focusout',function(){setTimeout(fit,150)},true);
+  window.addEventListener('scroll',function(){var a=document.activeElement;var typing=a&&(/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)||a.isContentEditable);if(!typing)fit()},{passive:true});
+  if(window.visualViewport){visualViewport.addEventListener('resize',function(){if(visualViewport.scale<=1.01)setTimeout(fit,100)})}
+})();
+</script>
 </head>
 <body>
 <div class="app" id="app" data-pane="doc">
