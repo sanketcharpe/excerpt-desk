@@ -1,5 +1,5 @@
 /* Excerpt Desk: keeps the app usable offline. Pages load fresh when online, so updates arrive by themselves. */
-const CACHE = 'xdesk-v4';   /* a new name clears every older offline copy */
+const CACHE = 'xdesk-v5';   /* a new name clears every older offline copy */
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './apple-touch-icon.png',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',

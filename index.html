@@ -705,6 +705,41 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
 .cz-list li .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cz-list li .mb{font-variant-numeric:tabular-nums;font-weight:600}
 .cz-bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}.cz-bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+/* ================= Read mode ================= */
+.app.reading .bar .brand,.app.reading #gbChip,.app.reading #penBtn,.app.reading #drawBtn,.app.reading .bar .tbseg,
+.app.reading #saveBtn,.app.reading #syncBtn,.app.reading #daybar,.app.reading #bkPill,
+.app.reading #addBtn,.app.reading #ngBtn,.app.reading #xoBtn,.app.reading #cmbBtn,.app.reading #rotBtn,.app.reading #pdelBtn,
+.app.reading #cropBtn,.app.reading #spotBtn,.app.reading #addSheet,.app.reading .desk-tools{display:none!important}
+.app.reading~#selbar,.app.reading~#inkbar,.app.reading~#ibar,.app.reading~#hlMenu{display:none!important}
+.app.reading .bar{min-height:42px;padding:4px 10px;background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-bottom-color:color-mix(in srgb,var(--line) 55%,transparent)}
+.app.reading .bar .btn.tb,.app.reading .dxbtn{height:32px;border-radius:999px;border-color:transparent;background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.app.reading .bar .btn.tb:hover{background:color-mix(in srgb,var(--ink) 11%,transparent)}
+.app.reading #readBtn{background:var(--accent);color:var(--accent-ink)}
+.app.reading .tabs{border-radius:999px;overflow:hidden}
+.app.reading .dtools{flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px;padding:4px 10px;overflow-x:auto;scrollbar-width:none;background:transparent;border-bottom-color:color-mix(in srgb,var(--line) 45%,transparent)}
+.app.reading .dtools::-webkit-scrollbar{display:none}
+.app.reading .dtools>.drow{display:contents}
+.app.reading .dtools .btn{border-radius:999px;border-color:transparent;background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.app.reading .dtabs{flex:0 1 auto;min-width:0}
+.app.reading .sheetbar{padding-top:4px;padding-bottom:4px;background:transparent;border-bottom-color:color-mix(in srgb,var(--line) 45%,transparent)}
+.app.reading .splitter span{opacity:.35}
+.app.reading.nobar .bar,.app.reading.nobar .dtools{display:none}
+/* floating page pill */
+.rdpill{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:85;display:flex;align-items:center;gap:4px;padding:5px 6px 5px 8px;border-radius:999px;
+  background:color-mix(in srgb,var(--surface) 78%,transparent);backdrop-filter:saturate(1.5) blur(16px);-webkit-backdrop-filter:saturate(1.5) blur(16px);
+  border:1px solid color-mix(in srgb,var(--line) 60%,transparent);box-shadow:0 10px 30px -12px rgba(0,0,0,.35);font:600 13px/1 var(--f-ui);color:var(--ink);
+  transition:opacity .35s;opacity:.92}
+.rdpill[hidden]{display:none}
+.rdpill.dim{opacity:.3}
+.rdpill:hover,.rdpill:focus-within{opacity:1}
+.rdpill .ic{width:30px;height:30px;border:0;border-radius:50%;background:transparent;color:inherit;font-size:18px;cursor:pointer;display:grid;place-items:center}
+.rdpill .ic:hover{background:color-mix(in srgb,var(--ink) 9%,transparent)}
+.rdpill #rdPg{min-width:64px;text-align:center;font-variant-numeric:tabular-nums}
+.rdpill .rdsep{width:1px;height:18px;background:var(--line);margin:0 2px}
+.rdpill .rdx{border:0;border-radius:999px;padding:0 12px;height:30px;background:var(--accent);color:var(--accent-ink);font:600 12.5px/1 var(--f-ui);cursor:pointer}
+@media (prefers-reduced-motion:reduce){.rdpill{transition:none}}
+@media print{.rdpill{display:none!important}}
+.app.reading~.toast{bottom:calc(70px + env(safe-area-inset-bottom,0px))!important}
 </style>
 <script>
 /* Keep the app fitted to the screen on iPad/tablets: Safari can leave the page zoomed in
@@ -742,6 +777,7 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
       <span class="tbseg"><button class="btn tb" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><span class="ico" aria-hidden="true">↶</span><span class="bt">Undo</span></button><button class="btn tb" id="redoBtn" title="Redo (Ctrl+Y)" aria-label="Redo" disabled><span class="ico" aria-hidden="true">↷</span><span class="bt">Redo</span></button></span>
       <button class="btn tb" id="saveBtn" title="Save now (Ctrl+S)" aria-label="Save"><span class="ico" aria-hidden="true">✓</span><span class="bt">Save</span></button>
       <button class="btn tb" id="syncBtn" hidden title="Sync with Google Drive now">☁ Sync</button>
+      <button class="btn tb rdbtn" id="readBtn" aria-pressed="false" title="Read mode: hides the editing and drawing tools so the PDF and the worksheet get the whole screen. Shortcut: R" aria-label="Read mode"><span class="ico" aria-hidden="true">📖</span><span class="bt">Read</span></button>
       <button class="btn tb" id="libBtn" title="Library: your matters" aria-label="Library"><span class="ico" aria-hidden="true">▤</span><span class="bt">Library</span></button>
       <button class="btn tb" id="moreBtn" aria-haspopup="true" aria-expanded="false" title="More: New, Export, From Claude, Ask, Instructions, Paper, Colour, Settings" aria-label="More"><span class="ico" aria-hidden="true">☰</span><span class="bt">More</span></button>
       <div class="tbmore" id="tbMore" role="menu" aria-label="More">
@@ -852,6 +888,7 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
   <span class="sep"></span>
   <button class="btn warn" id="ibDel">Delete</button>
 </div>
+<div class="rdpill" id="rdPill" hidden><button class="ic" id="rdPrev" aria-label="Previous page">‹</button><span id="rdPg">–</span><button class="ic" id="rdNext" aria-label="Next page">›</button><span class="rdsep"></span><button class="ic" id="rdBar" title="Hide or show the top bar" aria-label="Hide or show the top bar">⤢</button><button class="rdx" id="rdExit" title="Leave Read mode (R or Esc)">Done reading</button></div>
 <svg id="penSvg" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
@@ -4204,6 +4241,35 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 window.addEventListener('pagehide',()=>{if(saveT&&proj&&!scratch())saveNow();if(recT)mirrorUntitled(true)});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&recT)mirrorUntitled(true)});
 
+/* ================= Read mode: editing tools hidden, more room for the PDF and the worksheet ================= */
+function readingOn(){return document.getElementById('app').classList.contains('reading')}
+function setReading(on,quiet){
+  const app=document.getElementById('app'),b=document.getElementById('readBtn'),pill=document.getElementById('rdPill');
+  if(on){try{if(typeof penMode!=='undefined'&&penMode)setPen(false)}catch(e){}try{if(typeof drawMode!=='undefined'&&drawMode)setDraw(false)}catch(e){}
+    try{const sb=document.getElementById('selbar');if(sb)sb.hidden=true;window.getSelection().removeAllRanges()}catch(e){}}
+  app.classList.toggle('reading',!!on);if(!on)app.classList.remove('nobar');
+  if(b)b.setAttribute('aria-pressed',on?'true':'false');if(pill)pill.hidden=!on;
+  try{localStorage.setItem('xd_reading',on?'1':'0')}catch(e){}
+  rdUpdate();rdWake();
+  setTimeout(()=>window.dispatchEvent(new Event('resize')),60);
+  if(!quiet)try{toast(on?'Read mode on':'Read mode off')}catch(e){}
+}
+function rdUpdate(){const el=document.getElementById('rdPg');if(!el)return;const i=document.getElementById('pgIn'),t=document.getElementById('pgTot');
+  const n=(i&&i.value)||'–',tot=(t&&t.textContent||'').replace(/[^\d]/g,'');el.textContent=(tot&&tot!=='0')?('Page '+n+' of '+tot):'No PDF open'}
+let rdT=null;function rdWake(){const p=document.getElementById('rdPill');if(!p)return;p.classList.remove('dim');clearTimeout(rdT);rdT=setTimeout(()=>p.classList.add('dim'),2500)}
+(function(){
+  const b=document.getElementById('readBtn');if(b)b.addEventListener('click',()=>setReading(!readingOn()));
+  const on=(id,f)=>{const x=document.getElementById(id);if(x)x.addEventListener('click',e=>{e.stopPropagation();f();rdWake()})};
+  on('rdPrev',()=>{const x=document.getElementById('prevBtn');if(x)x.click();setTimeout(rdUpdate,120)});
+  on('rdNext',()=>{const x=document.getElementById('nextBtn');if(x)x.click();setTimeout(rdUpdate,120)});
+  on('rdBar',()=>{document.getElementById('app').classList.toggle('nobar');setTimeout(()=>window.dispatchEvent(new Event('resize')),60)});
+  on('rdExit',()=>setReading(false));
+  setInterval(()=>{if(readingOn())rdUpdate()},500);
+  ['scroll','pointermove','touchstart','wheel'].forEach(ev=>document.addEventListener(ev,()=>{if(readingOn())rdWake()},{passive:true,capture:true}));
+  let was='0';try{was=localStorage.getItem('xd_reading')||'0'}catch(e){}
+  if(was==='1')setTimeout(()=>setReading(true,true),400);
+})();
+
 /* ================= keyboard ================= */
 document.addEventListener('keydown',e=>{
   const typing=e.target.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
@@ -4216,6 +4282,9 @@ document.addEventListener('keydown',e=>{
   }
   if(e.altKey&&!typing&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){e.preventDefault();histMove(e.key==='ArrowLeft'?-1:1);return}
   if(typing||e.ctrlKey||e.metaKey||e.altKey||document.querySelector('.panel:not([hidden])'))return;
+  if(e.key==='r'||e.key==='R'){e.preventDefault();setReading(!readingOn());return}
+  if(readingOn()&&e.key==='Escape'){e.preventDefault();setReading(false);return}
+  if(readingOn()&&/^[ldLD]$/.test(e.key))return;
   if(e.key==='l'||e.key==='L'){e.preventDefault();setPen(!penMode)}
   else if(e.key==='d'||e.key==='D'){e.preventDefault();setDraw(!drawMode)}
   else if(e.key==='PageDown'&&active){e.preventDefault();goPage(V().cur+1,false)}
