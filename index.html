@@ -709,14 +709,18 @@ html.paper .rcvbox{background:rgba(60,60,58,.35)}
 .app.reading .bar .brand,.app.reading #gbChip,.app.reading #penBtn,.app.reading #drawBtn,.app.reading .bar .tbseg,
 .app.reading #saveBtn,.app.reading #syncBtn,.app.reading #daybar,.app.reading #bkPill,
 .app.reading #addBtn,.app.reading #ngBtn,.app.reading #xoBtn,.app.reading #cmbBtn,.app.reading #rotBtn,.app.reading #pdelBtn,
-.app.reading #cropBtn,.app.reading #spotBtn,.app.reading #addSheet,.app.reading .desk-tools{display:none!important}
+.app.reading #cropBtn,.app.reading #spotBtn,.app.reading #addSheet,.app.reading .desk-tools,.app.reading .dxbtn,.app.reading #moreBtn,.app.reading #tbMore,.app.reading #dirBtn{display:none!important}
+/* keep the PDF and worksheet in the last grid row even when bars above are hidden */
+.app.reading>header.bar{grid-row:1}.app.reading>#daybar{grid-row:2}.app.reading>main.split{grid-row:3}
+.app.reading .dtools>*,.app.reading .dtools .drow>*{flex-shrink:0}.app.reading .dtools .grp{flex-wrap:nowrap}
+.app.reading .dtools .dtabs{flex:0 1 auto;min-width:0;max-width:40%;overflow-x:auto;scrollbar-width:none}
 .app.reading~#selbar,.app.reading~#inkbar,.app.reading~#ibar,.app.reading~#hlMenu{display:none!important}
 .app.reading .bar{min-height:42px;padding:4px 10px;background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-bottom-color:color-mix(in srgb,var(--line) 55%,transparent)}
 .app.reading .bar .btn.tb,.app.reading .dxbtn{height:32px;border-radius:999px;border-color:transparent;background:color-mix(in srgb,var(--ink) 6%,transparent)}
 .app.reading .bar .btn.tb:hover{background:color-mix(in srgb,var(--ink) 11%,transparent)}
 .app.reading #readBtn{background:var(--accent);color:var(--accent-ink)}
 .app.reading .tabs{border-radius:999px;overflow:hidden}
-.app.reading .dtools{flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px;padding:4px 10px;overflow-x:auto;scrollbar-width:none;background:transparent;border-bottom-color:color-mix(in srgb,var(--line) 45%,transparent)}
+.app.reading .dtools{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px;padding:4px 10px;overflow-x:auto;scrollbar-width:none;background:transparent;border-bottom-color:color-mix(in srgb,var(--line) 45%,transparent)}
 .app.reading .dtools::-webkit-scrollbar{display:none}
 .app.reading .dtools>.drow{display:contents}
 .app.reading .dtools .btn{border-radius:999px;border-color:transparent;background:color-mix(in srgb,var(--ink) 6%,transparent)}
