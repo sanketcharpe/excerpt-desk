@@ -471,7 +471,7 @@ details.drive ol b{color:var(--ink)}
 .gbt{width:100%;border-collapse:collapse;margin-top:6px;font-size:12px}.gbt td,.gbt th{padding:2px 4px;text-align:left}.gbt input{width:54px;height:26px;border:1px solid var(--line);border-radius:5px;padding:0 4px;background:var(--surface);color:inherit;font:inherit}
 @media (max-width:1100px){.gbchip{padding:0 8px}}
 /* top bar: one compact row. Secondary buttons sit under "More" except on wide screens; labels give way to icons when space is short */
-.bar{flex-wrap:nowrap;gap:8px;padding:6px 10px;position:relative;z-index:60;min-height:48px}
+.bar{flex-wrap:nowrap;gap:8px;padding:6px 10px;position:relative;z-index:60;min-height:48px;min-width:0;max-width:100vw;box-sizing:border-box}
 .bar .brand{font-size:17px}
 .bar .projbtn{flex:1 1 120px;min-width:60px}
 .bar .grp.tb-main{flex-wrap:nowrap;gap:5px;flex:none}
@@ -488,12 +488,11 @@ details.drive ol b{color:var(--ink)}
 .tbmore .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .tbmore .btn.on,.tbmore .btn[aria-pressed="true"]{background:color-mix(in srgb,var(--accent) 16%,transparent)}
 .tbmore .ico{width:22px}
-@media (min-width:1900px){
-  #moreBtn{display:none}
-  .tbmore{display:flex!important;position:static;flex-direction:row;padding:0;min-width:0;border:0;box-shadow:none;background:transparent;gap:5px}
-  .tbmore .btn{height:34px;font-size:inherit;width:auto;border-color:var(--line);background:var(--surface)}
-  .tbmore .btn.primary{background:var(--accent);border-color:var(--accent)}
-}
+/* "More" items go inline on the top bar only when they really fit (set by fitBar(), not by screen width) */
+.bar.wide #moreBtn{display:none}
+.bar.wide .tbmore{display:flex!important;position:static;flex-direction:row;padding:0;min-width:0;border:0;box-shadow:none;background:transparent;gap:5px}
+.bar.wide .tbmore .btn{height:34px;font-size:inherit;width:auto;border-color:var(--line);background:var(--surface)}
+.bar.wide .tbmore .btn.primary{background:var(--accent);border-color:var(--accent)}
 @media (max-width:1250px){.bar .brand{display:none}}
 @media (max-width:1100px){.bar .btn.tb .bt{display:none}.bar .btn.tb{width:38px;padding:0;justify-content:center}.bar #syncBtn{width:auto;padding:0 8px;max-width:110px}}
 @media (max-width:700px){.bar{gap:5px;padding:5px 6px}.bar .btn.tb{width:34px}.dxbtn .dxt{display:none}}
@@ -6830,13 +6829,22 @@ $('#askPanel').addEventListener('click',e=>{if(e.target===$('#askPanel')||e.targ
 document.getElementById('gbChip').addEventListener('click',e=>{e.stopPropagation();gbOpen()});gbPaint();
 /* top bar "More" menu: opens under the button; closes on a choice, a tap elsewhere, or Esc */
 (function(){const b=document.getElementById('moreBtn'),m=document.getElementById('tbMore');if(!b||!m)return;
-  const wide=()=>matchMedia('(min-width:1900px)').matches;
+  const wide=()=>!!(b.closest('header.bar')&&b.closest('header.bar').classList.contains('wide'));
   const set=o=>{m.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false')};
   b.addEventListener('click',e=>{e.stopPropagation();set(!m.classList.contains('open'))});
   m.addEventListener('click',e=>{if(!wide()&&e.target.closest('button'))setTimeout(()=>set(false),0)});
   document.addEventListener('pointerdown',e=>{if(m.classList.contains('open')&&!m.contains(e.target)&&!b.contains(e.target))set(false)},true);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&m.classList.contains('open')){set(false);b.focus()}});
 })();
+
+/* top bar: put the More items inline only if the whole bar still fits the window */
+(function(){const bar=document.querySelector('header.bar');if(!bar)return;let busy=false;
+  function fitBar(){if(busy)return;busy=true;try{bar.classList.add('wide');const pb=document.getElementById('projBtn'),nm=document.getElementById('projName');const need=nm?Math.min(nm.scrollWidth+16,380):0;if(bar.scrollWidth>bar.clientWidth+1||bar.getBoundingClientRect().right>document.documentElement.clientWidth+1||(pb&&pb.getBoundingClientRect().width<need))bar.classList.remove('wide')}finally{busy=false}}
+  let t=0;const later=()=>{clearTimeout(t);t=setTimeout(fitBar,60)};
+  window.addEventListener('resize',later);
+  try{new MutationObserver(later).observe(bar,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden']})}catch(e){}
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(later);
+  fitBar();setTimeout(fitBar,500);window.fitBar=fitBar})();
 </script>
 </body>
 </html>
