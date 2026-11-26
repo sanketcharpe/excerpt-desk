@@ -355,8 +355,10 @@ button,label.btn,input,select,textarea{font:inherit;color:inherit}
 .inkbar .chk input{margin:0}
 .app.drawing .page,.app.drawing .page *,.app.drawing #desk{cursor:crosshair!important}
 .app.drawing.erasing .page,.app.drawing.erasing .page *,.app.drawing.erasing #desk{cursor:cell!important}
-.app.drawing .textLayer span,.app.drawing .item,.app.drawing .item *{user-select:none!important;-webkit-user-select:none!important;-webkit-touch-callout:none}
-.app.drawing .item,.app.drawing .pin,.app.drawing #links .hit{pointer-events:none!important}
+.app.drawing .textLayer span{user-select:none!important;-webkit-user-select:none!important;-webkit-touch-callout:none}
+/* Nov 2026: notes stay live while Draw is on — click or tap a note to type in it */
+.app.drawing .pin,.app.drawing #links .hit{pointer-events:none!important}
+.app.drawing .item{cursor:auto}
 .app.drawing .desk-tools{display:none}
 .app.drawing.allink .page,.app.drawing.allink #desk{touch-action:none}
 
@@ -2168,7 +2170,7 @@ function flashItem(id,noSwitch){
     el.style.zIndex=++topZ;el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')});
 }
 desk.addEventListener('click',e=>{
-  if(e.target!==desk||suppressClick||drawMode||!P)return;
+  if(e.target!==desk||suppressClick||!P)return;
   /* placing a linked note, or the single-tap setting: one tap is enough. Otherwise a quick tap is treated as unintentional. */
   if(pendingAnchor||settings.tap==='tap'){newNoteAt(e.clientX,e.clientY);return}
   tapHint(e.pointerType==='mouse'||(!e.pointerType&&!touchDevice));
@@ -2258,7 +2260,8 @@ function deskXY(cx,cy){const db=desk.getBoundingClientRect();return {x:cx-db.lef
 function newNoteAt(cx,cy){const {x,y}=deskXY(cx,cy);if(pendingAnchor){const a=pendingAnchor;endModes();createText(x,y-settings.fontSize*.7,a)}else createText(x,y-settings.fontSize*.7,null)}
 function cancelHold(){if(!hold)return;clearTimeout(hold.t);if(hold.ring)hold.ring.remove();hold=null}
 desk.addEventListener('pointerdown',e=>{
-  if(e.target!==desk||!P||drawMode||penMode||e.button>0||settings.tap==='tap'||e.pointerType==='mouse')return;
+  if(e.target!==desk||!P||penMode||e.button>0||settings.tap==='tap'||e.pointerType==='mouse')return;
+  if(drawMode&&!(e.pointerType==='touch'&&settings.pencilOnly))return; /* in Draw the pen/mouse press is handled by the ink code */
   cancelHold();const h=hold={id:e.pointerId,x:e.clientX,y:e.clientY,ready:false};
   h.t=setTimeout(()=>{if(hold!==h)return;h.ready=true;const p=deskXY(h.x,h.y);const r=document.createElement('div');r.className='holdring';r.style.left=p.x+'px';r.style.top=p.y+'px';desk.append(r);h.ring=r;
     try{navigator.vibrate&&navigator.vibrate(8)}catch(_){}},420);
@@ -2269,7 +2272,7 @@ desk.addEventListener('pointercancel',cancelHold);
 desk.addEventListener('touchend',e=>{if(!hold)return;const h=hold;cancelHold();if(!h.ready)return;e.preventDefault();suppressClick=true;setTimeout(()=>suppressClick=false,350);newNoteAt(h.x,h.y)},{passive:false});
 desk.addEventListener('pointerup',e=>{if(!hold||e.pointerId!==hold.id)return;const h=hold;setTimeout(()=>{if(hold!==h)return;cancelHold();if(h.ready){suppressClick=true;setTimeout(()=>suppressClick=false,350);newNoteAt(h.x,h.y)}},40)});
 desk.addEventListener('contextmenu',e=>{if(e.target===desk&&settings.tap!=='tap')e.preventDefault()});
-desk.addEventListener('dblclick',e=>{if(e.target!==desk||!P||drawMode||suppressClick||settings.tap==='tap')return;clearTimeout(tapHintT);newNoteAt(e.clientX,e.clientY)});
+desk.addEventListener('dblclick',e=>{if(e.target!==desk||!P||suppressClick||settings.tap==='tap')return;clearTimeout(tapHintT);newNoteAt(e.clientX,e.clientY)});
 function tapHint(mouse){clearTimeout(tapHintT);tapHintT=setTimeout(()=>{if(Date.now()-tapHintAt<25000)return;tapHintAt=Date.now();
   toast(mouse?'Double-click on the worksheet to type there.':'Press and hold on the worksheet to type there. A quick tap is ignored.')},380)}
 
@@ -2563,8 +2566,8 @@ inkbar.addEventListener('pointerdown',e=>{if(e.target.tagName!=='INPUT'&&e.targe
 function setDraw(on){
   if(drawMode===on)return;drawMode=on;app.classList.toggle('drawing',on);$('#drawBtn').setAttribute('aria-pressed',on);inkbar.hidden=!on;
   crumb('draw '+(on?'on':'off'));
-  if(on){setPen(false);endModes();clearSel();hideBars();hlMenu.hidden=true;if(document.activeElement&&document.activeElement.isContentEditable)document.activeElement.blur();
-    toast(touchDevice&&settings.pencilOnly?'Draw with your pen (Apple Pencil or tablet stylus) on the PDF or the worksheet. Your finger still scrolls. If your pen does not draw, untick Pencil only. Tap Done to finish.':'Draw on the PDF or the worksheet. Tap Done (or press Esc) to finish.')}
+  if(on){setPen(false);endModes();clearSel();hideBars();hlMenu.hidden=true;
+    toast(touchDevice&&settings.pencilOnly?'Draw with your pen. You can still type and link: tap a note to type, press and hold the worksheet for a new note, and drag a pen line from the PDF onto the worksheet to link. Your finger still scrolls.':'Draw on the PDF or the worksheet. You can still type and link: click a note to type, double-click the worksheet for a new note, and drag from the PDF onto the worksheet to link. Done or Esc to finish.')}
   else if(stroke){stroke.tmp&&stroke.tmp.remove();stroke=null}
   inkSync();
 }
@@ -2592,23 +2595,50 @@ document.addEventListener('pointerdown',e=>{
   if(!drawMode||!P||(e.button>0&&e.pointerType==='mouse'))return;
   if(e.pointerType==='touch'&&settings.pencilOnly)return; /* a finger scrolls; Apple Pencil draws */
   const tg=inkTarget(e);if(!tg)return;
+  /* a press on a note card is for typing in it, not for ink (eraser still erases) */
+  if(settings.inkTool!=='erase'&&e.target.closest&&(e.target.closest('.item')||e.target.isContentEditable))return;
   e.preventDefault();e.stopPropagation();try{e.target.setPointerCapture(e.pointerId)}catch(_){}
+  if(tg.kind==='desk'&&document.activeElement&&document.activeElement.isContentEditable)document.activeElement.blur();
   if(tg.kind==='pdf'){const vi=views.findIndex(v=>v.el.contains(tg.pg.el));if(vi>=0&&vi!==av)setActiveView(vi)}
   const pt=localXY(tg,e.clientX,e.clientY);
   if(settings.inkTool==='erase'){stroke={erase:true,tg,id:e.pointerId,gone:eraseAt(tg,pt)};return}
   const hl=settings.inkTool==='hl',sz=Math.max(1,Math.min(3,+settings.inkSize||2))-1,where=tg.kind==='desk'?'desk':'pdf';
   const k={t:hl?'hl':'pen',c:hl?settings.inkHl:settings.inkPen,w:(hl?HL_W:PEN_W)[where][sz]};
   const disp=tg.kind==='desk'?k.w:k.w*tg.pg.scale;const svg=tg.kind==='desk'?$('#inkDesk'):tg.pg.inkLayer;
-  stroke={tg,k,pts:[pt],disp,svg,id:e.pointerId,tmp:null};stroke.tmp=inkEl(stroke.pts,k,disp,tg.kind==='desk');svg.append(stroke.tmp);
+  stroke={tg,k,pts:[pt],disp,svg,id:e.pointerId,tmp:null,cx0:e.clientX,cy0:e.clientY,t0:Date.now(),far:0,ptype:e.pointerType};stroke.tmp=inkEl(stroke.pts,k,disp,tg.kind==='desk');svg.append(stroke.tmp);
 },true);
 window.addEventListener('pointermove',e=>{
   if(!stroke||e.pointerId!==stroke.id)return;e.preventDefault();
+  if(!stroke.erase){stroke.far=Math.max(stroke.far,Math.hypot(e.clientX-stroke.cx0,e.clientY-stroke.cy0));if(inkToLink(e))return}
   const evs=e.getCoalescedEvents?e.getCoalescedEvents():[];const list=evs&&evs.length?evs:[e];
   for(const ev of list){const pt=localXY(stroke.tg,ev.clientX,ev.clientY);
     if(stroke.erase){stroke.gone+=eraseAt(stroke.tg,pt);continue}
     const l=stroke.pts[stroke.pts.length-1];if(Math.hypot(pt[0]-l[0],pt[1]-l[1])>=.8)stroke.pts.push(pt)}
   if(!stroke.erase)stroke.tmp.setAttribute('d',pathD(stroke.pts));
 },{passive:false});
+/* Draw stays on while linking: a stroke that starts on the PDF and is carried onto the worksheet
+   (or the other way) becomes a link line instead of ink — same result as the Link pen. */
+function overPdf(x,y){const el=document.elementFromPoint(x,y);return !!(el&&el.closest&&el.closest('.page')&&docArea.contains(el))}
+function inkToLink(e){
+  const s=stroke;if(!s||s.erase)return false;
+  const cross=s.tg.kind==='pdf'?overDesk(e.clientX,e.clientY)&&!overPdf(e.clientX,e.clientY):overPdf(e.clientX,e.clientY);
+  if(!cross)return false;
+  const src=penEnd(s.cx0,s.cy0);if(!src)return false;
+  s.tmp.remove();stroke=null;
+  try{window.getSelection().removeAllRanges()}catch(_){}hideBars();hlMenu.hidden=true;
+  pen={src,x0:s.cx0,y0:s.cy0,x:e.clientX,y:e.clientY,moved:true};drawPen();return true;
+}
+/* a tap with no movement on the worksheet while drawing: start typing instead of leaving a dot */
+let inkTapLast=null;
+function inkTap(s,e){
+  if(s.tg.kind!=='desk'||s.far>5)return false;
+  const long=Date.now()-s.t0>=420,now=Date.now();
+  const dbl=inkTapLast&&now-inkTapLast.t<450&&Math.hypot(e.clientX-inkTapLast.x,e.clientY-inkTapLast.y)<24;
+  inkTapLast={t:now,x:e.clientX,y:e.clientY};
+  if(long||dbl||settings.tap==='tap'||pendingAnchor){inkTapLast=null;newNoteAt(s.cx0,s.cy0)}
+  else if(!settings.inkTapTip){settings.inkTapTip=1;applySettings();toast(s.ptype==='mouse'?'Double-click the worksheet to type a note — Draw stays on.':'Press and hold (or double-tap) the worksheet to type a note — Draw stays on.')}
+  return true;
+}
 function straighten(pts){
   if(pts.length<3)return pts;const a=pts[0],b=pts[pts.length-1],len=Math.hypot(b[0]-a[0],b[1]-a[1]);if(len<24)return pts;
   let dev=0;for(const p of pts)dev=Math.max(dev,segDist(p,a,b));return dev<Math.max(5,len*.06)?[a,b]:pts;
@@ -2618,6 +2648,7 @@ function finishStroke(e,cancel){
   suppressClick=true;setTimeout(()=>suppressClick=false,0);
   if(s.erase){if(s.gone){touch();commitHist(true)}return}
   s.tmp.remove();if(cancel&&s.pts.length<3)return;
+  if(!cancel&&e&&inkTap(s,e))return;
   let pts=s.k.t==='hl'?straighten(s.pts):s.pts;const k=Object.assign({id:uid()},s.k);
   if(s.tg.kind==='desk'){k.sheet=curSheet;k.p=pts.flatMap(([x,y])=>[Math.round(Math.max(0,x)*10)/10,Math.round(Math.max(0,y)*10)/10])}
   else{const pg=s.tg.pg,{W,H}=pgDisp(pg),r=inv(pg.rot||0);k.doc=pg.doc;k.page=pg.n;
